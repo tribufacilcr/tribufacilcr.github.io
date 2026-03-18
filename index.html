@@ -1,0 +1,2297 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tribu Fácil CR — Gestión Fiscal Inteligente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#060c1a;--surface:#0d1628;--surface2:#131e35;--surface3:#1a2847;
+  --border:rgba(99,143,255,.12);--border-hi:rgba(99,143,255,.28);
+  --primary:#3d7aff;--primary-glow:rgba(61,122,255,.22);
+  --accent:#00d68f;--accent-glow:rgba(0,214,143,.18);
+  --danger:#ff4d6a;--danger-glow:rgba(255,77,106,.18);
+  --warn:#ffc947;--warn-glow:rgba(255,201,71,.18);
+  --text:#e8eeff;--muted:#7a90b8;--faint:#3d5078;
+  --r:14px;--rs:8px;--shadow:0 8px 32px rgba(0,0,0,.4);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;font-size:14px;line-height:1.6}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 900px 600px at 10% 0%,rgba(61,122,255,.07) 0%,transparent 70%),radial-gradient(ellipse 700px 500px at 90% 100%,rgba(0,214,143,.05) 0%,transparent 70%);pointer-events:none;z-index:0}
+.app{position:relative;z-index:1;max-width:1360px;margin:0 auto;padding:0 20px 80px}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(6,12,26,.94);backdrop-filter:blur(20px);z-index:100;margin:0 -20px}
+.logo{display:flex;align-items:center;gap:12px;text-decoration:none}
+.logo-icon{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--primary),#6a9fff);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:17px;color:#fff;box-shadow:0 0 18px var(--primary-glow);flex-shrink:0}
+.logo-name{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:var(--text)}
+.logo-tag{font-size:10px;color:var(--muted)}
+.hdr-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--rs);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s;text-decoration:none}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:0 4px 14px var(--primary-glow)}
+.btn-primary:hover{background:#2d6aef;transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--border-hi);color:var(--text);background:var(--surface)}
+.btn-accent{background:var(--accent);color:#03120a}
+.btn-accent:hover{opacity:.9}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover{opacity:.9}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-xs{padding:4px 10px;font-size:11px}
+
+/* NAV TABS */
+.nav-tabs{display:flex;gap:3px;margin:22px 0 28px;padding:4px;background:var(--surface);border-radius:var(--r);border:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tab{flex:1;min-width:100px;padding:9px 14px;border-radius:10px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border:none;background:transparent;font-family:'DM Sans',sans-serif;transition:all .2s;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:5px}
+.nav-tab:hover{color:var(--text);background:var(--surface2)}
+.nav-tab.active{background:var(--surface3);color:var(--text);border:1px solid var(--border-hi);box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.tab-badge{background:var(--primary);color:#fff;border-radius:100px;padding:1px 6px;font-size:10px;font-weight:700;min-width:16px;text-align:center}
+.tab-badge.warn{background:var(--warn);color:#000}
+
+/* SECTIONS */
+.section{display:none}
+.section.active{display:block;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* CARDS & SURFACES */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px}
+.card-sm{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px}
+
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;transition:all .2s;position:relative;overflow:visible}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:2px 2px 0 0}
+.stat-card.blue::before{background:var(--primary)}.stat-card.green::before{background:var(--accent)}.stat-card.red::before{background:var(--danger)}.stat-card.yellow::before{background:var(--warn)}.stat-card.purple::before{background:#a78bfa}
+.stat-card:hover{border-color:var(--border-hi);transform:translateY(-2px)}
+.stat-label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;margin-bottom:5px}
+.stat-value{font-family:'Syne',sans-serif;font-size:24px;font-weight:700;line-height:1}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* SECTION TITLE */
+.section-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:10px}
+
+/* UPLOAD */
+.upload-zone{border:2px dashed var(--border-hi);border-radius:var(--r);padding:52px 36px;text-align:center;cursor:pointer;transition:all .3s;background:var(--surface);position:relative;overflow:hidden}
+.upload-zone::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(61,122,255,.05),transparent 70%)}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--primary);background:var(--surface2);box-shadow:0 0 40px rgba(61,122,255,.1)}
+.upload-zone.drag-over{border-color:var(--accent);box-shadow:0 0 40px var(--accent-glow)}
+.upload-icon{width:64px;height:64px;margin:0 auto 16px;background:var(--surface2);border:1px solid var(--border);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:28px;position:relative;z-index:1;box-shadow:var(--shadow)}
+.upload-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:6px;position:relative;z-index:1}
+.upload-sub{color:var(--muted);font-size:13px;margin-bottom:20px;position:relative;z-index:1}
+.upload-types{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;position:relative;z-index:1;margin-top:16px}
+.type-chip{padding:3px 10px;border-radius:100px;font-size:10px;font-weight:600;letter-spacing:.4px;background:var(--surface3);border:1px solid var(--border);color:var(--muted)}
+.progress-bar{width:100%;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;margin-top:14px;display:none}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:2px;transition:width .3s ease}
+.upload-status-txt{text-align:center;margin-top:8px;font-size:12px;color:var(--muted);display:none}
+#fileInput{display:none}
+
+/* INVOICE CARDS */
+.invoice-controls{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.search-box{flex:1;min-width:180px;background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:9px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
+.search-box:focus{border-color:var(--primary)}
+.search-box::placeholder{color:var(--faint)}
+.filter-sel{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:9px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;outline:none;cursor:pointer}
+.invoice-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.invoice-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;transition:all .2s;cursor:pointer;position:relative;overflow:visible}
+.invoice-card:hover{border-color:var(--border-hi);transform:translateY(-2px);box-shadow:var(--shadow)}
+.invoice-card-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.status-pill{display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:100px;font-size:11px;font-weight:600}
+.status-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.s-accepted{background:rgba(0,214,143,.1);color:var(--accent);border:1px solid rgba(0,214,143,.22)}.s-accepted .status-dot{background:var(--accent)}
+.s-rejected{background:rgba(255,77,106,.1);color:var(--danger);border:1px solid rgba(255,77,106,.22)}.s-rejected .status-dot{background:var(--danger)}
+.s-warn{background:rgba(255,201,71,.1);color:var(--warn);border:1px solid rgba(255,201,71,.22)}.s-warn .status-dot{background:var(--warn)}
+.inv-type-badge{font-size:10px;font-weight:700;letter-spacing:.5px;padding:3px 7px;border-radius:4px;background:var(--surface3);color:var(--muted)}
+.party{display:flex;gap:7px;align-items:baseline}
+.party-lbl{font-size:9px;font-weight:700;letter-spacing:.5px;color:var(--faint);text-transform:uppercase;min-width:28px}
+.party-name{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px}
+.inv-divider{height:1px;background:var(--border);margin:12px 0}
+.inv-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.meta-lbl{font-size:9px;color:var(--faint);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.meta-val{font-size:12px;color:var(--text);font-weight:500;margin-top:1px}
+.inv-amounts{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.amount-total{font-family:'Syne',sans-serif;font-size:18px;font-weight:700}
+.amount-tax{font-size:11px;color:var(--muted)}
+.amount-tax span{color:var(--accent);font-weight:600}
+.tax-chips{display:flex;gap:3px;flex-wrap:wrap;margin-top:8px}
+.tchip{font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;letter-spacing:.3px}
+.tc-grav{background:rgba(61,122,255,.15);color:#7aabff}
+.tc-exen{background:rgba(0,214,143,.12);color:var(--accent)}
+.tc-nosi{background:rgba(255,201,71,.12);color:var(--warn)}
+.tc-iva{background:rgba(61,122,255,.1);color:#8ab4ff;border:1px solid rgba(61,122,255,.2)}
+.tc-comp{background:rgba(255,77,106,.12);color:var(--danger)}
+.tc-rep{background:rgba(167,139,250,.15);color:#a78bfa}
+.tc-nd{background:rgba(251,146,60,.15);color:#fb923c}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:70px 20px;display:flex;flex-direction:column;align-items:center}
+.empty-icon{font-size:52px;margin-bottom:14px}
+.empty-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:6px}
+.empty-sub{color:var(--muted);font-size:13px;max-width:320px}
+
+/* PAGINATION */
+.pagination-bar{display:none;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:20px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r)}
+.page-info{font-size:12px;color:var(--muted)}
+.page-btns{display:flex;gap:5px;align-items:center}
+.page-btn{width:30px;height:30px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .2s;font-family:'DM Sans',sans-serif}
+.page-btn:hover{border-color:var(--border-hi);color:var(--text)}
+.page-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.page-btn:disabled{opacity:.35;cursor:default}
+.page-ellipsis{color:var(--faint);padding:0 3px;font-size:13px}
+
+/* TRIBU ROWS */
+.t-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px}
+.t-card-title{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:18px;display:flex;align-items:center;gap:7px}
+.t-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(99,143,255,.06)}
+.t-row:last-child{border-bottom:none}
+.t-row-lbl{font-size:13px;color:var(--muted)}
+.t-row-val{font-size:13px;font-weight:600;font-family:'Syne',sans-serif}
+.t-total{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:var(--surface3);border-radius:var(--rs);border:1px solid var(--border-hi);margin-top:14px}
+.t-total-lbl{font-size:12px;font-weight:600;color:var(--muted)}
+.t-total-val{font-family:'Syne',sans-serif;font-size:20px;font-weight:800}
+
+/* D-150 SPECIFIC */
+.d150-section{margin-bottom:20px}
+.d150-section-header{background:var(--surface3);border:1px solid var(--border-hi);border-radius:var(--rs) var(--rs) 0 0;padding:10px 16px;display:flex;align-items:center;justify-content:space-between}
+.d150-section-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text)}
+.d150-section-num{font-size:10px;font-weight:700;letter-spacing:.6px;color:var(--muted);background:var(--surface2);padding:2px 8px;border-radius:100px;border:1px solid var(--border)}
+.d150-body{background:var(--surface);border:1px solid var(--border);border-left:1px solid var(--border);border-right:1px solid var(--border);border-bottom:1px solid var(--border);border-radius:0 0 var(--rs) var(--rs);padding:14px 16px}
+.d150-row{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:6px;margin-bottom:4px;transition:background .15s}
+.d150-row:hover{background:var(--surface2)}
+.d150-row-lbl{font-size:12px;color:var(--muted);flex:1}
+.d150-row-casilla{font-size:10px;font-weight:700;color:var(--faint);margin:0 10px;min-width:24px;text-align:center}
+.d150-row-val{font-size:13px;font-weight:700;font-family:'Syne',sans-serif;color:var(--text);min-width:120px;text-align:right}
+.d150-row-val.blue{color:#7aabff}
+.d150-row-val.green{color:var(--accent)}
+.d150-row-val.red{color:var(--danger)}
+.d150-row-val.warn{color:var(--warn)}
+.d150-copy-btn{cursor:pointer;background:var(--surface3);border:1px solid var(--border);border-radius:4px;padding:2px 7px;font-size:10px;color:var(--muted);transition:all .15s;margin-left:8px}
+.d150-copy-btn:hover{color:var(--text);border-color:var(--border-hi)}
+.d150-grand-total{background:linear-gradient(135deg,rgba(61,122,255,.08),rgba(0,214,143,.05));border:1px solid var(--border-hi);border-radius:var(--r);padding:20px;display:flex;justify-content:space-between;align-items:center;margin-top:16px}
+
+/* VENCIMIENTO WIDGET */
+.venc-widget{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;display:flex;align-items:center;gap:20px;margin-bottom:20px;flex-wrap:wrap}
+.venc-countdown{display:flex;gap:10px}
+.venc-unit{text-align:center;background:var(--surface3);border:1px solid var(--border);border-radius:var(--rs);padding:10px 14px;min-width:56px}
+.venc-num{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;line-height:1}
+.venc-lbl{font-size:9px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-top:2px}
+.venc-info{flex:1}
+.venc-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:4px}
+.venc-sub{font-size:12px;color:var(--muted)}
+.venc-status{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:100px;font-size:11px;font-weight:600}
+
+/* SIMULADOR */
+.sim-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media(max-width:900px){.sim-grid{grid-template-columns:1fr}}
+.sim-lbl{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block}
+.sim-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:11px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;outline:none;margin-bottom:14px;transition:border-color .2s}
+.sim-input:focus{border-color:var(--primary)}
+.bracket-row{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.bracket-lbl{font-size:11px;color:var(--muted);min-width:110px}
+.bracket-track{flex:1;height:6px;background:var(--surface3);border-radius:3px;overflow:hidden}
+.bracket-fill{height:100%;border-radius:3px;transition:width .5s ease}
+.bracket-val{font-size:11px;font-weight:600;min-width:90px;text-align:right}
+
+/* WARNINGS */
+.warn-list{display:flex;flex-direction:column;gap:10px}
+.warn-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 18px;display:flex;gap:12px;align-items:flex-start}
+.warn-card.error{border-color:rgba(255,77,106,.3);background:rgba(255,77,106,.04)}
+.warn-card.warn{border-color:rgba(255,201,71,.3);background:rgba(255,201,71,.04)}
+.warn-card.info{border-color:rgba(61,122,255,.3);background:rgba(61,122,255,.04)}
+.warn-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.warn-title{font-size:13px;font-weight:600;margin-bottom:2px}
+.warn-desc{font-size:11px;color:var(--muted)}
+
+/* EXPORT */
+.export-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:20px}
+.export-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px;display:flex;flex-direction:column;gap:10px;transition:all .2s}
+.export-card:hover{border-color:var(--border-hi);transform:translateY(-2px)}
+.export-icon{font-size:28px}
+.export-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700}
+.export-desc{font-size:12px;color:var(--muted);flex:1}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(6,12,26,.92);backdrop-filter:blur(8px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border-hi);border-radius:var(--r);max-width:740px;width:100%;max-height:88vh;overflow-y:auto;animation:mIn .22s ease;box-shadow:0 24px 80px rgba(0,0,0,.6)}
+@keyframes mIn{from{opacity:0;transform:scale(.96) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-hdr{display:flex;justify-content:space-between;align-items:center;padding:20px 22px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:1}
+.modal-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700}
+.modal-close{width:30px;height:30px;border-radius:7px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.modal-close:hover{color:var(--text);border-color:var(--border-hi)}
+.modal-body{padding:20px 22px}
+.detail-sec{margin-bottom:20px}
+.detail-sec-title{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:560px){.detail-grid{grid-template-columns:1fr}}
+.dfield .field-lbl{font-size:10px;color:var(--faint);margin-bottom:2px;font-weight:500}
+.dfield .field-val{font-size:12px;color:var(--text);font-weight:500;word-break:break-all}
+.lines-table{width:100%;border-collapse:collapse;font-size:11px}
+.lines-table th{text-align:left;padding:7px 10px;font-size:9px;font-weight:700;letter-spacing:.5px;color:var(--faint);text-transform:uppercase;border-bottom:1px solid var(--border)}
+.lines-table td{padding:8px 10px;color:var(--muted);border-bottom:1px solid rgba(99,143,255,.05)}
+.lines-table tr:hover td{background:var(--surface2);color:var(--text)}
+.hl-row{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--surface3);border-radius:var(--rs);border:1px solid var(--border);margin-top:10px}
+.hl-lbl{font-size:12px;color:var(--muted);font-weight:500}
+.hl-val{font-family:'Syne',sans-serif;font-size:17px;font-weight:700}
+
+/* TOAST */
+.toast-ctr{position:fixed;bottom:20px;right:20px;z-index:300;display:flex;flex-direction:column;gap:7px}
+.toast{background:var(--surface2);border:1px solid var(--border-hi);border-radius:var(--rs);padding:10px 16px;display:flex;align-items:center;gap:8px;font-size:12px;box-shadow:var(--shadow);animation:slideIn .25s ease;min-width:260px}
+.toast.success{border-color:rgba(0,214,143,.4)}.toast.error{border-color:rgba(255,77,106,.4)}.toast.warn{border-color:rgba(255,201,71,.4)}
+@keyframes slideIn{from{transform:translateX(80px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* STORAGE BADGE */
+.storage-badge{position:fixed;bottom:20px;left:20px;z-index:150;background:var(--surface2);border:1px solid var(--border-hi);border-radius:var(--rs);padding:8px 14px;font-size:11px;color:var(--muted);display:none;box-shadow:var(--shadow)}
+
+/* MISC */
+.month-selector{display:flex;gap:7px;align-items:center}
+.month-btn{width:30px;height:30px;background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);color:var(--muted);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.month-btn:hover{border-color:var(--border-hi);color:var(--text)}
+.month-label{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;min-width:130px;text-align:center}
+.cabys-warn{font-size:10px;color:var(--warn);background:rgba(255,201,71,.08);padding:1px 6px;border-radius:4px;margin-left:4px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:700px){.grid2{grid-template-columns:1fr}}
+.info-box{background:rgba(255,201,71,.06);border:1px solid rgba(255,201,71,.18);border-radius:var(--rs);padding:13px 16px;font-size:12px;color:var(--warn);margin-bottom:18px}
+.info-box.blue{background:rgba(61,122,255,.06);border-color:rgba(61,122,255,.18);color:#7aabff}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:3px}
+footer{text-align:center;padding:22px;margin-top:36px;border-top:1px solid var(--border);font-size:11px;color:var(--faint)}
+footer span{color:var(--muted)}
+
+/* ═══════════════════════════════════════════════════════
+   TOOLTIP SYSTEM — CSS-only desktop + JS tap for mobile
+═══════════════════════════════════════════════════════ */
+[data-tip]{position:relative}
+button[data-tip],a[data-tip]{cursor:pointer}
+[data-tip]:not(button):not(a):not(input):not(select){cursor:help}
+
+[data-tip]::after{
+  content:attr(data-tip);
+  position:absolute;
+  bottom:calc(100% + 10px);
+  left:50%;
+  transform:translateX(-50%) translateY(4px);
+  background:rgba(8,15,35,.98);
+  color:#e8eeff;
+  font-family:'DM Sans',sans-serif;
+  font-size:11.5px;font-weight:400;line-height:1.55;
+  white-space:normal;
+  width:max-content;
+  max-width:min(260px, calc(100vw - 32px));
+  min-width:100px;
+  padding:8px 12px;
+  border-radius:9px;
+  border:1px solid rgba(99,143,255,.35);
+  box-shadow:0 8px 32px rgba(0,0,0,.6);
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .15s ease, transform .15s ease;
+  z-index:99999;
+  text-align:left;
+  letter-spacing:0;
+  text-transform:none;
+  font-weight:400;
+}
+[data-tip]::before{
+  content:'';
+  position:absolute;
+  bottom:calc(100% + 5px);
+  left:50%;
+  transform:translateX(-50%);
+  border:5px solid transparent;
+  border-top-color:rgba(99,143,255,.35);
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .15s ease;
+  z-index:99999;
+}
+[data-tip]:hover::after{opacity:1;transform:translateX(-50%) translateY(0)}
+[data-tip]:hover::before{opacity:1}
+/* Active state for JS-triggered mobile tap */
+[data-tip].tip-active::after{opacity:1;transform:translateX(-50%) translateY(0)}
+[data-tip].tip-active::before{opacity:1}
+
+/* Direction variants */
+[data-tip].tip-right::after{left:auto;right:0;transform:translateY(4px)}
+[data-tip].tip-right:hover::after,[data-tip].tip-right.tip-active::after{transform:translateY(0)}
+[data-tip].tip-right::before{left:auto;right:14px;transform:none}
+[data-tip].tip-left::after{left:0;right:auto;transform:translateY(4px)}
+[data-tip].tip-left:hover::after,[data-tip].tip-left.tip-active::after{transform:translateY(0)}
+[data-tip].tip-left::before{left:14px;transform:none}
+[data-tip].tip-below::after{top:calc(100% + 10px);bottom:auto;transform:translateX(-50%) translateY(-4px)}
+[data-tip].tip-below:hover::after,[data-tip].tip-below.tip-active::after{transform:translateX(-50%) translateY(0)}
+[data-tip].tip-below::before{top:calc(100% + 5px);bottom:auto;border-top-color:transparent;border-bottom-color:rgba(99,143,255,.35)}
+
+/* On touch devices, hide CSS :hover tooltips — JS handles tap instead */
+@media(hover:none){
+  [data-tip]:hover::after,[data-tip]:hover::before{opacity:0}
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE — TABLET  (max 1024px)
+═══════════════════════════════════════════════════════ */
+@media(max-width:1024px){
+  .app{padding:0 16px 80px}
+  .invoice-grid{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+  .stats-row{grid-template-columns:repeat(3,1fr)}
+  .export-grid{grid-template-columns:repeat(2,1fr)}
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE — MOBILE  (max 768px)
+═══════════════════════════════════════════════════════ */
+@media(max-width:768px){
+  /* Base */
+  body{font-size:13px}
+  .app{padding:0 12px 100px}
+
+  /* Header */
+  header{
+    padding:12px 14px;
+    margin:0 -12px;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .logo-name{font-size:15px}
+  .logo-tag{display:none}
+  .hdr-right{gap:6px;width:100%;justify-content:flex-end}
+  .hdr-right > div:first-child{display:none} /* hide version badge */
+  .btn-sm{padding:6px 10px;font-size:11px}
+
+  /* Nav tabs — scrollable row, smaller */
+  .nav-tabs{margin:14px 0 20px;padding:3px;gap:2px}
+  .nav-tab{min-width:72px;padding:7px 10px;font-size:11px;gap:3px}
+
+  /* Section titles */
+  .section-title{font-size:16px}
+  .section-header{margin-bottom:16px}
+
+  /* Stats grid */
+  .stats-row{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+  .stat-value{font-size:20px}
+  .stat-card{padding:14px 16px}
+
+  /* Upload zone */
+  .upload-zone{padding:32px 20px}
+  .upload-title{font-size:16px}
+  .upload-sub{font-size:12px;margin-bottom:14px}
+  .upload-icon{width:52px;height:52px;font-size:22px;border-radius:14px}
+  .upload-types{gap:4px;margin-top:12px}
+  .type-chip{font-size:9px;padding:2px 8px}
+
+  /* Vencimiento widget — stack vertically */
+  .venc-widget{flex-direction:column;align-items:flex-start;gap:12px;padding:14px}
+  .venc-countdown{gap:7px}
+  .venc-unit{min-width:48px;padding:8px 10px}
+  .venc-num{font-size:22px}
+  .venc-title{font-size:13px}
+
+  /* Invoice controls — stack filters */
+  .invoice-controls{flex-direction:column;align-items:stretch;gap:8px}
+  .search-box{min-width:unset;width:100%}
+  .filter-sel{width:100%}
+  .invoice-grid{grid-template-columns:1fr;gap:10px}
+
+  /* Invoice card */
+  .invoice-card{padding:14px}
+  .party-name{max-width:180px}
+  .amount-total{font-size:16px}
+
+  /* Pagination */
+  .pagination-bar{flex-direction:column;align-items:flex-start;gap:8px;padding:12px 14px}
+
+  /* D-150 */
+  .d150-section-header{flex-wrap:wrap;gap:6px;padding:10px 12px}
+  .d150-section-title{font-size:12px}
+  .d150-row{flex-wrap:wrap;gap:4px;padding:8px 8px}
+  .d150-row-lbl{font-size:11px;width:100%}
+  .d150-row-casilla{min-width:unset}
+  .d150-row-val{min-width:unset;font-size:12px}
+  .d150-grand-total{flex-direction:column;gap:10px;padding:16px}
+  #d150FinalResult{font-size:22px}
+  .t-total{flex-direction:row}
+  .t-total-val{font-size:17px}
+
+  /* Summary */
+  .grid2{grid-template-columns:1fr;gap:14px}
+  .t-card{padding:16px}
+
+  /* Simulator */
+  .sim-grid{grid-template-columns:1fr;gap:16px}
+  .sim-input{padding:10px 12px;font-size:12px}
+  .bracket-lbl{min-width:80px;font-size:10px}
+  .bracket-val{min-width:70px;font-size:10px}
+
+  /* Export */
+  .export-grid{grid-template-columns:1fr;gap:10px}
+  .export-card{padding:16px}
+
+  /* Modal */
+  .modal-overlay{padding:12px}
+  .modal{max-height:92vh;border-radius:12px}
+  .modal-body{padding:14px 16px}
+  .modal-hdr{padding:14px 16px}
+  .detail-grid{grid-template-columns:1fr}
+  .lines-table{font-size:10px}
+  .lines-table th,.lines-table td{padding:5px 7px}
+
+  /* Toast + storage badge — avoid overlap */
+  .toast-ctr{bottom:70px;right:12px;max-width:calc(100vw - 24px)}
+  .toast{min-width:unset;max-width:100%}
+  .storage-badge{bottom:14px;left:12px;font-size:10px;padding:6px 10px;max-width:calc(100vw - 100px)}
+
+  /* Guide */
+  .card{padding:16px}
+  .card-sm{padding:12px}
+
+  /* Tooltip: constrain width on mobile */
+  [data-tip]::after{max-width:calc(100vw - 24px)}
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE — SMALL PHONE  (max 400px)
+═══════════════════════════════════════════════════════ */
+@media(max-width:400px){
+  .stats-row{grid-template-columns:1fr}
+  .venc-countdown{gap:5px}
+  .venc-unit{min-width:42px;padding:6px 8px}
+  .venc-num{font-size:19px}
+  .hdr-right .btn-ghost{display:none} /* hide Limpiar on tiny screens */
+  .nav-tab{min-width:60px;padding:6px 8px;font-size:10px}
+}
+
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <a class="logo" href="#">
+    <div class="logo-icon">T</div>
+    <div>
+      <div class="logo-name">Tribu Fácil CR</div>
+      <div class="logo-tag">Gestión Fiscal Inteligente · Costa Rica</div>
+    </div>
+  </a>
+  <div class="hdr-right">
+    <div data-tip="Compatible con Factura Electrónica v4.4 de Hacienda Costa Rica · Portal TRIBU-CR" style="display:flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--border);border-radius:100px;font-size:10px;font-weight:600;color:var(--muted)">🇨🇷 Hacienda · TRIBU-CR · v4.4</div>
+    <button class="btn btn-ghost btn-sm" onclick="clearAll()" data-tip="Elimina todos los documentos cargados en esta sesión. No afecta tus archivos originales.">🗑 Limpiar</button>
+    <button class="btn btn-primary btn-sm" onclick="document.getElementById('fileInput').click()" data-tip="Cargá archivos XML de tus facturas electrónicas o un ZIP con todas las del período.">+ Subir XML</button>
+  </div>
+</header>
+
+<div class="app">
+
+<!-- NAV TABS -->
+<div class="nav-tabs">
+  <button class="nav-tab active" onclick="switchTab('upload')" id="tab-upload" data-tip="Cargá tus archivos XML o ZIP de facturas electrónicas aquí.">📤 Subir</button>
+  <button class="nav-tab" onclick="switchTab('invoices')" id="tab-invoices" data-tip="Listado de todos los documentos cargados con filtros por estado, tipo y mes." >🧾 Facturas <span class="tab-badge" id="badge-inv">0</span></button>
+  <button class="nav-tab" onclick="switchTab('d150')" id="tab-d150" data-tip="Borrador del formulario D-150 (IVA mensual) con las 6 secciones listas para ingresar en TRIBU-CR.">📋 D-150 TRIBU</button>
+  <button class="nav-tab" onclick="switchTab('summary')" id="tab-summary" data-tip="Resumen de IVA débito (ventas), crédito (compras) y monto a pagar por período.">📊 Resumen IVA</button>
+  <button class="nav-tab" onclick="switchTab('simulator')" id="tab-simulator" data-tip="Estimá tu Impuesto sobre la Renta anual (D-101) con los tramos oficiales de Hacienda.">🧮 Renta</button>
+  <button class="nav-tab" onclick="switchTab('guia')" id="tab-guia" data-tip="Guía paso a paso para declarar el D-150 y el D-101 en el portal TRIBU-CR.">📖 Guía TRIBU-CR</button>
+  <button class="nav-tab" onclick="switchTab('warnings')" id="tab-warnings" data-tip="Alertas automáticas sobre facturas rechazadas, CABYS inválidos y proporcionalidad.">⚠️ Alertas <span class="tab-badge warn" id="badge-warn">0</span></button>
+  <button class="nav-tab" onclick="switchTab('export')" id="tab-export" data-tip="Exportá tus datos en Excel, D-150 .xlsx, CSV o JSON para tu contador o respaldo.">📥 Exportar</button>
+</div>
+
+<!-- ════ UPLOAD ════ -->
+<section class="section active" id="section-upload">
+
+  <!-- VENCIMIENTO WIDGET -->
+  <div class="venc-widget" id="vencWidget" data-tip="Cuenta regresiva al próximo vencimiento del D-150 (IVA mensual). El plazo es el día 15 de cada mes.">
+    <div class="venc-countdown" id="vencCountdown"></div>
+    <div class="venc-info">
+      <div class="venc-title" id="vencTitle">Cargando...</div>
+      <div class="venc-sub" id="vencSub"></div>
+    </div>
+    <div id="vencStatus"></div>
+  </div>
+
+  <div class="upload-zone" id="dropZone"
+       onclick="document.getElementById('fileInput').click()"
+       ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+    <div class="upload-icon">📁</div>
+    <div class="upload-title">Arrastrá tus facturas electrónicas aquí</div>
+    <div class="upload-sub">XML individuales, múltiples o un ZIP con todas las facturas del período</div>
+    <button class="btn btn-primary" onclick="event.stopPropagation();document.getElementById('fileInput').click()">Seleccionar archivos</button>
+    <div class="upload-types">
+      <div class="type-chip" data-tip="Factura electrónica estándar de venta. El tipo más común emitido por comercios y profesionales.">FacturaElectronica v4.4</div>
+      <div class="type-chip" data-tip="Respuesta de Hacienda sobre una factura: puede ser Aceptada o Rechazada.">MensajeHacienda</div>
+      <div class="type-chip" data-tip="Factura de compra recibida de un proveedor. El IVA de estas facturas se convierte en Crédito Fiscal.">FacturaCompra (Crédito Fiscal)</div>
+      <div class="type-chip" data-tip="Comprobante simplificado de venta al consumidor final. No requiere datos del receptor.">TiqueteElectronico</div>
+      <div class="type-chip" data-tip="Nota Crédito: anula o reduce el monto de una factura anterior. Nota Débito: aumenta el monto.">NotaCredito / NotaDebito</div>
+      <div class="type-chip" data-tip="Recibo Electrónico de Pago: comprobante para honorarios profesionales y servicios independientes.">REP v4.4</div>
+      <div class="type-chip" data-tip="Podés comprimir múltiples XML en un archivo .zip y subirlos todos de una sola vez.">​.zip múltiple</div>
+    </div>
+    <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="upload-status-txt" id="uploadTxt"></div>
+  </div>
+  <input type="file" id="fileInput" accept=".xml,.zip" multiple onchange="handleFileSelect(event)">
+  <div style="text-align:center;margin-top:12px">
+    <button class="btn btn-ghost btn-sm" onclick="loadDemo()" data-tip="Carga 6 documentos de ejemplo para explorar todas las funciones sin necesitar XMLs reales.">🎲 No tengo XMLs — Cargar datos demo</button>
+  </div>
+
+  <div class="stats-row" style="margin-top:22px">
+    <div class="stat-card blue" data-tip="Total de archivos XML procesados en esta sesión (facturas, notas, mensajes de Hacienda)."><div class="stat-label">Total Documentos</div><div class="stat-value" id="s-total">0</div><div class="stat-sub">Cargados en el sistema</div></div>
+    <div class="stat-card green" data-tip="Documentos validados y aceptados por el sistema de Hacienda. Estos son fiscalmente válidos."><div class="stat-label">Aceptados</div><div class="stat-value" id="s-accepted">0</div><div class="stat-sub">Validados por Hacienda</div></div>
+    <div class="stat-card red" data-tip="Documentos rechazados por Hacienda. Revisá el Centro de Alertas para ver el motivo de cada rechazo."><div class="stat-label">Rechazados</div><div class="stat-value" id="s-rejected">0</div><div class="stat-sub">Con error Hacienda</div></div>
+    <div class="stat-card yellow" data-tip="IVA generado en tus ventas gravadas. Este monto es lo que 'debés' a Hacienda antes de restar el crédito fiscal."><div class="stat-label">IVA Débito</div><div class="stat-value" id="s-iva">₡0</div><div class="stat-sub">Ventas gravadas</div></div>
+    <div class="stat-card purple" data-tip="IVA pagado en tus compras y gastos. Podés acreditarlo contra el débito fiscal para reducir lo que pagás."><div class="stat-label">IVA Crédito</div><div class="stat-value" id="s-credito">₡0</div><div class="stat-sub">De compras deducibles</div></div>
+  </div>
+
+  <div class="card" style="margin-top:6px">
+    <div class="t-card-title">💡 ¿Cómo usar Tribu Fácil CR?</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:18px">
+      <div><div style="font-size:22px;margin-bottom:7px">1️⃣</div><div style="font-size:13px;font-weight:600;margin-bottom:3px">Subí tus XML</div><div style="font-size:12px;color:var(--muted)">Facturas emitidas Y recibidas (compras) para calcular IVA a pagar correctamente.</div></div>
+      <div><div style="font-size:22px;margin-bottom:7px">2️⃣</div><div style="font-size:13px;font-weight:600;margin-bottom:3px">Extracción automática</div><div style="font-size:12px;color:var(--muted)">El sistema lee XML v4.4 y extrae CABYS, tarifas, servicios vs mercancías, y crédito fiscal.</div></div>
+      <div><div style="font-size:22px;margin-bottom:7px">3️⃣</div><div style="font-size:13px;font-weight:600;margin-bottom:3px">Borrador D-150</div><div style="font-size:12px;color:var(--muted)">Generamos las 6 secciones del formulario D-150 listas para ingresar a TRIBU-CR.</div></div>
+      <div><div style="font-size:22px;margin-bottom:7px">4️⃣</div><div style="font-size:13px;font-weight:600;margin-bottom:3px">Declarás con confianza</div><div style="font-size:12px;color:var(--muted)">Exportá, revisá con tu contador y declarás directamente en la OVi de TRIBU-CR.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ FACTURAS ════ -->
+<section class="section" id="section-invoices">
+  <div class="section-header">
+    <div class="section-title">🧾 Documentos Cargados</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="switchTab('export')">📥 Exportar</button>
+    </div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card blue" data-tip="Total de documentos cargados en esta sesión."><div class="stat-label">Total</div><div class="stat-value" id="i-total">0</div></div>
+    <div class="stat-card green" data-tip="Facturas, tiquetes y REPs emitidos por vos (tus ventas)."><div class="stat-label">Ventas (Emitidas)</div><div class="stat-value" id="i-emitidas">0</div></div>
+    <div class="stat-card purple" data-tip="Facturas de compra recibidas de proveedores. Generan crédito fiscal deducible del IVA."><div class="stat-label">Compras (Recibidas)</div><div class="stat-value" id="i-recibidas">0</div></div>
+    <div class="stat-card red" data-tip="Documentos que Hacienda rechazó. No tienen validez fiscal. Verificá el motivo en el Centro de Alertas."><div class="stat-label">Rechazadas</div><div class="stat-value" id="i-rejected">0</div></div>
+  </div>
+  <div class="invoice-controls">
+    <input type="text" class="search-box" id="searchBox" placeholder="🔍  Buscar por emisor, receptor, clave..." oninput="filterInvoices()" data-tip="Buscá por nombre del emisor, receptor o clave numérica del comprobante.">
+    <select class="filter-sel" id="fStatus" onchange="filterInvoices()" data-tip="Filtrá por estado: Aceptadas (válidas), Rechazadas (por Hacienda) o con Advertencia.">
+      <option value="">Todos los estados</option>
+      <option value="accepted">Aceptadas</option>
+      <option value="rejected">Rechazadas</option>
+      <option value="warning">Advertencia</option>
+    </select>
+    <select class="filter-sel" id="fDirection" onchange="filterInvoices()" data-tip="Emitidas = tus ventas. Recibidas = tus compras a proveedores (generan crédito fiscal).">
+      <option value="">Emitidas y Recibidas</option>
+      <option value="emitida">Solo Emitidas</option>
+      <option value="recibida">Solo Recibidas (Compras)</option>
+    </select>
+    <select class="filter-sel" id="fType" onchange="filterInvoices()" data-tip="Filtrá por tipo de comprobante electrónico según la clasificación de Hacienda.">
+      <option value="">Todos los tipos</option>
+      <option value="FacturaElectronica">Factura Electrónica</option>
+      <option value="FacturaCompra">Factura Compra</option>
+      <option value="TiqueteElectronico">Tiquete Electrónico</option>
+      <option value="NotaCredito">Nota Crédito</option>
+      <option value="NotaDebito">Nota Débito</option>
+      <option value="REP">REP</option>
+      <option value="MensajeHacienda">Mensaje Hacienda</option>
+    </select>
+    <select class="filter-sel" id="fMonth" onchange="filterInvoices()" data-tip="Filtrá documentos por mes de emisión para revisar períodos específicos.">
+      <option value="">Todos los meses</option>
+    </select>
+  </div>
+  <div class="invoice-grid" id="invoiceGrid"></div>
+  <div class="pagination-bar" id="paginationBar">
+    <div class="page-info" id="pageInfo">Mostrando 1–24 de 0</div>
+    <div class="page-btns" id="pageBtns"></div>
+    <div style="display:flex;align-items:center;gap:7px">
+      <span style="font-size:11px;color:var(--muted)">Por página:</span>
+      <select class="filter-sel" id="pageSize" onchange="changePageSize()" style="padding:6px 10px" data-tip="Elegí cuántas facturas ver por página. Más elementos por página carga más rápido en pantalla completa.">
+        <option value="12">12</option><option value="24" selected>24</option><option value="48">48</option><option value="100">100</option>
+      </select>
+    </div>
+  </div>
+</section>
+
+<!-- ════ D-150 BORRADOR ════ -->
+<section class="section" id="section-d150">
+  <div class="section-header">
+    <div class="section-title">📋 Borrador Formulario D-150</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <div class="month-selector">
+        <button class="month-btn" onclick="changeMonth(-1)" data-tip="Mes anterior">‹</button>
+        <div class="month-label" id="d150MonthLabel" data-tip="Filtrá el borrador D-150 por mes de emisión de las facturas.">Todos los meses</div>
+        <button class="month-btn" onclick="changeMonth(1)" data-tip="Mes siguiente">›</button>
+      </div>
+      <button class="btn btn-accent btn-sm" onclick="copyAllD150()" data-tip="Copia todas las secciones del D-150 al portapapeles en formato texto para pegarlo donde necesités.">📋 Copiar todo</button>
+    </div>
+  </div>
+
+  <div class="info-box blue" id="d150Notice">
+    📌 <strong>¿Cómo usarlo?</strong> Este borrador refleja los datos de tus XML agrupados según las secciones del formulario D-150 en TRIBU-CR. Revisá cada valor, luego entrá a <strong><a href="https://tribu.hacienda.go.cr" target="_blank" style="color:#7aabff">tribu.hacienda.go.cr</a></strong> y copiá los números en las casillas correspondientes. <a href="https://tribu.hacienda.go.cr" target="_blank" class="btn btn-ghost btn-xs" style="margin-left:8px;display:inline-flex">🌐 Abrir TRIBU-CR →</a>
+  </div>
+
+  <!-- RESUMEN SIMPLE TOP -->
+  <div id="d150SimpleSummary" style="background:var(--surface);border:1px solid var(--border-hi);border-radius:var(--r);padding:20px;margin-bottom:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px"></div>
+
+  <!-- SECCIÓN I -->
+  <div class="d150-section">
+    <div class="d150-section-header" data-tip="Registrá todas tus ventas del período separadas por tarifa de IVA (13%, 4%, 2%, 1%) y el IVA generado en cada una. También incluye ventas exentas y no sujetas.">
+      <div class="d150-section-title">SECCIÓN I — Ventas y Otras Operaciones del Período</div>
+      <div class="d150-section-num">I</div>
+    </div>
+    <div class="d150-body" id="d150-sec1"></div>
+  </div>
+
+  <!-- SECCIÓN II -->
+  <div class="d150-section">
+    <div class="d150-section-header" data-tip="Registrá el IVA pagado en tus compras (crédito fiscal). Este monto se resta del débito fiscal para calcular lo que pagás.">
+      <div class="d150-section-title">SECCIÓN II — Compras y Créditos del Período</div>
+      <div class="d150-section-num">II</div>
+    </div>
+    <div class="d150-body" id="d150-sec2"></div>
+  </div>
+
+  <!-- SECCIÓN III -->
+  <div class="d150-section">
+    <div class="d150-section-header" data-tip="Solo aplica si tenés ventas gravadas Y exentas. Calculá qué porcentaje de tus ventas son gravadas para saber cuánto crédito fiscal podés acreditar.">
+      <div class="d150-section-title">SECCIÓN III — Proporcionalidad de Crédito (ventas mixtas)</div>
+      <div class="d150-section-num">III</div>
+    </div>
+    <div class="d150-body" id="d150-sec3"></div>
+  </div>
+
+  <!-- SECCIÓN IV -->
+  <div class="d150-section">
+    <div class="d150-section-header" data-tip="Si recibiste pagos con datáfono, el banco retiene parte del IVA. Ese monto retenido es un crédito adicional que podés acreditar aquí.">
+      <div class="d150-section-title">SECCIÓN IV — Crédito Fiscal por Retención en la Fuente</div>
+      <div class="d150-section-num">IV</div>
+    </div>
+    <div class="d150-body" id="d150-sec4">
+      <div style="padding:14px 10px">
+        <div style="background:rgba(61,122,255,.06);border:1px solid rgba(61,122,255,.18);border-radius:var(--rs);padding:12px 16px;font-size:12px;color:#7aabff;margin-bottom:12px">
+          ℹ️ Esta sección aplica si recibiste pagos con <strong>datáfono (tarjetas)</strong> o si tenés <strong>retenciones bancarias</strong>. El banco te debió entregar un comprobante con el monto retenido.
+        </div>
+        <div class="d150-row">
+          <div class="d150-row-lbl">Retenciones por medios de pago electrónico (datáfono, tarjetas)</div>
+          <div class="d150-row-casilla">IV-1</div>
+          <div class="d150-row-val" style="color:var(--accent)">Ingresá manualmente</div>
+        </div>
+        <div class="d150-row">
+          <div class="d150-row-lbl">Otras retenciones en la fuente acreditables</div>
+          <div class="d150-row-casilla">IV-2</div>
+          <div class="d150-row-val" style="color:var(--accent)">Ingresá manualmente</div>
+        </div>
+        <div style="font-size:11px;color:var(--faint);padding:8px 10px 2px">💡 Estos montos se restan del impuesto determinado en la Sección VI. Consultá con tu banco o contador los comprobantes de retención.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN V -->
+  <div class="d150-section">
+    <div class="d150-section-header" data-tip="Resta el crédito fiscal (Sección II) del débito fiscal (Sección I). El resultado es el impuesto determinado que debés pagar.">
+      <div class="d150-section-title">SECCIÓN V — Determinación del Impuesto Final</div>
+      <div class="d150-section-num">V</div>
+    </div>
+    <div class="d150-body" id="d150-sec5"></div>
+  </div>
+
+  <!-- SECCIÓN VI -->
+  <div class="d150-section">
+    <div class="d150-section-header" data-tip="Al impuesto determinado se le restan retenciones bancarias y saldos a favor de períodos anteriores. El resultado es el monto final a pagar o el saldo a tu favor.">
+      <div class="d150-section-title">SECCIÓN VI — Liquidación de la Deuda Tributaria</div>
+      <div class="d150-section-num">VI</div>
+    </div>
+    <div class="d150-body" id="d150-sec6"></div>
+  </div>
+
+  <!-- GRAN TOTAL -->
+  <div class="d150-grand-total" id="d150GrandTotal" data-tip="Resultado final estimado. Si es positivo, debés pagarlo a Hacienda antes del día 15. Si es negativo, tenés saldo a favor que se aplica al período siguiente.">
+    <div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:3px" data-tip="Este es el resultado final del D-150. Si es positivo debés pagarlo antes del día 15. Si es negativo tenés saldo a favor que se aplica al siguiente período.">IVA a Pagar / (Crédito a Favor) estimado</div>
+      <div style="font-size:11px;color:var(--faint)">Revisá con tu contador antes de declarar. Vence el día 15 del mes siguiente.</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800" id="d150FinalResult">₡0</div>
+      <div style="font-size:11px;color:var(--muted)" id="d150FinalLabel">—</div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ RESUMEN MENSUAL ════ -->
+<section class="section" id="section-summary">
+  <div class="section-header">
+    <div class="section-title">📊 Resumen Mensual IVA</div>
+    <div class="month-selector">
+      <button class="month-btn" onclick="changeMonthSum(-1)" data-tip="Mes anterior">‹</button>
+      <div class="month-label" id="sumMonthLabel" data-tip="Filtrá el resumen por mes de emisión. Útil para preparar cada declaración mensual.">Todos los meses</div>
+      <button class="month-btn" onclick="changeMonthSum(1)" data-tip="Mes siguiente">›</button>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="t-card">
+      <div class="t-card-title">💰 Ventas del Período</div>
+      <div class="t-row" data-tip="Ventas de servicios (honorarios, consultoría, etc.) sujetas a IVA. Van a la casilla de ventas gravadas en el D-150."><span class="t-row-lbl">Servicios Gravados</span><span class="t-row-val" style="color:#7aabff" id="sum-servgrav">₡0</span></div>
+      <div class="t-row" data-tip="Ventas de bienes físicos (productos, mercancía) sujetos a IVA."><span class="t-row-lbl">Mercancías Gravadas</span><span class="t-row-val" style="color:#7aabff" id="sum-mercgrav">₡0</span></div>
+      <div class="t-row" data-tip="Servicios exonerados del IVA por ley (ej: servicios médicos, educativos). No generan débito fiscal."><span class="t-row-lbl">Servicios Exentos</span><span class="t-row-val" style="color:var(--accent)" id="sum-servexen">₡0</span></div>
+      <div class="t-row" data-tip="Mercancías exoneradas del IVA por ley (ej: alimentos básicos, medicamentos)."><span class="t-row-lbl">Mercancías Exentas</span><span class="t-row-val" style="color:var(--accent)" id="sum-mercexen">₡0</span></div>
+      <div class="t-row" data-tip="Operaciones que están fuera del campo de aplicación del IVA por disposición legal. Tampoco generan crédito fiscal."><span class="t-row-lbl">No Sujetas</span><span class="t-row-val" style="color:var(--warn)" id="sum-nosuj">₡0</span></div>
+      <div class="t-row" data-tip="Monto total de notas de crédito emitidas. Se resta de las ventas porque anulan o reducen facturas anteriores."><span class="t-row-lbl">Notas Crédito (ajuste)</span><span class="t-row-val" style="color:var(--danger)" id="sum-nc">-₡0</span></div>
+      <div class="t-total" data-tip="Suma de todas las ventas (gravadas + exentas + no sujetas) menos las notas de crédito del período.">
+        <span class="t-total-lbl">Total Ventas Netas</span>
+        <span class="t-total-val" id="sum-ventas-netas">₡0</span>
+      </div>
+    </div>
+    <div class="t-card">
+      <div class="t-card-title">📋 IVA del Período</div>
+      <div class="t-row" data-tip="IVA generado en ventas a tarifa general del 13%. Es el más común para la mayoría de bienes y servicios."><span class="t-row-lbl">Débito IVA 13%</span><span class="t-row-val" style="color:var(--danger)" id="sum-iva13">₡0</span></div>
+      <div class="t-row" data-tip="IVA al 4%, aplica principalmente a servicios de salud privados y medicamentos no exentos."><span class="t-row-lbl">Débito IVA 4%</span><span class="t-row-val" style="color:var(--danger)" id="sum-iva4">₡0</span></div>
+      <div class="t-row" data-tip="Tarifas reducidas: 2% para seguros, 1% para canasta básica y 0.5% para boletos aéreos y similares."><span class="t-row-lbl">Débito IVA 2% / 1% / 0.5%</span><span class="t-row-val" style="color:var(--danger)" id="sum-ivared">₡0</span></div>
+      <div class="t-row" data-tip="Suma de todo el IVA generado en tus ventas por todas las tarifas. Es lo que 'debés' a Hacienda antes de aplicar el crédito."><span class="t-row-lbl">Total Débito Fiscal</span><span class="t-row-val" style="color:var(--danger)" id="sum-debito">₡0</span></div>
+      <div class="t-row" data-tip="IVA pagado en tus facturas de compra recibidas de proveedores. Se resta del débito fiscal."><span class="t-row-lbl">Crédito Fiscal (Compras)</span><span class="t-row-val" style="color:var(--accent)" id="sum-credito-val">₡0</span></div>
+      <div class="t-total" style="background:rgba(255,77,106,.08);border-color:rgba(255,77,106,.25)" data-tip="Débito Fiscal menos Crédito Fiscal. Este es el monto que efectivamente pagás a Hacienda. Si el crédito supera el débito, tenés saldo a favor.">
+        <span class="t-total-lbl">IVA a Pagar</span>
+        <span class="t-total-val" style="color:var(--danger)" id="sum-pagar">₡0</span>
+      </div>
+    </div>
+  </div>
+  <div class="t-card" style="margin-top:18px">
+    <div class="t-card-title" data-tip="Muestra qué porcentaje de tu IVA viene de cada tarifa (13%, 4%, 2%, etc.). Útil para verificar que tus ventas estén clasificadas correctamente.">🏦 Distribución por Tarifa IVA</div>
+    <div id="ivaRateChart" style="padding-top:6px"></div>
+  </div>
+  <div id="proporcionalidadBox" style="display:none;margin-top:18px" class="info-box" data-tip="Cuando tenés ventas gravadas Y exentas, solo podés acreditar una parte del IVA de tus compras. La proporción = ventas gravadas ÷ total ventas. Ej: si el 70% de tus ventas son gravadas, solo acreditás el 70% del IVA pagado en compras.">
+    ⚠️ <strong>Proporcionalidad de Crédito:</strong> Tu empresa tiene ventas gravadas y exentas. En la Sección II del D-150 deberás calcular y registrar el % de proporcionalidad (ventas gravadas ÷ total ventas). Consultá con tu contador para aplicarlo correctamente.
+  </div>
+</section>
+
+<!-- ════ SIMULADOR RENTA ════ -->
+<section class="section" id="section-simulator">
+  <div class="section-header">
+    <div class="section-title">🧮 Simulador Impuesto sobre la Renta</div>
+    <button class="btn btn-ghost btn-sm" onclick="resetSim()">↺ Resetear</button>
+  </div>
+  <div class="info-box">
+    ⚠️ <strong>Importante:</strong> Estimado orientativo para el formulario D-101 (Renta). Consultá siempre con un contador público autorizado. Los tramos corresponden al <strong>Decreto Ejecutivo N°44772-H</strong> (período 2024–2025) y la <strong>Gaceta N°229 del 05-12-2025</strong> (período 2025–2026), publicados por el Ministerio de Hacienda. La persona jurídica con ingresos ≤ al umbral usa <strong>tramos progresivos sobre renta neta</strong>, no tasa plana.
+  </div>
+  <div class="sim-grid">
+    <div class="card">
+      <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:18px">Datos del Período Fiscal</div>
+      <label class="sim-lbl">Período Fiscal</label>
+      <select class="sim-input" id="sim-period" onchange="calcSim()" data-tip="El año fiscal en Costa Rica va del 1° de octubre al 30 de setiembre. Seleccioná el período que vas a declarar.">
+        <option value="2025">2024–2025 (1 oct 2024 – 30 set 2025)</option>
+        <option value="2026" selected>2025–2026 (1 oct 2025 – 30 set 2026)</option>
+      </select>
+      <label class="sim-lbl">Tipo de Contribuyente</label>
+      <select class="sim-input" id="sim-tipo" onchange="calcSim()" data-tip="Persona Física: profesionales independientes, comerciantes físicos. Persona Jurídica: S.A., S.R.L., cooperativas, etc.">
+        <option value="fisica">Persona Física con Actividad Lucrativa (D-101)</option>
+        <option value="juridica">Persona Jurídica / Empresa (D-101)</option>
+      </select>
+      <label class="sim-lbl">Ingresos Brutos Anuales (₡)</label>
+      <input type="number" class="sim-input" id="sim-ing" placeholder="Ej: 15000000" oninput="calcSim()" data-tip="Total de ingresos antes de restar gastos. Para personas jurídicas también determina si aplicás tramos progresivos (≤umbral) o tarifa plana del 30%.">
+      <label class="sim-lbl">Gastos Deducibles Anuales (₡) <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--faint)">(facturas, salarios, alquiler, etc.)</span></label>
+      <input type="number" class="sim-input" id="sim-gas" placeholder="Ej: 8000000" oninput="calcSim()" data-tip="Gastos necesarios para generar la renta: facturas de proveedores, salarios, alquiler, servicios públicos, seguros, etc. Deben estar debidamente documentados.">
+      <label class="sim-lbl">Otras Deducciones (₡)</label>
+      <input type="number" class="sim-input" id="sim-otras" placeholder="Ej: 500000" oninput="calcSim()" data-tip="Deducciones adicionales permitidas por ley: cuotas obrero-patronales, seguros del INS, créditos fiscales por hijo o cónyuge (aplica a persona física).">
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="calcSim()" data-tip="Calculá el estimado de impuesto según los tramos oficiales del Decreto Ejecutivo N°44772-H.">🧮 Calcular</button>
+      <button class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:8px" onclick="autoFillSim()" data-tip="Carga el total de tus facturas emitidas como ingreso bruto. Atención: los gastos se estiman al 40%, ajustá con tus gastos reales.">✨ Usar datos de mis facturas</button>
+    </div>
+    <div class="card">
+      <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:18px">Resultado del Estimado</div>
+      <div class="t-row" data-tip="Total de ingresos antes de cualquier deducción."><span class="t-row-lbl">Ingresos Brutos</span><span class="t-row-val" style="color:#7aabff" id="r-ing">₡0</span></div>
+      <div class="t-row" data-tip="Gastos necesarios para generar la renta, respaldados por comprobantes fiscales."><span class="t-row-lbl">(-) Gastos Deducibles</span><span class="t-row-val" id="r-gas">₡0</span></div>
+      <div class="t-row" data-tip="Otras deducciones permitidas: cargas sociales, seguros, créditos familiares, etc."><span class="t-row-lbl">(-) Otras Deducciones</span><span class="t-row-val" id="r-otras">₡0</span></div>
+      <div class="t-row" style="border-bottom:2px solid var(--border-hi)" data-tip="Ingresos Brutos menos todos los gastos y deducciones. Sobre esta base se aplican los tramos de impuesto.">
+        <span class="t-row-lbl" style="font-weight:600;color:var(--text)">Renta Neta Imponible</span>
+        <span class="t-row-val" style="font-size:16px" id="r-neta">₡0</span>
+      </div>
+      <div style="margin:14px 0 8px;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--faint)">Cálculo por Tramos</div>
+      <div id="simBrackets"></div>
+      <div style="background:rgba(255,77,106,.08);border:1px solid rgba(255,77,106,.25);border-radius:var(--rs);padding:16px;display:flex;justify-content:space-between;align-items:center;margin-top:14px" data-tip="Estimado antes de aplicar créditos fiscales por hijo o cónyuge, retenciones en la fuente ni pagos parciales ya realizados. Confirmá con tu contador antes de declarar el D-101.">
+        <div><div style="font-size:11px;color:var(--muted)">Impuesto Estimado Anual</div><div style="font-size:11px;color:var(--faint)">Antes de créditos y retenciones · D-101</div></div>
+        <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--danger)" id="r-imp">₡0</div>
+      </div>
+      <div style="margin-top:10px;font-size:10px;color:var(--faint);line-height:1.7" id="simNotes"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ ALERTAS ════ -->
+<section class="section" id="section-warnings">
+  <div class="section-header">
+    <div class="section-title">⚠️ Centro de Alertas</div>
+    <button class="btn btn-ghost btn-sm" onclick="clearWarnings()" data-tip="Borra todas las alertas visibles. Las alertas se regeneran al recargar o subir nuevos documentos.">Limpiar alertas</button>
+  </div>
+  <div class="warn-list" id="warnList"></div>
+</section>
+
+<!-- ════ EXPORTAR ════ -->
+<section class="section" id="section-export">
+  <div class="section-header"><div class="section-title">📥 Exportar Datos</div></div>
+  <div class="card-sm" style="margin-bottom:16px">
+    <div style="font-size:13px;color:var(--muted)" data-tip="La exportación incluye todos los documentos cargados en la sesión actual."><strong style="color:var(--text)">Datos disponibles:</strong> <span id="exp-count">0 documentos</span></div>
+  </div>
+  <div class="export-grid">
+    <div class="export-card" data-tip="Incluye todas las facturas en una hoja y el resumen D-150 en otra. Ideal para enviar a tu contador.">
+      <div class="export-icon">📊</div>
+      <div class="export-title">Excel completo (.xlsx)</div>
+      <div class="export-desc">Todas las facturas + hoja Resumen D-150 + hoja de IVA por tarifa. Lista para el contador.</div>
+      <button class="btn btn-accent" onclick="exportExcel()">Descargar Excel</button>
+    </div>
+    <div class="export-card" data-tip="Solo las 6 secciones del D-150 con los montos calculados. Abrila y copiá cada casilla directamente en TRIBU-CR.">
+      <div class="export-icon">📋</div>
+      <div class="export-title">Borrador D-150 (.xlsx)</div>
+      <div class="export-desc">Solo las 6 secciones del D-150 con las casillas mapeadas, para ingresar a TRIBU-CR.</div>
+      <button class="btn btn-primary" onclick="exportD150Excel()">Exportar D-150</button>
+    </div>
+    <div class="export-card" data-tip="Archivo de texto separado por comas, compatible con Excel, Google Sheets, contabilidades y sistemas ERP.">
+      <div class="export-icon">📄</div>
+      <div class="export-title">CSV</div>
+      <div class="export-desc">Formato plano compatible con cualquier sistema contable o hoja de cálculo.</div>
+      <button class="btn btn-ghost" onclick="exportCSV()">Descargar CSV</button>
+    </div>
+    <div class="export-card" data-tip="Todos los datos en formato JSON estructurado. Útil para integraciones con sistemas propios o respaldo completo.">
+      <div class="export-icon">📋</div>
+      <div class="export-title">JSON Raw</div>
+      <div class="export-desc">Datos completos en JSON para integración con otros sistemas o respaldo.</div>
+      <button class="btn btn-ghost" onclick="exportJSON()">Exportar JSON</button>
+    </div>
+  </div>
+</section>
+
+<!-- ════ GUÍA TRIBU-CR ════ -->
+<section class="section" id="section-guia">
+  <div class="section-header">
+    <div class="section-title">📖 Guía para Declarar en TRIBU-CR</div>
+    <a href="https://tribu.hacienda.go.cr" target="_blank" class="btn btn-primary btn-sm">🌐 Abrir TRIBU-CR</a>
+  </div>
+
+  <div class="info-box blue">
+    ℹ️ TRIBU-CR (<strong>tribu.hacienda.go.cr</strong>) es el portal oficial del Ministerio de Hacienda de Costa Rica para declarar y pagar impuestos electrónicamente. Esta guía te explica paso a paso cómo declarar el <strong>D-150 (IVA mensual)</strong> y el <strong>D-101 (Renta anual)</strong>.
+  </div>
+
+  <!-- PASO A PASO D-150 -->
+  <div class="card" style="margin-bottom:20px">
+    <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;margin-bottom:18px;display:flex;align-items:center;gap:8px">📋 Cómo declarar el D-150 (IVA mensual) en TRIBU-CR</div>
+
+    <div style="display:flex;flex-direction:column;gap:0">
+
+      <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0" data-tip="Primer paso: accedé al portal oficial de Hacienda en tribu.hacienda.go.cr">1</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:3px">Ingresá al portal TRIBU-CR</div>
+          <div style="font-size:12px;color:var(--muted)">Andá a <a href="https://tribu.hacienda.go.cr" target="_blank" style="color:#7aabff">tribu.hacienda.go.cr</a> e iniciá sesión con tu usuario y contraseña de la OVi (Oficina Virtual de Hacienda). Si no tenés usuario, registrate con tu cédula en el mismo portal.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0" data-tip="Navegá al menú de Declaraciones → Impuesto al Valor Agregado → D-150">2</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:3px">Navegá a "Declaraciones" → "Impuesto al Valor Agregado"</div>
+          <div style="font-size:12px;color:var(--muted)">En el menú principal, seleccioná <strong>Declaraciones juradas</strong> y luego buscá el formulario <strong>D-150 — Declaración IVA</strong>. Elegí el período mensual que vas a declarar (mes y año).</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:3px">Completá la Sección I — Ventas y Operaciones</div>
+          <div style="font-size:12px;color:var(--muted)">Ingresá los montos de tus ventas gravadas (base imponible separada por tarifa: 13%, 4%, 2%, 1%) y el IVA correspondiente. Luego ingresá las ventas exentas y no sujetas. Usá los valores del tab <strong>D-150 TRIBU</strong> de esta app (botón 📋 para copiar cada valor).</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">4</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:3px">Completá la Sección II — Compras y Crédito Fiscal</div>
+          <div style="font-size:12px;color:var(--muted)">Ingresá el total de compras del período y el IVA soportado (crédito fiscal). Si tenés ventas mixtas (gravadas y exentas), debés calcular e ingresar el porcentaje de proporcionalidad. Esta app te lo calcula en la Sección III del borrador D-150.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">5</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:3px">Sección IV — Retenciones en la Fuente (si aplica)</div>
+          <div style="font-size:12px;color:var(--muted)">Si recibiste pagos con <strong>tarjeta de crédito o débito (datáfono)</strong>, el banco retuvo parte del IVA. Ingresá ese monto aquí. Podés obtener el comprobante en el portal del banco o solicitarlo directamente.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">6</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:3px">Revisá el resultado en Sección V y VI</div>
+          <div style="font-size:12px;color:var(--muted)">TRIBU-CR calculará automáticamente el <strong>Impuesto Determinado</strong> (débito − crédito). En la Sección VI verás si tenés IVA a pagar o saldo a favor. Si hay saldo a favor, se aplica al período siguiente.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:14px;padding:14px 0">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:#03120a;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">7</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:3px">Presentá y pagá antes del día 15</div>
+          <div style="font-size:12px;color:var(--muted)">El plazo para declarar y pagar el IVA vence el <strong>día 15 del mes siguiente</strong> al período declarado. Podés pagar con cuenta IBAN directamente en TRIBU-CR, o en ventanilla del BCR, BAC u otros bancos autorizados. Guardá el comprobante de presentación.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- D-101 RENTA -->
+  <div class="card" style="margin-bottom:20px">
+    <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;margin-bottom:18px;display:flex;align-items:center;gap:8px">🧮 Cómo declarar el D-101 (Impuesto sobre la Renta) en TRIBU-CR</div>
+    <div style="display:flex;flex-direction:column;gap:0">
+
+      <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)">
+        <div style="width:32px;height:32px;border-radius:50%;background:#a78bfa;color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:3px">El período fiscal corre del 1° de octubre al 30 de setiembre</div>
+          <div style="font-size:12px;color:var(--muted)">En Costa Rica el año fiscal no coincide con el año calendario. El período 2024–2025 va del 01/10/2024 al 30/09/2025. La declaración se presenta en <strong>TRIBU-CR</strong> antes del <strong>15 de diciembre</strong> siguiente.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)">
+        <div style="width:32px;height:32px;border-radius:50%;background:#a78bfa;color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:3px">En TRIBU-CR seleccioná "Declaraciones" → "Impuesto sobre la Renta" → D-101</div>
+          <div style="font-size:12px;color:var(--muted)">Elegí el período fiscal correcto. El formulario te pedirá ingresos brutos, costos y gastos deducibles, y otras deducciones permitidas por ley.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)">
+        <div style="width:32px;height:32px;border-radius:50%;background:#a78bfa;color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:3px">Estimá tu impuesto antes con el Simulador de esta app</div>
+          <div style="font-size:12px;color:var(--muted)">Usá el tab <strong>🧮 Renta</strong> para estimar cuánto pagarás. Podés cargar tus ingresos desde las facturas y ajustar los gastos reales. Los tramos vigentes para <strong>personas físicas 2025–2026</strong> van desde 0% (hasta ₡6.244.000) hasta 25% (sobre ₡20.872.000). Para personas jurídicas con ingresos ≤ ₡119.174.000 aplican tramos progresivos del 5% al 20% sobre la renta neta; las que superan ese umbral pagan 30% plano. Fuente: Gaceta N°229 del 05-12-2025.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:14px;padding:14px 0">
+        <div style="width:32px;height:32px;border-radius:50%;background:#a78bfa;color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">4</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:3px">Pagos parciales (estimaciones) durante el año</div>
+          <div style="font-size:12px;color:var(--muted)">Si tu impuesto estimado supera cierto umbral, Hacienda puede exigirte <strong>pagos parciales trimestrales</strong> (en marzo, junio y setiembre). TRIBU-CR te notificará si aplica. Guardá todos los comprobantes de pago.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INFORMACIÓN ÚTIL -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px">
+    <div class="card-sm">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text)" data-tip="Fechas críticas para no caer en mora. El sistema de TRIBU-CR te notifica, pero es bueno tenerlas claras.">⏰ Vencimientos clave</div>
+      <div style="font-size:12px;color:var(--muted);line-height:2">
+        <div>📋 <strong style="color:var(--text)">D-150 (IVA)</strong> — Día 15 de cada mes</div>
+        <div>🧮 <strong style="color:var(--text)">D-101 (Renta)</strong> — 15 de diciembre</div>
+        <div>💳 <strong style="color:var(--text)">Pago estimado 1</strong> — Marzo</div>
+        <div>💳 <strong style="color:var(--text)">Pago estimado 2</strong> — Junio</div>
+        <div>💳 <strong style="color:var(--text)">Pago estimado 3</strong> — Setiembre</div>
+      </div>
+    </div>
+    <div class="card-sm">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text)">🏦 Formas de pago en TRIBU-CR</div>
+      <div style="font-size:12px;color:var(--muted);line-height:2">
+        <div>✅ Cuenta IBAN (débito directo)</div>
+        <div>✅ Ventanilla BCR, BAC y otros bancos</div>
+        <div>✅ Pago en línea con tarjeta</div>
+        <div>✅ CENPagos (Hacienda)</div>
+        <div style="color:var(--faint);font-size:11px;margin-top:4px">Siempre imprimí o guardá el comprobante de pago (PDF).</div>
+      </div>
+    </div>
+    <div class="card-sm">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text)">📞 Ayuda oficial de Hacienda</div>
+      <div style="font-size:12px;color:var(--muted);line-height:2">
+        <div>🌐 <a href="https://tribu.hacienda.go.cr" target="_blank" style="color:#7aabff">tribu.hacienda.go.cr</a></div>
+        <div>🌐 <a href="https://www.hacienda.go.cr" target="_blank" style="color:#7aabff">hacienda.go.cr</a></div>
+        <div>📞 Call center: <strong style="color:var(--text)">2539-6240</strong></div>
+        <div>📧 Consultas DGT en el portal</div>
+        <div style="color:var(--faint);font-size:11px;margin-top:4px">Esta app es una herramienta de apoyo. Siempre verificá con un CPA antes de declarar.</div>
+      </div>
+    </div>
+    <div class="card-sm">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text)" data-tip="Las sanciones se aplican automáticamente. Siempre es mejor declarar aunque no puedas pagar — el recargo de mora es menor que la infracción formal por no declarar.">⚠️ Multas por incumplimiento</div>
+      <div style="font-size:12px;color:var(--muted);line-height:2">
+        <div>🔴 Declaración tardía: <strong style="color:var(--danger)">2% mensual</strong> sobre impuesto</div>
+        <div>🔴 Mora en pago: intereses + recargo</div>
+        <div>🔴 No declarar: infracción formal</div>
+        <div>🟡 Subsanación voluntaria: reduce sanción</div>
+        <div style="color:var(--faint);font-size:11px;margin-top:4px">Mejor declarar aunque no puedas pagar completo.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div><!-- /app -->
+
+<!-- MODAL DETALLE -->
+<div class="modal-overlay" id="invModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" data-tip="Detalle completo del comprobante: clave, emisor, receptor, líneas y resumen fiscal.">Detalle del Documento</div>
+      <button class="modal-close" onclick="closeModal()" data-tip="Cerrar detalle">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast-ctr" id="toastCtr"></div>
+<div class="storage-badge" id="storageBadge" data-tip="Los documentos se guardan automáticamente en tu navegador y se restauran en la próxima visita."></div>
+
+<footer><span>Tribu Fácil CR</span> · Compatible con TRIBU-CR · Hacienda Digital · Factura Electrónica v4.4 · Formulario D-150 · 2026</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+let invoices = [];
+let warnings = [];
+let currentMonthD150 = -1;   // -1 = all
+let currentMonthSum  = -1;
+let currentYearD150  = new Date().getFullYear();
+let currentYearSum   = new Date().getFullYear();
+let currentPage      = 1;
+let filteredCache    = null;
+const PAGE_SIZE_DEF  = 24;
+
+const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const SK = 'tribu-facil-cr';
+
+// ═══════════════════════════════════════════════════════
+//  STORAGE
+// ═══════════════════════════════════════════════════════
+async function saveStorage() {
+  if (typeof window.storage === 'undefined') return;
+  try {
+    const CHUNK = 40;
+    const chunks = [];
+    for (let i = 0; i < invoices.length; i += CHUNK)
+      chunks.push(invoices.slice(i, i + CHUNK));
+    await window.storage.set(SK+'-meta', JSON.stringify({ chunks: chunks.length, total: invoices.length }));
+    for (let c = 0; c < chunks.length; c++)
+      await window.storage.set(SK+'-c'+c, JSON.stringify(chunks[c]));
+    for (let c = chunks.length; c < chunks.length + 5; c++) {
+      try { await window.storage.delete(SK+'-c'+c); } catch(e) {}
+    }
+  } catch(e) { console.warn('save error', e); }
+}
+
+async function loadStorage() {
+  if (typeof window.storage === 'undefined') return false;
+  try {
+    const m = await window.storage.get(SK+'-meta');
+    if (!m) return false;
+    const meta = JSON.parse(m.value);
+    const arr = [];
+    for (let c = 0; c < meta.chunks; c++) {
+      try { const r = await window.storage.get(SK+'-c'+c); if (r) arr.push(...JSON.parse(r.value)); } catch(e) {}
+    }
+    if (arr.length > 0) { invoices = arr; return true; }
+    return false;
+  } catch(e) { return false; }
+}
+
+async function clearStorage() {
+  if (typeof window.storage === 'undefined') return;
+  try {
+    const m = await window.storage.get(SK+'-meta');
+    if (m) {
+      const meta = JSON.parse(m.value);
+      for (let c = 0; c < meta.chunks + 3; c++) { try { await window.storage.delete(SK+'-c'+c); } catch(e) {} }
+      await window.storage.delete(SK+'-meta');
+    }
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════
+//  TAB NAV
+// ═══════════════════════════════════════════════════════
+function switchTab(t) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('section-'+t).classList.add('active');
+  document.getElementById('tab-'+t).classList.add('active');
+  if (t === 'invoices')  { populateMonthFilter(); renderInvoices(); }
+  if (t === 'd150')      renderD150();
+  if (t === 'summary')   renderSummary();
+  if (t === 'export')    document.getElementById('exp-count').textContent = invoices.length + ' documentos';
+}
+
+// ═══════════════════════════════════════════════════════
+//  DRAG & DROP
+// ═══════════════════════════════════════════════════════
+function handleDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('drag-over'); }
+function handleDragLeave() { document.getElementById('dropZone').classList.remove('drag-over'); }
+function handleDrop(e) { e.preventDefault(); document.getElementById('dropZone').classList.remove('drag-over'); processFiles(Array.from(e.dataTransfer.files)); }
+function handleFileSelect(e) { processFiles(Array.from(e.target.files)); e.target.value = ''; }
+
+// ═══════════════════════════════════════════════════════
+//  FILE PROCESSING
+// ═══════════════════════════════════════════════════════
+async function processFiles(files) {
+  if (!files.length) return;
+  showProgress(true);
+  let xmlFiles = [];
+  let i = 0;
+  for (const file of files) {
+    if (file.name.endsWith('.zip')) {
+      try {
+        const zip = await JSZip.loadAsync(file);
+        const entries = Object.values(zip.files).filter(f => f.name.endsWith('.xml') && !f.dir);
+        for (const e of entries) xmlFiles.push({ name: e.name, content: await e.async('text') });
+      } catch(e) { addWarning('error', 'Error al leer ZIP: '+file.name, e.message); }
+    } else if (file.name.endsWith('.xml')) {
+      xmlFiles.push({ name: file.name, content: await file.text() });
+    } else {
+      addWarning('warn', 'Archivo no soportado: '+file.name, 'Solo .xml o .zip');
+    }
+    setProgress(++i / files.length * 40);
+  }
+  let ok = 0;
+  for (let j = 0; j < xmlFiles.length; j++) {
+    try {
+      const inv = parseXML(xmlFiles[j].content, xmlFiles[j].name);
+      if (inv) {
+        if (inv.clave && invoices.find(x => x.clave === inv.clave && x.direction === inv.direction)) {
+          addWarning('warn', 'Clave duplicada: '+inv.clave.slice(0,22)+'...', 'Archivo: '+xmlFiles[j].name);
+        } else { invoices.push(inv); ok++; }
+      }
+    } catch(e) { addWarning('error', 'XML inválido: '+xmlFiles[j].name, e.message); }
+    setProgress(40 + (j / xmlFiles.length * 60));
+  }
+  setProgress(100);
+  setTimeout(() => showProgress(false), 700);
+  if (ok > 0) await saveStorage();
+  updateStats(); updateBadges(); populateMonthFilter();
+  toast(ok > 0 ? 'success' : 'error', ok > 0
+    ? `✅ ${ok} documento${ok!==1?'s':''} cargado${ok!==1?'s':''}. Total: ${invoices.length}`
+    : '❌ No se pudo procesar ningún archivo');
+}
+
+// ═══════════════════════════════════════════════════════
+//  XML PARSER — detects type, direction, v4.4 fields
+// ═══════════════════════════════════════════════════════
+function parseXML(xmlText, filename) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xmlText, 'application/xml');
+  if (doc.querySelector('parsererror')) throw new Error('XML malformado');
+  const root = doc.documentElement;
+  const rn = (root.localName || root.nodeName.split(':').pop() || '').toLowerCase();
+
+  if (rn.includes('mensajehacienda')) return parseMensaje(doc, filename);
+  if (rn.includes('notacredito'))     return parseFactura(doc, filename, 'NotaCredito', 'emitida');
+  if (rn.includes('notadebito'))      return parseFactura(doc, filename, 'NotaDebito', 'emitida');
+  if (rn.includes('facturacompra'))   return parseFactura(doc, filename, 'FacturaCompra', 'recibida');
+  if (rn.includes('tiquete'))         return parseFactura(doc, filename, 'TiqueteElectronico', 'emitida');
+  if (rn.includes('rep'))             return parseREP(doc, filename);
+  if (rn.includes('factura'))         return parseFactura(doc, filename, 'FacturaElectronica', 'emitida');
+  // fallback: check for Clave
+  const cl = getT(doc,'Clave');
+  if (cl) return parseFactura(doc, filename, 'FacturaElectronica', 'emitida');
+  throw new Error('Tipo no reconocido: '+rn);
+}
+
+function getT(doc, tag) {
+  const el = [...doc.getElementsByTagName('*')].find(e => e.localName === tag);
+  return el ? el.textContent.trim() : '';
+}
+function getChild(el, tag) {
+  const ch = [...el.getElementsByTagName('*')].find(e => e.localName === tag);
+  return ch ? ch.textContent.trim() : '';
+}
+function getSec(doc, tag) {
+  return [...doc.getElementsByTagName('*')].find(e => e.localName === tag);
+}
+
+function parseFactura(doc, filename, type, direction) {
+  // v4.4: separate services vs goods
+  const inv = {
+    type, direction, filename,
+    clave:            getT(doc,'Clave'),
+    numeroConsec:     getT(doc,'NumeroConsecutivo'),
+    fechaEmision:     getT(doc,'FechaEmision'),
+    emisor: {
+      nombre:         getT(doc,'NombreEmisor') || getSecNombre(doc,'Emisor'),
+      id:             getSecId(doc,'Emisor')
+    },
+    receptor: {
+      nombre:         getT(doc,'NombreReceptor') || getSecNombre(doc,'Receptor'),
+      id:             getSecId(doc,'Receptor')
+    },
+    lineas: [],
+    resumen: {
+      totalServGravados:  parseF(getT(doc,'TotalServGravados')) || parseF(getT(doc,'TotalGravado')) || 0,
+      totalMercGravadas:  parseF(getT(doc,'TotalMercanciasGravadas')) || 0,
+      totalServExentos:   parseF(getT(doc,'TotalServExentos')) || 0,
+      totalMercExentas:   parseF(getT(doc,'TotalMercanciasExentas')) || 0,
+      totalNoSujeto:      parseF(getT(doc,'TotalNoSujeto')) || 0,
+      // fallback from old structure
+      totalGravado:       parseF(getT(doc,'TotalGravado')) || 0,
+      totalExento:        parseF(getT(doc,'TotalExento')) || 0,
+      totalImpuesto:      parseF(getT(doc,'TotalImpuesto')) || 0,
+      totalComprobante:   parseF(getT(doc,'TotalComprobante')) || 0,
+    },
+    status:       'accepted',
+    ivaRates:     [],
+    clasificacion:[],
+    cabysWarnings:[],
+  };
+
+  // If old XML (v4.3) fallback: distribute TotalGravado into ServGravados
+  if (!inv.resumen.totalServGravados && !inv.resumen.totalMercGravadas && inv.resumen.totalGravado > 0)
+    inv.resumen.totalServGravados = inv.resumen.totalGravado;
+  if (!inv.resumen.totalServExentos && !inv.resumen.totalMercExentas && inv.resumen.totalExento > 0)
+    inv.resumen.totalServExentos = inv.resumen.totalExento;
+
+  // Parse lineas
+  const lineas = [...doc.getElementsByTagName('*')].filter(e => e.localName === 'LineaDetalle');
+  for (const ln of lineas) {
+    const imps = [...ln.getElementsByTagName('*')].filter(e => e.localName === 'Impuesto');
+    const cabys = getChild(ln,'CodigoComercial') || getChild(ln,'CodigoCabys') || getChild(ln,'CABYS') || '';
+    // MEJORA 7: validate CABYS length
+    if (cabys && cabys.length !== 13) inv.cabysWarnings.push('CABYS inválido ('+cabys.length+' dígitos): '+cabys);
+    inv.lineas.push({
+      numero:   getChild(ln,'NumeroLinea'),
+      cabys,
+      detalle:  getChild(ln,'Detalle'),
+      cantidad: parseF(getChild(ln,'Cantidad')) || 1,
+      precio:   parseF(getChild(ln,'PrecioUnitario')) || 0,
+      total:    parseF(getChild(ln,'MontoTotal')) || 0,
+      subtotal: parseF(getChild(ln,'SubTotal')) || 0,
+      base:     parseF(getChild(ln,'BaseImponible')) || 0,
+      impuestos: imps.map(im => ({
+        codigo:   getChild(im,'Codigo'),
+        tarifa:   parseF(getChild(im,'Tarifa')) || 0,
+        monto:    parseF(getChild(im,'Monto')) || 0,
+      })),
+    });
+    for (const im of imps)
+      if (!inv.ivaRates.find(r => r.t === parseF(getChild(im,'Tarifa'))))
+        inv.ivaRates.push({ t: parseF(getChild(im,'Tarifa')) || 0 });
+  }
+
+  // Classification
+  const tgrav = inv.resumen.totalServGravados + inv.resumen.totalMercGravadas;
+  const texen = inv.resumen.totalServExentos  + inv.resumen.totalMercExentas;
+  if (tgrav > 0) inv.clasificacion.push('gravado');
+  if (texen > 0) inv.clasificacion.push('exento');
+  if (inv.resumen.totalNoSujeto > 0) inv.clasificacion.push('nosujeto');
+  if (type === 'NotaCredito') inv.clasificacion.push('nc');
+  if (type === 'NotaDebito')  inv.clasificacion.push('nd');
+
+  // MEJORA 3: warn if ventas mixtas (proporcionalidad)
+  if (tgrav > 0 && texen > 0)
+    addWarning('info','Proporcionalidad: '+filename,'Esta factura tiene ventas gravadas y exentas. Revisá la Sección III del D-150.');
+
+  // MEJORA 7: CABYS
+  for (const w of inv.cabysWarnings)
+    addWarning('warn','CABYS inválido en '+filename, w);
+
+  if (!inv.resumen.totalComprobante)
+    addWarning('warn','Campos fiscales vacíos: '+filename,'No se encontraron montos en el resumen.');
+
+  return inv;
+}
+
+function parseREP(doc, filename) {
+  return {
+    type: 'REP', direction: 'emitida', filename,
+    clave:        getT(doc,'Clave'),
+    numeroConsec: getT(doc,'NumeroConsecutivo'),
+    fechaEmision: getT(doc,'FechaEmision'),
+    emisor:   { nombre: getSecNombre(doc,'Emisor') || getT(doc,'NombreEmisor'),   id: getSecId(doc,'Emisor') },
+    receptor: { nombre: getSecNombre(doc,'Receptor') || getT(doc,'NombreReceptor'), id: getSecId(doc,'Receptor') },
+    lineas: [],
+    resumen: { totalServGravados:0,totalMercGravadas:0,totalServExentos:0,totalMercExentas:0,totalNoSujeto:0,totalGravado:0,totalExento:0,totalImpuesto:parseF(getT(doc,'TotalImpuesto'))||0,totalComprobante:parseF(getT(doc,'TotalComprobante'))||0 },
+    status: 'accepted', ivaRates: [], clasificacion: ['rep'], cabysWarnings: [],
+  };
+}
+
+function parseMensaje(doc, filename) {
+  const estado = getT(doc,'EstadoMensaje') || getT(doc,'Mensaje') || '';
+  const isR = estado.toLowerCase().includes('rechazado') || estado === '2' || estado === '02';
+  const inv = {
+    type: 'MensajeHacienda', direction: 'emitida', filename,
+    clave:        getT(doc,'Clave'),
+    numeroConsec: getT(doc,'NumeroCedulaEmisor') || '',
+    fechaEmision: getT(doc,'FechaEmisionDoc') || new Date().toISOString(),
+    emisor:   { nombre: getT(doc,'NombreEmisor'),   id: getT(doc,'NumeroCedulaEmisor') },
+    receptor: { nombre: getT(doc,'NombreReceptor'), id: getT(doc,'NumeroCedulaReceptor') },
+    lineas: [],
+    resumen: { totalServGravados:0,totalMercGravadas:0,totalServExentos:0,totalMercExentas:0,totalNoSujeto:0,totalGravado:0,totalExento:0,totalImpuesto:parseF(getT(doc,'MontoTotalImpuesto'))||0,totalComprobante:parseF(getT(doc,'TotalFactura'))||0 },
+    status:    isR ? 'rejected' : 'accepted',
+    mensajeHacienda: getT(doc,'DetalleMensaje') || estado,
+    estado, ivaRates: [], clasificacion: [], cabysWarnings:[],
+  };
+  if (isR) addWarning('error','Factura RECHAZADA por Hacienda: '+inv.clave?.slice(0,20), inv.mensajeHacienda);
+  return inv;
+}
+
+function getSecNombre(doc, sec) {
+  const s = getSec(doc, sec);
+  return s ? getChild(s,'Nombre') : '';
+}
+function getSecId(doc, sec) {
+  const s = getSec(doc, sec);
+  if (!s) return '';
+  return getChild(s,'Numero');
+}
+function parseF(v) { return parseFloat(v) || 0; }
+
+// ═══════════════════════════════════════════════════════
+//  RENDER INVOICES (with pagination)
+// ═══════════════════════════════════════════════════════
+function populateMonthFilter() {
+  const sel = document.getElementById('fMonth');
+  const months = new Set();
+  for (const inv of invoices) {
+    if (inv.fechaEmision) {
+      const d = new Date(inv.fechaEmision);
+      if (!isNaN(d)) months.add(d.getFullYear()+'-'+(d.getMonth()+1).toString().padStart(2,'0'));
+    }
+  }
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Todos los meses</option>';
+  [...months].sort().reverse().forEach(m => {
+    const [y,mo] = m.split('-');
+    sel.innerHTML += `<option value="${m}">${MONTHS[+mo-1]} ${y}</option>`;
+  });
+  if (cur) sel.value = cur;
+}
+
+function filterInvoices() {
+  const search = document.getElementById('searchBox').value.toLowerCase();
+  const fStatus = document.getElementById('fStatus').value;
+  const fDir    = document.getElementById('fDirection').value;
+  const fType   = document.getElementById('fType').value;
+  const fMonth  = document.getElementById('fMonth').value;
+
+  filteredCache = invoices.filter(inv => {
+    if (search && !(inv.emisor.nombre||'').toLowerCase().includes(search)
+               && !(inv.receptor.nombre||'').toLowerCase().includes(search)
+               && !(inv.clave||'').toLowerCase().includes(search)
+               && !(inv.numeroConsec||'').toLowerCase().includes(search)) return false;
+    if (fStatus && inv.status !== fStatus) return false;
+    if (fDir && inv.direction !== fDir) return false;
+    if (fType && inv.type !== fType) return false;
+    if (fMonth) {
+      const d = new Date(inv.fechaEmision);
+      const key = d.getFullYear()+'-'+(d.getMonth()+1).toString().padStart(2,'0');
+      if (key !== fMonth) return false;
+    }
+    return true;
+  });
+
+  currentPage = 1;
+  renderInvoices();
+}
+
+function renderInvoices() {
+  const list = filteredCache !== null ? filteredCache : invoices;
+  const grid = document.getElementById('invoiceGrid');
+
+  // header stats
+  document.getElementById('i-total').textContent     = invoices.length;
+  document.getElementById('i-emitidas').textContent  = invoices.filter(i=>i.direction==='emitida').length;
+  document.getElementById('i-recibidas').textContent = invoices.filter(i=>i.direction==='recibida').length;
+  document.getElementById('i-rejected').textContent  = invoices.filter(i=>i.status==='rejected').length;
+
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">🧾</div><div class="empty-title">Sin documentos</div><div class="empty-sub">Subí archivos XML en "Subir" para comenzar.</div></div>`;
+    document.getElementById('paginationBar').style.display = 'none';
+    return;
+  }
+
+  const ps = parseInt(document.getElementById('pageSize')?.value || PAGE_SIZE_DEF);
+  const totalPages = Math.ceil(list.length / ps);
+  if (currentPage > totalPages) currentPage = totalPages;
+  const start = (currentPage - 1) * ps;
+  const page  = list.slice(start, start + ps);
+
+  document.getElementById('pageInfo').textContent = `Mostrando ${start+1}–${Math.min(start+ps,list.length)} de ${list.length}`;
+
+  // pagination buttons
+  const btns = document.getElementById('pageBtns');
+  btns.innerHTML = '';
+  const addPB = (lbl, pg, active, dis) => {
+    const b = document.createElement('button');
+    b.className = 'page-btn' + (active?' active':'');
+    b.textContent = lbl; b.disabled = dis;
+    if (!dis) b.onclick = () => goPage(pg);
+    btns.appendChild(b);
+  };
+  addPB('‹', currentPage-1, false, currentPage===1);
+  const range=2; const pages=new Set([1,totalPages]);
+  for (let p=Math.max(1,currentPage-range);p<=Math.min(totalPages,currentPage+range);p++) pages.add(p);
+  let prev=0;
+  [...pages].sort((a,b)=>a-b).forEach(p=>{
+    if(prev && p-prev>1){const sp=document.createElement('span');sp.className='page-ellipsis';sp.textContent='…';btns.appendChild(sp);}
+    addPB(p,p,p===currentPage,false); prev=p;
+  });
+  addPB('›',currentPage+1,false,currentPage===totalPages);
+  document.getElementById('paginationBar').style.display = 'flex';
+
+  grid.innerHTML = page.map(inv => {
+    const idx = invoices.indexOf(inv);
+    const sc = inv.status==='accepted'?'s-accepted':inv.status==='rejected'?'s-rejected':'s-warn';
+    const sl = inv.status==='accepted'?'Aceptada':inv.status==='rejected'?'Rechazada':'Advertencia';
+    const dt = inv.fechaEmision ? new Date(inv.fechaEmision).toLocaleDateString('es-CR',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+    const typeLabels = {FacturaElectronica:'📄 FE',FacturaCompra:'🛒 FC',TiqueteElectronico:'🎫 TE',NotaCredito:'✂️ NC',NotaDebito:'➕ ND',REP:'🧾 REP',MensajeHacienda:'📬 MSG'};
+    const typeTips   = {FacturaElectronica:'Factura Electrónica — documento principal de venta de bienes y servicios.',FacturaCompra:'Factura de Compra — recibida de un proveedor. Su IVA genera crédito fiscal.',TiqueteElectronico:'Tiquete Electrónico — para ventas al consumidor final sin datos del receptor.',NotaCredito:'Nota de Crédito — anula o reduce el monto de una factura anterior.',NotaDebito:'Nota de Débito — aumenta el monto de una factura anterior.',REP:'Recibo Electrónico de Pago — para honorarios y servicios independientes.',MensajeHacienda:'Mensaje de Hacienda — respuesta del sistema sobre el estado de una factura.'};
+    const chips = inv.clasificacion.map(c=>{
+      if(c==='gravado') return '<span class="tchip tc-grav" data-tip="Operación sujeta a IVA. Genera débito fiscal que debés reportar en el D-150.">Gravado</span>';
+      if(c==='exento')  return '<span class="tchip tc-exen" data-tip="Operación exonerada de IVA por ley. No genera débito fiscal ni permite crédito proporcional.">Exento</span>';
+      if(c==='nosujeto')return '<span class="tchip tc-nosi" data-tip="Fuera del campo de aplicación del IVA. No genera débito ni crédito fiscal.">No Sujeto</span>';
+      if(c==='nc')      return '<span class="tchip tc-comp" data-tip="Nota de Crédito: ajusta o anula una factura anterior. Reduce el débito fiscal del período.">Nota Crédito</span>';
+      if(c==='nd')      return '<span class="tchip tc-nd" data-tip="Nota de Débito: incrementa el monto de una factura anterior. Aumenta el débito fiscal.">Nota Débito</span>';
+      if(c==='rep')     return '<span class="tchip tc-rep" data-tip="Recibo Electrónico de Pago para servicios independientes o profesionales.">REP</span>';
+      return '';
+    }).join('');
+    const ivaC = inv.ivaRates.map(r=>`<span class="tchip tc-iva" data-tip="Este documento tiene IVA al ${r.t}%. La base imponible se reporta en la casilla correspondiente del D-150.">IVA ${r.t}%</span>`).join('');
+    const dirTip = inv.direction==='recibida' ? 'Factura recibida de un proveedor. El IVA de esta compra es crédito fiscal deducible.' : 'Factura emitida por vos. El IVA cargado es débito fiscal que debés reportar.';
+    const dirBadge = inv.direction==='recibida'
+      ? `<span style="font-size:9px;background:rgba(167,139,250,.15);color:#a78bfa;padding:2px 6px;border-radius:4px;font-weight:700" data-tip="${dirTip}">COMPRA</span>`
+      : `<span style="font-size:9px;background:rgba(0,214,143,.12);color:var(--accent);padding:2px 6px;border-radius:4px;font-weight:700" data-tip="${dirTip}">VENTA</span>`;
+    const statusTip = inv.status==='accepted' ? 'Aceptada por Hacienda: este documento es fiscalmente válido.' : inv.status==='rejected' ? 'Rechazada por Hacienda: este documento NO tiene validez fiscal. Revisá el Centro de Alertas.' : 'Con advertencia: revisá los detalles en el Centro de Alertas.';
+    return `<div class="invoice-card" onclick="showDetail(${idx})">
+      <div class="invoice-card-hdr">
+        <div style="display:flex;align-items:center;gap:5px">${dirBadge}<div class="status-pill ${sc}" data-tip="${statusTip}"><div class="status-dot"></div>${sl}</div></div>
+        <div style="display:flex;align-items:center;gap:5px">
+          <div class="inv-type-badge" data-tip="${typeTips[inv.type]||inv.type}">${typeLabels[inv.type]||inv.type}</div>
+          <button onclick="event.stopPropagation();deleteInv(${idx})" style="background:none;border:none;color:var(--faint);cursor:pointer;font-size:13px;padding:2px 4px;border-radius:4px;transition:color .2s" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--faint)'" data-tip="Eliminar este documento de la sesión.">✕</button>
+        </div>
+      </div>
+      <div style="margin-bottom:10px">
+        <div class="party"><div class="party-lbl">DE</div><div class="party-name">${esc(inv.emisor.nombre)||'Sin emisor'}</div></div>
+        <div class="party" style="margin-top:3px"><div class="party-lbl">PARA</div><div class="party-name">${esc(inv.receptor.nombre)||'Sin receptor'}</div></div>
+      </div>
+      <div class="inv-divider"></div>
+      <div class="inv-meta">
+        <div><div class="meta-lbl">Fecha</div><div class="meta-val">${dt}</div></div>
+        <div><div class="meta-lbl">Líneas</div><div class="meta-val">${inv.lineas.length} ítem${inv.lineas.length!==1?'s':''}</div></div>
+        <div style="grid-column:1/-1"><div class="meta-lbl">Clave</div><div class="meta-val" style="font-size:10px;color:var(--faint);font-family:monospace">${inv.clave?inv.clave.slice(0,26)+'...':'N/D'}</div></div>
+      </div>
+      <div class="inv-amounts">
+        <div>
+          <div class="amount-total">${fmt(inv.resumen.totalComprobante)}</div>
+          <div class="amount-tax">IVA: <span>${fmt(inv.resumen.totalImpuesto)}</span></div>
+        </div>
+        <div style="text-align:right"><div class="tax-chips">${chips}${ivaC}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function goPage(p) { currentPage = p; renderInvoices(); document.getElementById('section-invoices').scrollIntoView({behavior:'smooth',block:'start'}); }
+function changePageSize() { currentPage=1; renderInvoices(); }
+async function deleteInv(idx) { invoices.splice(idx,1); filteredCache=null; await saveStorage(); updateStats(); updateBadges(); filterInvoices(); toast('success','🗑 Documento eliminado'); }
+
+// ═══════════════════════════════════════════════════════
+//  DETAIL MODAL
+// ═══════════════════════════════════════════════════════
+function showDetail(idx) {
+  const inv = invoices[idx];
+  if (!inv) return;
+  const sc = inv.status==='accepted'?'s-accepted':inv.status==='rejected'?'s-rejected':'s-warn';
+  const sl = inv.status==='accepted'?'Aceptada':inv.status==='rejected'?'Rechazada':'Advertencia';
+  const dt = inv.fechaEmision ? new Date(inv.fechaEmision).toLocaleString('es-CR') : 'N/D';
+  const chips = inv.clasificacion.map(c=>{
+    const m = {gravado:'tc-grav',exento:'tc-exen',nosujeto:'tc-nosi',nc:'tc-comp',nd:'tc-nd',rep:'tc-rep'};
+    return `<span class="tchip ${m[c]||''}">${c}</span>`;
+  }).join('');
+  const linesHTML = inv.lineas.length ? `
+    <div class="detail-sec"><div class="detail-sec-title">Detalle de Líneas</div>
+    <div style="overflow-x:auto"><table class="lines-table">
+      <thead><tr><th>#</th><th>Detalle</th><th>CABYS</th><th>Cant.</th><th>P.Unit.</th><th>IVA</th><th>Total</th></tr></thead>
+      <tbody>${inv.lineas.map(l=>`<tr>
+        <td>${l.numero||'-'}</td>
+        <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(l.detalle)||'-'}</td>
+        <td style="font-family:monospace;font-size:10px">${l.cabys||'-'}${l.cabys&&l.cabys.length!==13?'<span class="cabys-warn" data-tip="CABYS debe tener 13 dígitos. Código inválido puede causar rechazo por Hacienda.">!</span>':''}</td>
+        <td>${l.cantidad}</td>
+        <td>${fmt(l.precio)}</td>
+        <td>${l.impuestos.map(i=>`${i.tarifa}%:${fmt(i.monto)}`).join('<br>')||'-'}</td>
+        <td style="font-weight:600">${fmt(l.total)}</td>
+      </tr>`).join('')}</tbody>
+    </table></div></div>` : '';
+
+  document.getElementById('modalBody').innerHTML = `
+    <div style="display:flex;gap:7px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+      <div class="status-pill ${sc}"><div class="status-dot"></div>${sl}</div>
+      <span class="inv-type-badge" style="font-size:11px">${inv.type}</span>
+      <span style="font-size:10px;padding:2px 7px;border-radius:4px;background:var(--surface3);color:var(--muted)">${inv.direction==='recibida'?'📥 COMPRA':'📤 VENTA'}</span>
+      ${chips}
+    </div>
+    <div class="detail-sec"><div class="detail-sec-title">Información General</div>
+      <div class="detail-grid">
+        <div class="dfield"><div class="field-lbl">Clave Numérica</div><div class="field-val" style="font-family:monospace;font-size:10px">${inv.clave||'N/D'}</div></div>
+        <div class="dfield"><div class="field-lbl">Número Consecutivo</div><div class="field-val">${inv.numeroConsec||'N/D'}</div></div>
+        <div class="dfield"><div class="field-lbl">Fecha de Emisión</div><div class="field-val">${dt}</div></div>
+        <div class="dfield"><div class="field-lbl">Archivo</div><div class="field-val" style="font-size:10px;color:var(--muted)">${inv.filename}</div></div>
+      </div>
+    </div>
+    <div class="detail-sec"><div class="detail-sec-title">Emisor</div>
+      <div class="detail-grid">
+        <div class="dfield"><div class="field-lbl">Nombre / Razón Social</div><div class="field-val">${esc(inv.emisor.nombre)||'N/D'}</div></div>
+        <div class="dfield"><div class="field-lbl">Cédula / RUC</div><div class="field-val" style="font-family:monospace">${esc(inv.emisor.id)||'N/D'}</div></div>
+      </div>
+    </div>
+    <div class="detail-sec"><div class="detail-sec-title">Receptor</div>
+      <div class="detail-grid">
+        <div class="dfield"><div class="field-lbl">Nombre / Razón Social</div><div class="field-val">${esc(inv.receptor.nombre)||'N/D'}</div></div>
+        <div class="dfield"><div class="field-lbl">Cédula / RUC</div><div class="field-val" style="font-family:monospace">${esc(inv.receptor.id)||'N/D'}</div></div>
+      </div>
+    </div>
+    ${linesHTML}
+    <div class="detail-sec"><div class="detail-sec-title">Resumen Fiscal (v4.4)</div>
+      <div class="t-row"><span class="t-row-lbl">Servicios Gravados</span><span class="t-row-val" style="color:#7aabff">${fmt(inv.resumen.totalServGravados)}</span></div>
+      <div class="t-row"><span class="t-row-lbl">Mercancías Gravadas</span><span class="t-row-val" style="color:#7aabff">${fmt(inv.resumen.totalMercGravadas)}</span></div>
+      <div class="t-row"><span class="t-row-lbl">Servicios Exentos</span><span class="t-row-val" style="color:var(--accent)">${fmt(inv.resumen.totalServExentos)}</span></div>
+      <div class="t-row"><span class="t-row-lbl">Mercancías Exentas</span><span class="t-row-val" style="color:var(--accent)">${fmt(inv.resumen.totalMercExentas)}</span></div>
+      <div class="t-row"><span class="t-row-lbl">No Sujeto</span><span class="t-row-val" style="color:var(--warn)">${fmt(inv.resumen.totalNoSujeto)}</span></div>
+      <div class="t-row"><span class="t-row-lbl">Total Impuesto</span><span class="t-row-val" style="color:var(--danger)">${fmt(inv.resumen.totalImpuesto)}</span></div>
+      <div class="hl-row"><span class="hl-lbl">Total Comprobante</span><span class="hl-val">${fmt(inv.resumen.totalComprobante)}</span></div>
+    </div>
+    ${inv.mensajeHacienda?`<div class="detail-sec"><div class="detail-sec-title">Mensaje Hacienda</div><div style="background:var(--surface3);border-radius:var(--rs);padding:10px 14px;font-size:12px;color:var(--muted)">${inv.mensajeHacienda}</div></div>`:''}
+  `;
+  document.getElementById('invModal').classList.add('open');
+}
+function closeModal() { document.getElementById('invModal').classList.remove('open'); }
+document.getElementById('invModal').addEventListener('click', e => { if(e.target===document.getElementById('invModal'))closeModal(); });
+
+// ═══════════════════════════════════════════════════════
+//  MONTH HELPERS
+// ═══════════════════════════════════════════════════════
+function getFilteredByMonth(monthIdx, yearHint) {
+  if (monthIdx === -1) return invoices;
+  return invoices.filter(inv => {
+    if (!inv.fechaEmision) return false;
+    const d = new Date(inv.fechaEmision);
+    if (isNaN(d)) return false;
+    if (yearHint !== undefined && d.getFullYear() !== yearHint) return false;
+    return d.getMonth() === monthIdx;
+  });
+}
+
+function changeMonth(dir) {
+  currentMonthD150 += dir;
+  if (currentMonthD150 > 11) { currentMonthD150 = -1; }
+  else if (currentMonthD150 < -1) { currentMonthD150 = 11; }
+  const lbl = currentMonthD150 === -1 ? 'Todos los meses' : MONTHS[currentMonthD150] + ' ' + currentYearD150;
+  document.getElementById('d150MonthLabel').textContent = lbl;
+  renderD150();
+}
+function changeMonthSum(dir) {
+  currentMonthSum += dir;
+  if (currentMonthSum > 11) { currentMonthSum = -1; }
+  else if (currentMonthSum < -1) { currentMonthSum = 11; }
+  const lbl = currentMonthSum === -1 ? 'Todos los meses' : MONTHS[currentMonthSum] + ' ' + currentYearSum;
+  document.getElementById('sumMonthLabel').textContent = lbl;
+  renderSummary();
+}
+
+// ═══════════════════════════════════════════════════════
+//  D-150 BORRADOR  (MEJORA 1 — secciones I-VI)
+// ═══════════════════════════════════════════════════════
+function calcD150Data(list) {
+  // Separate emitidas (ventas) vs recibidas (compras)
+  const ventas   = list.filter(i => i.direction === 'emitida' && i.type !== 'MensajeHacienda');
+  const compras  = list.filter(i => i.direction === 'recibida');
+  const nc       = list.filter(i => i.type === 'NotaCredito');
+  const nd       = list.filter(i => i.type === 'NotaDebito');
+
+  // Ventas gravadas por tarifa
+  const ivaByRate = {};
+  for (const inv of ventas) {
+    for (const ln of inv.lineas) {
+      for (const im of ln.impuestos) {
+        if (!ivaByRate[im.tarifa]) ivaByRate[im.tarifa] = { base: 0, impuesto: 0 };
+        ivaByRate[im.tarifa].base      += ln.base || ln.subtotal;
+        ivaByRate[im.tarifa].impuesto  += im.monto;
+      }
+    }
+    // Fallback for docs without lineas
+    if (!inv.lineas.length && inv.resumen.totalImpuesto) {
+      if (!ivaByRate[13]) ivaByRate[13] = { base:0,impuesto:0 };
+      ivaByRate[13].base     += inv.resumen.totalServGravados + inv.resumen.totalMercGravadas;
+      ivaByRate[13].impuesto += inv.resumen.totalImpuesto;
+    }
+  }
+
+  const totalServGrav = sum(ventas, i=>i.resumen.totalServGravados);
+  const totalMercGrav = sum(ventas, i=>i.resumen.totalMercGravadas);
+  const totalServExen = sum(ventas, i=>i.resumen.totalServExentos);
+  const totalMercExen = sum(ventas, i=>i.resumen.totalMercExentas);
+  const totalNoSuj    = sum(ventas, i=>i.resumen.totalNoSujeto);
+  const totalDebitoIVA= sum(ventas, i=>i.resumen.totalImpuesto);
+  const ajusteNC      = sum(nc,     i=>i.resumen.totalImpuesto);
+  const ajusteND      = sum(nd,     i=>i.resumen.totalImpuesto);
+  const debitoNeto    = totalDebitoIVA - ajusteNC + ajusteND;
+
+  // MEJORA 2: crédito fiscal de compras
+  const totalCompras  = sum(compras, i=>i.resumen.totalComprobante);
+  const creditoFiscal = sum(compras, i=>i.resumen.totalImpuesto);
+
+  // Proporcionalidad
+  const totalVentasBase = totalServGrav + totalMercGrav + totalServExen + totalMercExen + totalNoSuj;
+  const ventasConDerecho= totalServGrav + totalMercGrav;
+  const proporcion      = totalVentasBase > 0 ? (ventasConDerecho / totalVentasBase) : 1;
+  const creditoAjustado = creditoFiscal * proporcion;
+
+  const ivaPagar = Math.max(0, debitoNeto - creditoAjustado);
+  const credFavor= Math.max(0, creditoAjustado - debitoNeto);
+
+  return { ivaByRate, totalServGrav, totalMercGrav, totalServExen, totalMercExen, totalNoSuj,
+           totalDebitoIVA, ajusteNC, ajusteND, debitoNeto,
+           totalCompras, creditoFiscal, proporcion, creditoAjustado,
+           ivaPagar, credFavor, hasMixtas: totalServExen+totalMercExen>0 && totalServGrav+totalMercGrav>0 };
+}
+
+function renderD150() {
+  const list = currentMonthD150 === -1 ? invoices : invoices.filter(inv => {
+    if (!inv.fechaEmision) return false;
+    const d = new Date(inv.fechaEmision);
+    return d.getMonth() === currentMonthD150 && d.getFullYear() === currentYearD150;
+  });
+  const d = calcD150Data(list);
+
+  // Simple summary top
+  const simp = document.getElementById('d150SimpleSummary');
+  const simp_items = [
+    { lbl:'Total Ventas Netas', val: d.totalServGrav+d.totalMercGrav+d.totalServExen+d.totalMercExen+d.totalNoSuj, color:'#7aabff', tip:'Suma de todas tus ventas del período (gravadas + exentas + no sujetas). Base de la Sección I.' },
+    { lbl:'IVA Débito (Ventas)', val: d.totalDebitoIVA, color:'var(--danger)', tip:'Total del IVA que generaste en tus ventas gravadas. Es lo que "debés" a Hacienda antes del crédito.' },
+    { lbl:'IVA Crédito (Compras)', val: d.creditoAjustado, color:'var(--accent)', tip:'IVA pagado en tus compras que podés acreditar. Se resta del débito fiscal para calcular lo que pagás.' },
+    { lbl: d.ivaPagar>0?'IVA a Pagar':'Saldo a Favor', val: d.ivaPagar||d.credFavor, color: d.ivaPagar>0?'var(--danger)':'var(--accent)', tip: d.ivaPagar>0?'Monto que debés pagar a Hacienda antes del día 15. Podés pagar con IBAN en TRIBU-CR.':'Saldo a tu favor. Se aplica automáticamente al siguiente período.' },
+  ];
+  simp.innerHTML = simp_items.map(s=>`
+    <div style="text-align:center;padding:12px 8px;background:var(--surface3);border-radius:var(--rs)" data-tip="${s.tip}">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">${s.lbl}</div>
+      <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:${s.color}">${fmt(s.val)}</div>
+    </div>`).join('');
+
+  // Render section helper
+  const mkRow = (lbl, casilla, val, color='') => `
+    <div class="d150-row">
+      <div class="d150-row-lbl">${lbl}</div>
+      <div class="d150-row-casilla">${casilla}</div>
+      <div class="d150-row-val ${color}">${fmt(val)}</div>
+      <button class="d150-copy-btn" onclick="copyVal('${Math.round(val)}')" data-tip="Copiar ₡${Math.round(val).toLocaleString('es-CR')} al portapapeles">📋</button>
+    </div>`;
+
+  // SECCIÓN I
+  document.getElementById('d150-sec1').innerHTML =
+    Object.entries(d.ivaByRate).sort((a,b)=>b[0]-a[0]).map(([tarifa,v]) =>
+      mkRow(`Ventas Generales — Base imponible ${tarifa}%`, `${tarifa}%`, v.base,'blue') +
+      mkRow(`IVA ${tarifa}% generado`, '→IVA', v.impuesto,'blue')
+    ).join('') +
+    mkRow('Ventas Exentas (sin IVA)', 'EX', d.totalServExen+d.totalMercExen, 'green') +
+    mkRow('Ventas No Sujetas', 'NS', d.totalNoSuj, 'warn') +
+    mkRow('(-) Ajuste Notas de Crédito', 'NC', d.ajusteNC, '') +
+    mkRow('(+) Ajuste Notas de Débito', 'ND', d.ajusteND, '') +
+    `<div class="t-total" style="margin-top:10px"><span class="t-total-lbl">Total Débito Fiscal (IVA ventas)</span><span class="t-total-val" style="color:var(--danger)">${fmt(d.debitoNeto)}</span></div>`;
+
+  // SECCIÓN II
+  document.getElementById('d150-sec2').innerHTML =
+    mkRow('Total Compras del período', 'C1', d.totalCompras) +
+    mkRow('IVA soportado en compras', 'C2', d.creditoFiscal, 'green') +
+    (d.hasMixtas
+      ? `<div style="background:rgba(255,201,71,.07);border:1px solid rgba(255,201,71,.2);border-radius:var(--rs);padding:10px 14px;margin:8px 0;font-size:12px;color:var(--warn)">
+          ⚠️ <strong>Proporcionalidad manual requerida:</strong> Tenés ventas gravadas y exentas. Proporción estimada: <strong>${(d.proporcion*100).toFixed(1)}%</strong>. Ingresá este % en la casilla de proporcionalidad del D-150.
+         </div>`
+      : '') +
+    mkRow('Crédito fiscal aplicable', 'C3', d.creditoAjustado, 'green') +
+    `<div class="t-total"><span class="t-total-lbl">Total Crédito Fiscal</span><span class="t-total-val" style="color:var(--accent)">${fmt(d.creditoAjustado)}</span></div>`;
+
+  // SECCIÓN III
+  const hasMixtas = d.hasMixtas;
+  document.getElementById('d150-sec3').innerHTML = hasMixtas
+    ? mkRow('Ventas con derecho a crédito (gravadas)', 'P1', d.totalServGrav+d.totalMercGrav,'blue') +
+      mkRow('Total ventas del período', 'P2', d.totalServGrav+d.totalMercGrav+d.totalServExen+d.totalMercExen+d.totalNoSuj,'') +
+      `<div class="d150-row"><div class="d150-row-lbl">Proporción provisional (P1/P2 × 100)</div><div class="d150-row-casilla">%</div><div class="d150-row-val warn">${(d.proporcion*100).toFixed(2)}%</div><button class="d150-copy-btn" onclick="copyVal('${(d.proporcion*100).toFixed(2)}')">📋</button></div>` +
+      `<div style="font-size:11px;color:var(--faint);padding:8px 10px">Ingresá este porcentaje manualmente en la Sección II del D-150 dentro de TRIBU-CR.</div>`
+    : `<div style="padding:16px;text-align:center;font-size:13px;color:var(--muted)">✅ No aplica — Todas tus ventas son de un solo tipo (gravadas o exentas). No necesitás calcular proporcionalidad.</div>`;
+
+  // SECCIÓN V
+  document.getElementById('d150-sec5').innerHTML =
+    mkRow('Total Débito Fiscal (de Sección I)', 'V1', d.debitoNeto, 'warn') +
+    mkRow('(-) Total Crédito Fiscal (de Sección II)', 'V2', d.creditoAjustado, 'green') +
+    `<div class="t-total" style="background:rgba(255,77,106,.08);border-color:rgba(255,77,106,.25)">
+      <span class="t-total-lbl">Impuesto Determinado (V1 − V2)</span>
+      <span class="t-total-val" style="color:var(--danger)">${fmt(Math.max(0, d.debitoNeto - d.creditoAjustado))}</span>
+    </div>`;
+
+  // SECCIÓN VI
+  const impDet = Math.max(0, d.debitoNeto - d.creditoAjustado);
+  document.getElementById('d150-sec6').innerHTML =
+    mkRow('Impuesto Determinado (de Sección V)', 'L1', impDet, 'warn') +
+    mkRow('(-) Retenciones bancarias (datáfono, etc.)', 'L2', 0) +
+    mkRow('(-) Saldo a Favor período anterior', 'L3', 0) +
+    `<div class="t-total ${impDet>0?'style="background:rgba(255,77,106,.08);border-color:rgba(255,77,106,.25)"':''}">
+      <span class="t-total-lbl">${d.ivaPagar>0?'⚠️ IVA a PAGAR':'✅ Saldo a FAVOR'}</span>
+      <span class="t-total-val" style="color:${d.ivaPagar>0?'var(--danger)':'var(--accent)'}">${fmt(d.ivaPagar||d.credFavor)}</span>
+    </div>
+    <div style="font-size:11px;color:var(--faint);padding:10px 10px 4px">
+      💳 Podés pagar directo en TRIBU-CR con cuenta IBAN, o en ventanilla del BCR / BAC.
+    </div>`;
+
+  // Grand total
+  document.getElementById('d150FinalResult').textContent = fmt(d.ivaPagar||d.credFavor);
+  document.getElementById('d150FinalResult').style.color = d.ivaPagar>0?'var(--danger)':'var(--accent)';
+  document.getElementById('d150FinalLabel').textContent  = d.ivaPagar>0?'IVA a pagar a Hacienda':'Saldo a favor (crédito)';
+
+  // Proporcionalidad reminder in summary
+  document.getElementById('proporcionalidadBox').style.display = hasMixtas ? 'block' : 'none';
+}
+
+function copyVal(v) {
+  navigator.clipboard?.writeText(v).then(() => toast('success','📋 Copiado: ₡'+Number(v).toLocaleString('es-CR'))).catch(()=>{});
+}
+
+function copyAllD150() {
+  const list = currentMonthD150 === -1 ? invoices : invoices.filter(inv => {
+    const d = new Date(inv.fechaEmision||'');
+    return d.getMonth() === currentMonthD150 && d.getFullYear() === currentYearD150;
+  });
+  const d = calcD150Data(list);
+  const txt = `BORRADOR D-150 — Tribu Fácil CR
+Período: ${currentMonthD150===-1?'Todos':MONTHS[currentMonthD150]}
+
+=== SECCIÓN I (Ventas) ===
+Total Servicios Gravados: ${Math.round(d.totalServGrav)}
+Total Mercancías Gravadas: ${Math.round(d.totalMercGrav)}
+Total Exentas: ${Math.round(d.totalServExen+d.totalMercExen)}
+Total No Sujetas: ${Math.round(d.totalNoSuj)}
+Ajuste NC: ${Math.round(d.ajusteNC)}
+Total Débito IVA: ${Math.round(d.debitoNeto)}
+
+=== SECCIÓN II (Compras) ===
+Total Compras: ${Math.round(d.totalCompras)}
+IVA soportado: ${Math.round(d.creditoFiscal)}
+Crédito aplicable: ${Math.round(d.creditoAjustado)}
+${d.hasMixtas?'Proporción: '+(d.proporcion*100).toFixed(2)+'%\n':''}
+=== SECCIÓN V (Determinación) ===
+Impuesto Determinado: ${Math.round(Math.max(0,d.debitoNeto-d.creditoAjustado))}
+
+=== RESULTADO ===
+${d.ivaPagar>0?'IVA A PAGAR: '+Math.round(d.ivaPagar):'SALDO A FAVOR: '+Math.round(d.credFavor)}`;
+  navigator.clipboard?.writeText(txt).then(() => toast('success','📋 Borrador D-150 copiado al portapapeles')).catch(()=>{});
+}
+
+// ═══════════════════════════════════════════════════════
+//  MONTHLY SUMMARY
+// ═══════════════════════════════════════════════════════
+function renderSummary() {
+  const list = currentMonthSum === -1 ? invoices : invoices.filter(inv => {
+    if (!inv.fechaEmision) return false;
+    const d = new Date(inv.fechaEmision);
+    return d.getMonth() === currentMonthSum && d.getFullYear() === currentYearSum;
+  });
+  const ventas = list.filter(i=>i.direction==='emitida'&&i.type!=='MensajeHacienda');
+  const nc     = list.filter(i=>i.type==='NotaCredito');
+  const compras= list.filter(i=>i.direction==='recibida');
+
+  const sG = sum(ventas,i=>i.resumen.totalServGravados);
+  const mG = sum(ventas,i=>i.resumen.totalMercGravadas);
+  const sE = sum(ventas,i=>i.resumen.totalServExentos);
+  const mE = sum(ventas,i=>i.resumen.totalMercExentas);
+  const nS = sum(ventas,i=>i.resumen.totalNoSujeto);
+  const ncV= sum(nc,    i=>i.resumen.totalComprobante);
+  const tot= sG+mG+sE+mE+nS-ncV;
+
+  // IVA by rate
+  let iva13=0,iva4=0,ivaRed=0,ivaTotal=0;
+  for(const inv of ventas){
+    for(const ln of inv.lineas){for(const im of ln.impuestos){
+      if(im.tarifa===13)iva13+=im.monto;
+      else if(im.tarifa===4)iva4+=im.monto;
+      else ivaRed+=im.monto;
+      ivaTotal+=im.monto;
+    }}
+    if(!inv.lineas.length){iva13+=inv.resumen.totalImpuesto;ivaTotal+=inv.resumen.totalImpuesto;}
+  }
+  const credito = sum(compras,i=>i.resumen.totalImpuesto);
+  const pagar   = Math.max(0,ivaTotal-credito);
+
+  setText('sum-servgrav', fmt(sG)); setText('sum-mercgrav', fmt(mG));
+  setText('sum-servexen', fmt(sE)); setText('sum-mercexen', fmt(mE));
+  setText('sum-nosuj',    fmt(nS)); setText('sum-nc',       '-'+fmt(ncV));
+  setText('sum-ventas-netas', fmt(tot));
+  setText('sum-iva13',    fmt(iva13)); setText('sum-iva4',  fmt(iva4));
+  setText('sum-ivared',   fmt(ivaRed)); setText('sum-debito', fmt(ivaTotal));
+  setText('sum-credito-val', fmt(credito)); setText('sum-pagar', fmt(pagar));
+
+  // IVA chart
+  const rateMap = {};
+  for(const inv of ventas){for(const ln of inv.lineas){for(const im of ln.impuestos){
+    const k='IVA '+im.tarifa+'%';
+    rateMap[k]=(rateMap[k]||0)+im.monto;
+  }}}
+  const maxV = Math.max(...Object.values(rateMap),1);
+  const cols  = ['#3d7aff','#00d68f','#ffc947','#ff4d6a','#a78bfa','#fb923c'];
+  document.getElementById('ivaRateChart').innerHTML = Object.entries(rateMap).sort((a,b)=>b[1]-a[1]).map(([lbl,v],i)=>`
+    <div class="bracket-row">
+      <div class="bracket-lbl">${lbl}</div>
+      <div class="bracket-track"><div class="bracket-fill" style="width:${(v/maxV*100).toFixed(1)}%;background:${cols[i%cols.length]}"></div></div>
+      <div class="bracket-val" style="color:${cols[i%cols.length]}">${fmt(v)}</div>
+    </div>`).join('') || '<div style="color:var(--muted);font-size:13px;padding:14px 0">Sin datos de IVA para este período.</div>';
+
+  document.getElementById('proporcionalidadBox').style.display = (sE+mE>0&&sG+mG>0)?'block':'none';
+}
+
+// ═══════════════════════════════════════════════════════
+//  SIMULATOR (MEJORA 6 — fix D-101 / nueva codificación)
+// ═══════════════════════════════════════════════════════
+function autoFillSim() {
+  const ventas = invoices.filter(i=>i.direction==='emitida'&&i.type!=='MensajeHacienda');
+  const total  = sum(ventas, i=>i.resumen.totalComprobante);
+  document.getElementById('sim-ing').value  = Math.round(total);
+  document.getElementById('sim-gas').value  = Math.round(total * 0.40);
+  calcSim();
+  toast('warn','⚠️ Gastos estimados al 40% (ejemplo). Ajustá con tus gastos reales.');
+}
+
+function calcSim() {
+  const ing   = parseF(document.getElementById('sim-ing').value);
+  const gas   = parseF(document.getElementById('sim-gas').value);
+  const otras = parseF(document.getElementById('sim-otras').value);
+  const tipo  = document.getElementById('sim-tipo').value;
+  const period= document.getElementById('sim-period').value;
+  const renta = Math.max(0, ing - gas - otras);
+
+  setText('r-ing',   fmt(ing));
+  setText('r-gas',   fmt(gas));
+  setText('r-otras', fmt(otras));
+  setText('r-neta',  fmt(renta));
+
+  let imp = 0, brackets = [], notes = '';
+
+  if (tipo === 'fisica') {
+    // Tramos Persona Física con Actividad Lucrativa — sobre Renta Neta ANUAL
+    // Fuente: Decreto Ejecutivo N°44772-H (período 2025) y Gaceta 229 del 05-12-2025 (período 2026)
+    const tramos2025 = [
+      { hasta: 4094000,  tasa: 0,  lbl:'0% (exento)' },
+      { hasta: 6115000,  tasa: 10, lbl:'10%' },
+      { hasta: 10200000, tasa: 15, lbl:'15%' },
+      { hasta: 20442000, tasa: 20, lbl:'20%' },
+      { hasta: Infinity, tasa: 25, lbl:'25%' },
+    ];
+    const tramos2026 = [
+      { hasta: 6244000,  tasa: 0,  lbl:'0% (exento)' },
+      { hasta: 8329000,  tasa: 10, lbl:'10%' },
+      { hasta: 10414000, tasa: 15, lbl:'15%' },
+      { hasta: 20872000, tasa: 20, lbl:'20%' },
+      { hasta: Infinity, tasa: 25, lbl:'25%' },
+    ];
+    const tramos = period === '2026' ? tramos2026 : tramos2025;
+    let rest = renta, prev = 0;
+    for (const t of tramos) {
+      const tramo = Math.min(rest, t.hasta - prev);
+      const monto = tramo * t.tasa / 100;
+      imp += monto;
+      brackets.push({ lbl: t.lbl, monto });
+      rest -= tramo; prev = t.hasta;
+      if (rest <= 0) break;
+    }
+    const decree = period === '2026' ? 'Gaceta N°229 del 05-12-2025' : 'Decreto Ejecutivo N°44772-H del 03-12-2024';
+    notes = `* Período fiscal ${period==='2026'?'2025–2026':'2024–2025'} · Persona Física con Actividad Lucrativa · Tramos sobre Renta Neta Anual · Fuente: ${decree} · Antes de créditos fiscales (cónyuge ₡${period==='2026'?'31.080':'30.756'}/año, hijos ₡${period==='2026'?'20.520':'20.244'}/año) · Formulario D-101 en TRIBU-CR.`;
+  } else {
+    // Persona Jurídica — Fuente: Decreto N°44772-H (2025) y Gaceta 229 (2026)
+    // Umbral de ingresos brutos para determinar régimen
+    const umbral2025 = 119629000;
+    const umbral2026 = 119174000;
+    const umbral = period === '2026' ? umbral2026 : umbral2025;
+
+    if (ing > umbral) {
+      // Gran empresa: tarifa plana 30% sobre renta neta
+      imp = renta * 0.30;
+      brackets = [{ lbl: `Gran empresa (ingresos > ₡${Math.round(umbral/1e6)}M) — 30% sobre renta neta`, monto: imp }];
+      notes = `* Persona Jurídica · Ingresos brutos superan ₡${Math.round(umbral/1000000)}M → tarifa única 30% sobre renta neta · Período ${period==='2026'?'2025–2026':'2024–2025'} · Formulario D-101 en TRIBU-CR.`;
+    } else {
+      // Micro/pequeña empresa: tramos progresivos sobre renta neta
+      const tramos2025j = [
+        { hasta: 5642000,  tasa: 0,  lbl:'0% (exento)' },
+        { hasta: 8465000,  tasa: 10, lbl:'10%' },
+        { hasta: 11286000, tasa: 15, lbl:'15%' },
+        { hasta: Infinity, tasa: 20, lbl:'20%' },
+      ];
+      const tramos2026j = [
+        { hasta: 5621000,  tasa: 5,  lbl:'5%' },
+        { hasta: 8433000,  tasa: 10, lbl:'10%' },
+        { hasta: 11243000, tasa: 15, lbl:'15%' },
+        { hasta: Infinity, tasa: 20, lbl:'20%' },
+      ];
+      const tramos = period === '2026' ? tramos2026j : tramos2025j;
+      let rest = renta, prev = 0;
+      for (const t of tramos) {
+        const tramo = Math.min(rest, t.hasta - prev);
+        const monto = tramo * t.tasa / 100;
+        imp += monto;
+        brackets.push({ lbl: t.lbl, monto });
+        rest -= tramo; prev = t.hasta;
+        if (rest <= 0) break;
+      }
+      const decree = period === '2026' ? 'Gaceta N°229 del 05-12-2025' : 'Decreto Ejecutivo N°44772-H del 03-12-2024';
+      notes = `* Persona Jurídica con ingresos brutos ≤ ₡${Math.round(umbral/1e6)}M · Tramos progresivos sobre Renta Neta · Período ${period==='2026'?'2025–2026':'2024–2025'} · Fuente: ${decree} · Formulario D-101 en TRIBU-CR.`;
+    }
+  }
+
+  setText('r-imp', fmt(imp));
+  const maxB = Math.max(...brackets.map(b=>b.monto), 1);
+  const cols  = ['#3d7aff','#00d68f','#ffc947','#ff4d6a','#a78bfa'];
+  document.getElementById('simBrackets').innerHTML = brackets.map((b,i)=>`
+    <div class="bracket-row">
+      <div class="bracket-lbl">${b.lbl}</div>
+      <div class="bracket-track"><div class="bracket-fill" style="width:${b.monto>0?(b.monto/maxB*100).toFixed(1):0}%;background:${cols[i%cols.length]}"></div></div>
+      <div class="bracket-val" style="color:${cols[i%cols.length]}">${fmt(b.monto)}</div>
+    </div>`).join('');
+  document.getElementById('simNotes').textContent = notes;
+}
+
+function resetSim() {
+  ['sim-ing','sim-gas','sim-otras'].forEach(id=>document.getElementById(id).value='');
+  ['r-ing','r-gas','r-otras','r-neta','r-imp'].forEach(id=>setText(id,'₡0'));
+  document.getElementById('simBrackets').innerHTML='';
+  document.getElementById('simNotes').textContent='';
+}
+
+// ═══════════════════════════════════════════════════════
+//  VENCIMIENTO WIDGET  (MEJORA 3)
+// ═══════════════════════════════════════════════════════
+function renderVencimiento() {
+  const now   = new Date();
+  const yr    = now.getFullYear();
+  const mo    = now.getMonth();
+  // Vencimiento D-150: día 15 del mes siguiente
+  let venc    = new Date(yr, mo+1, 15, 23, 59, 59);
+  if (now > venc) venc = new Date(yr, mo+2, 15, 23, 59, 59);
+  const diff  = venc - now;
+  const days  = Math.floor(diff / 86400000);
+  const hrs   = Math.floor((diff % 86400000) / 3600000);
+  const mins  = Math.floor((diff % 3600000) / 60000);
+  const periodoDeclarar = new Date(venc.getFullYear(), venc.getMonth()-1, 1);
+  const periodoLabel    = MONTHS[periodoDeclarar.getMonth()]+' '+periodoDeclarar.getFullYear();
+
+  // Color
+  const urgente = days < 5;
+  const aviso   = days < 10;
+  const color   = urgente?'var(--danger)':aviso?'var(--warn)':'var(--accent)';
+
+  document.getElementById('vencCountdown').innerHTML = `
+    <div class="venc-unit"><div class="venc-num" style="color:${color}">${days}</div><div class="venc-lbl">días</div></div>
+    <div class="venc-unit"><div class="venc-num" style="color:${color}">${hrs}</div><div class="venc-lbl">hrs</div></div>
+    <div class="venc-unit"><div class="venc-num" style="color:${color}">${mins}</div><div class="venc-lbl">min</div></div>`;
+
+  document.getElementById('vencTitle').textContent = `Vencimiento D-150 · ${periodoLabel}`;
+  document.getElementById('vencSub').textContent   = `Declaración IVA en TRIBU-CR · Plazo: ${venc.toLocaleDateString('es-CR',{day:'2-digit',month:'long',year:'numeric'})}`;
+
+  // Check if this month has invoices
+  const hasInvoicesThisPeriod = invoices.some(inv => {
+    const d = new Date(inv.fechaEmision||'');
+    return d.getMonth() === periodoDeclarar.getMonth() && d.getFullYear() === periodoDeclarar.getFullYear();
+  });
+
+  const statusEl = document.getElementById('vencStatus');
+  if (hasInvoicesThisPeriod) {
+    statusEl.innerHTML = `<div class="venc-status" style="background:rgba(0,214,143,.1);color:var(--accent);border:1px solid rgba(0,214,143,.25)">✅ Tenés facturas de ${periodoLabel}</div>`;
+  } else {
+    statusEl.innerHTML = `<div class="venc-status" style="background:rgba(255,201,71,.1);color:var(--warn);border:1px solid rgba(255,201,71,.25)">⚠️ Sin facturas cargadas de ${periodoLabel}</div>`;
+  }
+
+  setTimeout(renderVencimiento, 60000); // refresh each minute
+}
+
+// ═══════════════════════════════════════════════════════
+//  WARNINGS
+// ═══════════════════════════════════════════════════════
+function addWarning(type, title, desc) {
+  // avoid exact dupes
+  if (!warnings.find(w=>w.title===title&&w.desc===desc)) {
+    warnings.push({ type, title, desc });
+    updateBadges();
+  }
+}
+function renderWarnings() {
+  const el = document.getElementById('warnList');
+  if (!warnings.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">Sin alertas</div><div class="empty-sub">Todo está bien. Las alertas aparecen cuando se detectan problemas.</div></div>`;
+    return;
+  }
+  el.innerHTML = warnings.map(w=>`
+    <div class="warn-card ${w.type==='error'?'error':w.type==='warn'?'warn':'info'}">
+      <div class="warn-icon">${w.type==='error'?'🔴':w.type==='warn'?'🟡':'ℹ️'}</div>
+      <div><div class="warn-title">${w.title}</div><div class="warn-desc">${w.desc||''}</div></div>
+    </div>`).join('');
+}
+function clearWarnings() { warnings=[]; updateBadges(); renderWarnings(); }
+
+// ═══════════════════════════════════════════════════════
+//  EXPORT
+// ═══════════════════════════════════════════════════════
+function exportExcel() {
+  if (!invoices.length) { toast('error','⚠️ Sin datos para exportar'); return; }
+  const wb = XLSX.utils.book_new();
+  // Sheet 1: Facturas
+  const rows = [['Dirección','Tipo','Clave','Consecutivo','Fecha','Emisor','ID Emisor','Receptor','ID Receptor','Serv.Gravados','Merc.Gravadas','Serv.Exentos','Merc.Exentas','No Sujeto','IVA','Total','Estado']];
+  for (const inv of invoices) rows.push([
+    inv.direction, inv.type, inv.clave, inv.numeroConsec,
+    inv.fechaEmision?new Date(inv.fechaEmision).toLocaleDateString('es-CR'):'',
+    inv.emisor.nombre, inv.emisor.id, inv.receptor.nombre, inv.receptor.id,
+    inv.resumen.totalServGravados, inv.resumen.totalMercGravadas,
+    inv.resumen.totalServExentos,  inv.resumen.totalMercExentas,
+    inv.resumen.totalNoSujeto,     inv.resumen.totalImpuesto, inv.resumen.totalComprobante,
+    inv.status==='accepted'?'Aceptada':inv.status==='rejected'?'Rechazada':'Advertencia'
+  ]);
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Documentos');
+
+  // Sheet 2: D-150
+  const d = calcD150Data(invoices);
+  const d150rows = [
+    ['BORRADOR D-150 — Tribu Fácil CR'],['Generado:', new Date().toLocaleString('es-CR')],[''],
+    ['SECCIÓN','CASILLA','DESCRIPCIÓN','MONTO (₡)'],
+    ['I','13%','Ventas Base 13%', Object.values(d.ivaByRate).reduce((s,v)=>s+v.base,0)],
+    ['I','IVA','Débito IVA generado',d.totalDebitoIVA],
+    ['I','EX','Ventas Exentas',d.totalServExen+d.totalMercExen],
+    ['I','NS','Ventas No Sujetas',d.totalNoSuj],
+    ['I','NC','Ajuste Notas Crédito',d.ajusteNC],
+    ['I','TOT','Total Débito Fiscal',d.debitoNeto],[''],
+    ['II','C1','Total Compras',d.totalCompras],
+    ['II','C2','IVA soportado (compras)',d.creditoFiscal],
+    ['II','%','Proporción',+(d.proporcion*100).toFixed(2)],
+    ['II','C3','Crédito Fiscal Aplicable',d.creditoAjustado],[''],
+    ['V','V1','Débito Fiscal',d.debitoNeto],
+    ['V','V2','Crédito Fiscal',d.creditoAjustado],
+    ['V','DET','Impuesto Determinado',Math.max(0,d.debitoNeto-d.creditoAjustado)],[''],
+    ['VI','PAGAR',d.ivaPagar>0?'IVA A PAGAR':'SALDO A FAVOR', d.ivaPagar||d.credFavor],
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(d150rows), 'Borrador D-150');
+  XLSX.writeFile(wb, 'tribu-facil-cr.xlsx');
+  toast('success','📊 Excel exportado');
+}
+
+function exportD150Excel() {
+  const d = calcD150Data(invoices);
+  const wb = XLSX.utils.book_new();
+  const rows = [
+    ['BORRADOR FORMULARIO D-150','','',''],['Generado con Tribu Fácil CR',new Date().toLocaleString('es-CR'),'',''],['','','',''],
+    ['SECCIÓN','CASILLA','DESCRIPCIÓN','MONTO (₡)'],
+    ['I','','=== VENTAS Y OPERACIONES ===',''],
+    ...Object.entries(d.ivaByRate).flatMap(([t,v])=>[
+      ['I',t+'% Base','Base imponible ventas '+t+'%',Math.round(v.base)],
+      ['I',t+'% IVA','IVA '+t+'% generado',Math.round(v.impuesto)],
+    ]),
+    ['I','EX','Ventas Exentas',Math.round(d.totalServExen+d.totalMercExen)],
+    ['I','NS','Ventas No Sujetas',Math.round(d.totalNoSuj)],
+    ['I','NC','Ajuste Notas Crédito',Math.round(d.ajusteNC)],
+    ['I','TOT','TOTAL DÉBITO FISCAL',Math.round(d.debitoNeto)],['','','',''],
+    ['II','','=== COMPRAS Y CRÉDITOS ===',''],
+    ['II','C1','Total Compras del período',Math.round(d.totalCompras)],
+    ['II','C2','IVA soportado en compras',Math.round(d.creditoFiscal)],
+    ['II','%','Proporción provisional (%)',+(d.proporcion*100).toFixed(2)],
+    ['II','C3','CRÉDITO FISCAL APLICABLE',Math.round(d.creditoAjustado)],['','','',''],
+    ['III','','=== PROPORCIONALIDAD ===',''],
+    ['III','P1','Ventas con derecho a crédito',Math.round(d.totalServGrav+d.totalMercGrav)],
+    ['III','P2','Total ventas',Math.round(d.totalServGrav+d.totalMercGrav+d.totalServExen+d.totalMercExen+d.totalNoSuj)],
+    ['III','PROP',d.hasMixtas?'Proporción (manual en TRIBU-CR 2025)':'No aplica (ventas uniformes)',d.hasMixtas?+(d.proporcion*100).toFixed(2):'N/A'],['','','',''],
+    ['V','','=== DETERMINACIÓN ===',''],
+    ['V','V1','Débito Fiscal',Math.round(d.debitoNeto)],
+    ['V','V2','(-) Crédito Fiscal',Math.round(d.creditoAjustado)],
+    ['V','DET','IMPUESTO DETERMINADO',Math.round(Math.max(0,d.debitoNeto-d.creditoAjustado))],['','','',''],
+    ['VI','','=== LIQUIDACIÓN ===',''],
+    ['VI','L2','(-) Retenciones bancarias (ingresá manualmente)',0],
+    ['VI','L3','(-) Saldo a favor período anterior (ingresá manualmente)',0],
+    ['VI','FINAL',d.ivaPagar>0?'⚠️ IVA A PAGAR':' ✅ SALDO A FAVOR',Math.round(d.ivaPagar||d.credFavor)],
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'D-150');
+  XLSX.writeFile(wb, 'd150-tribu-facil-cr.xlsx');
+  toast('success','📋 D-150 exportado');
+}
+
+function exportCSV() {
+  if (!invoices.length) { toast('error','⚠️ Sin datos'); return; }
+  const hdr = ['Dirección','Tipo','Clave','Fecha','Emisor','Receptor','IVA','Total','Estado'];
+  const rows = invoices.map(i=>[i.direction,i.type,i.clave,i.fechaEmision?new Date(i.fechaEmision).toLocaleDateString('es-CR'):'',`"${i.emisor.nombre||''}"`,`"${i.receptor.nombre||''}"`,i.resumen.totalImpuesto,i.resumen.totalComprobante,i.status]);
+  dlFile([hdr,...rows].map(r=>r.join(',')).join('\n'),'tribu-facil-cr.csv','text/csv');
+  toast('success','📄 CSV exportado');
+}
+function exportJSON() {
+  if (!invoices.length) { toast('error','⚠️ Sin datos'); return; }
+  dlFile(JSON.stringify({date:new Date().toISOString(),invoices},null,2),'tribu-facil-cr.json','application/json');
+  toast('success','📋 JSON exportado');
+}
+function dlFile(content,name,mime) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content],{type:mime}));
+  a.download = name; a.click();
+}
+
+// ═══════════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════════
+function fmt(v) { return '₡'+(Math.round(v||0)).toLocaleString('es-CR'); }
+function sum(arr, fn) { return arr.reduce((s,i)=>s+(fn(i)||0),0); }
+function setText(id,v) { const el=document.getElementById(id); if(el)el.textContent=v; }
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function toast(type,msg) {
+  const c = document.getElementById('toastCtr');
+  const t = document.createElement('div');
+  t.className='toast '+type; t.textContent=msg; c.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .3s'; setTimeout(()=>t.remove(),300); },3500);
+}
+
+function updateStats() {
+  const ventas  = invoices.filter(i=>i.direction==='emitida'&&i.type!=='MensajeHacienda');
+  const compras = invoices.filter(i=>i.direction==='recibida');
+  setText('s-total',    invoices.length);
+  setText('s-accepted', invoices.filter(i=>i.status==='accepted').length);
+  setText('s-rejected', invoices.filter(i=>i.status==='rejected').length);
+  setText('s-iva',      fmt(sum(ventas, i=>i.resumen.totalImpuesto)));
+  setText('s-credito',  fmt(sum(compras,i=>i.resumen.totalImpuesto)));
+  // storage badge
+  const sb = document.getElementById('storageBadge');
+  if (invoices.length>0) {
+    sb.style.display='block';
+    sb.innerHTML = `💾 <strong style="color:var(--text)">${invoices.length}</strong> doc${invoices.length!==1?'s':''} guardado${invoices.length!==1?'s':''} · <span style="color:var(--accent)">Auto-guardado ✓</span>`;
+  } else sb.style.display='none';
+}
+
+function updateBadges() {
+  setText('badge-inv',  invoices.length);
+  setText('badge-warn', warnings.length);
+}
+
+function showProgress(show) {
+  document.getElementById('progressBar').style.display = show?'block':'none';
+  document.getElementById('uploadTxt').style.display   = show?'block':'none';
+  if (!show) { setProgress(0); document.getElementById('uploadTxt').textContent=''; }
+}
+function setProgress(p) {
+  document.getElementById('progressFill').style.width = p+'%';
+  document.getElementById('uploadTxt').textContent = p<100?`Procesando... ${Math.round(p)}%`:'¡Listo!';
+}
+
+async function clearAll() {
+  if (invoices.length && !confirm(`¿Eliminar los ${invoices.length} documentos guardados? Esta acción no se puede deshacer.`)) return;
+  invoices=[]; warnings=[]; filteredCache=null;
+  await clearStorage();
+  updateStats(); updateBadges(); renderWarnings(); renderInvoices(); renderVencimiento();
+  toast('success','🗑 Datos eliminados');
+}
+
+async function loadDemo() {
+  if (invoices.length && !confirm('Ya tenés documentos cargados. ¿Reemplazar con datos demo?')) return;
+  invoices = demoData();
+  warnings = [];
+  filteredCache = null;
+  await saveStorage();
+  updateStats(); updateBadges(); renderWarnings(); renderVencimiento(); populateMonthFilter();
+  toast('success', '🎲 6 documentos demo cargados. Explorá las pestañas.');
+  switchTab('invoices');
+}
+// ═══════════════════════════════════════════════════════
+function demoData() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  return [
+    // Factura emitida (venta)
+    { type:'FacturaElectronica',direction:'emitida',filename:'demo-venta-001.xml',
+      clave:'50601012500310162280000100001010000000011999999999',numeroConsec:'00100001010000000011',
+      fechaEmision: new Date(y,m,5).toISOString(),
+      emisor:{nombre:'Tecnologías CR S.A.',id:'3101234567'},
+      receptor:{nombre:'Comercial del Norte S.R.L.',id:'3102345678'},
+      lineas:[
+        {numero:'1',cabys:'4321001000000',detalle:'Consultoría TI',cantidad:1,precio:500000,total:565000,subtotal:500000,base:500000,impuestos:[{codigo:'01',tarifa:13,monto:65000}]},
+        {numero:'2',cabys:'4321002000000',detalle:'Licencia software',cantidad:3,precio:75000,total:253875,subtotal:225000,base:225000,impuestos:[{codigo:'01',tarifa:13,monto:28875}]},
+      ],
+      resumen:{totalServGravados:725000,totalMercGravadas:0,totalServExentos:0,totalMercExentas:0,totalNoSujeto:0,totalGravado:725000,totalExento:0,totalImpuesto:93875,totalComprobante:818875},
+      status:'accepted',ivaRates:[{t:13}],clasificacion:['gravado'],cabysWarnings:[]},
+
+    // Factura emitida exenta
+    { type:'FacturaElectronica',direction:'emitida',filename:'demo-venta-002.xml',
+      clave:'50601012500310162280000100001010000000021999999999',numeroConsec:'00100001010000000021',
+      fechaEmision: new Date(y,m,12).toISOString(),
+      emisor:{nombre:'Salud Total S.A.',id:'3101987654'},
+      receptor:{nombre:'Juan Pérez Rodríguez',id:'1-0234-0567'},
+      lineas:[{numero:'1',cabys:'8511001000000',detalle:'Consulta médica',cantidad:1,precio:35000,total:35000,subtotal:35000,base:0,impuestos:[]}],
+      resumen:{totalServGravados:0,totalMercGravadas:0,totalServExentos:35000,totalMercExentas:0,totalNoSujeto:0,totalGravado:0,totalExento:35000,totalImpuesto:0,totalComprobante:35000},
+      status:'accepted',ivaRates:[],clasificacion:['exento'],cabysWarnings:[]},
+
+    // Factura de COMPRA (recibida — crédito fiscal)
+    { type:'FacturaCompra',direction:'recibida',filename:'demo-compra-001.xml',
+      clave:'50601012500310162280000100001010000000031999999999',numeroConsec:'00100001010000000031',
+      fechaEmision: new Date(y,m,8).toISOString(),
+      emisor:{nombre:'Proveedor Tecnológico S.A.',id:'3101444555'},
+      receptor:{nombre:'Tecnologías CR S.A.',id:'3101234567'},
+      lineas:[{numero:'1',cabys:'4321005000000',detalle:'Computadora portátil',cantidad:2,precio:300000,total:678000,subtotal:600000,base:600000,impuestos:[{codigo:'01',tarifa:13,monto:78000}]}],
+      resumen:{totalServGravados:0,totalMercGravadas:600000,totalServExentos:0,totalMercExentas:0,totalNoSujeto:0,totalGravado:600000,totalExento:0,totalImpuesto:78000,totalComprobante:678000},
+      status:'accepted',ivaRates:[{t:13}],clasificacion:['gravado'],cabysWarnings:[]},
+
+    // Mensaje Hacienda (rechazada)
+    { type:'MensajeHacienda',direction:'emitida',filename:'demo-msg-001.xml',
+      clave:'50601012500310162280000100001010000000041999999999',numeroConsec:'',
+      fechaEmision: new Date(y,m,10).toISOString(),
+      emisor:{nombre:'Distribuidora CR',id:'3101555444'},receptor:{nombre:'Supermercado S.A.',id:'3102666777'},
+      lineas:[],resumen:{totalServGravados:0,totalMercGravadas:0,totalServExentos:0,totalMercExentas:0,totalNoSujeto:0,totalGravado:0,totalExento:0,totalImpuesto:15000,totalComprobante:130000},
+      status:'rejected',mensajeHacienda:'Cédula del receptor no corresponde al contribuyente registrado.',estado:'Rechazado',
+      ivaRates:[],clasificacion:[],cabysWarnings:[]},
+
+    // Nota de Crédito
+    { type:'NotaCredito',direction:'emitida',filename:'demo-nc-001.xml',
+      clave:'50601012500310162280000100001010000000051999999999',numeroConsec:'00100001010000000051',
+      fechaEmision: new Date(y,m,15).toISOString(),
+      emisor:{nombre:'Tecnologías CR S.A.',id:'3101234567'},receptor:{nombre:'Comercial del Norte S.R.L.',id:'3102345678'},
+      lineas:[{numero:'1',cabys:'4321001000000',detalle:'Anulación parcial consultoría',cantidad:1,precio:100000,total:113000,subtotal:100000,base:100000,impuestos:[{codigo:'01',tarifa:13,monto:13000}]}],
+      resumen:{totalServGravados:100000,totalMercGravadas:0,totalServExentos:0,totalMercExentas:0,totalNoSujeto:0,totalGravado:100000,totalExento:0,totalImpuesto:13000,totalComprobante:113000},
+      status:'accepted',ivaRates:[{t:13}],clasificacion:['nc','gravado'],cabysWarnings:[]},
+
+    // Factura mes anterior (ventas mixtas para demostrar proporcionalidad)
+    { type:'FacturaElectronica',direction:'emitida',filename:'demo-venta-003.xml',
+      clave:'50601012500310162280000100001010000000061999999999',numeroConsec:'00100001010000000061',
+      fechaEmision: new Date(y,m>0?m-1:11,20).toISOString(),
+      emisor:{nombre:'Tecnologías CR S.A.',id:'3101234567'},receptor:{nombre:'Grupo GEC',id:'3102999888'},
+      lineas:[
+        {numero:'1',cabys:'4321003000000',detalle:'App web',cantidad:1,precio:2000000,total:2260000,subtotal:2000000,base:2000000,impuestos:[{codigo:'01',tarifa:13,monto:260000}]},
+        {numero:'2',cabys:'4321004000000',detalle:'Hosting (exento)',cantidad:12,precio:15000,total:180000,subtotal:180000,base:0,impuestos:[]},
+      ],
+      resumen:{totalServGravados:2000000,totalMercGravadas:0,totalServExentos:180000,totalMercExentas:0,totalNoSujeto:0,totalGravado:2000000,totalExento:180000,totalImpuesto:260000,totalComprobante:2440000},
+      status:'accepted',ivaRates:[{t:13}],clasificacion:['gravado','exento'],cabysWarnings:[]},
+  ];
+}
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+async function init() {
+  setText('s-total','0');
+  let loaded = false;
+  if (typeof window.storage !== 'undefined') loaded = await loadStorage();
+  if (loaded && invoices.length > 0) {
+    toast('success','✅ '+invoices.length+' documento'+(invoices.length!==1?'s':'')+' restaurado'+(invoices.length!==1?'s':'')+' de tu sesión anterior');
+  }
+  updateStats(); updateBadges(); renderWarnings(); renderVencimiento(); populateMonthFilter();
+}
+
+// ═══════════════════════════════════════════════════════
+//  MOBILE TAP TOOLTIPS
+// ═══════════════════════════════════════════════════════
+(function(){
+  let activeTip = null;
+  function closeTip(){ if(activeTip){ activeTip.classList.remove('tip-active'); activeTip=null; } }
+  document.addEventListener('click', function(e){
+    // Check if click is on a [data-tip] element or its child
+    const el = e.target.closest('[data-tip]');
+    // Only activate on touch devices
+    if(!window.matchMedia('(hover:none)').matches) return;
+    if(el){
+      if(activeTip === el){ closeTip(); return; }
+      closeTip();
+      // Prevent navigation/action on first tap if it's just a tooltip trigger
+      // (only if element is not a button or link doing something else)
+      activeTip = el;
+      el.classList.add('tip-active');
+      e.stopPropagation();
+    } else {
+      closeTip();
+    }
+  }, true);
+  // Close tooltip on scroll
+  document.addEventListener('scroll', closeTip, {passive:true});
+})();
+
+init();
+</script>
+</body>
+</html>
