@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://cdnjs.cloudflare.com; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; connect-src 'self' https://api.hacienda.go.cr https://corsproxy.io https://api.allorigins.win https://proxy.cors.sh; object-src 'none';">
 <title>Tribu Fácil CR — Gestión Fiscal Inteligente</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5515541580647235"
-     crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{
   --bg:#060c1a;--surface:#0d1628;--surface2:#131e35;--surface3:#1a2847;
@@ -506,11 +506,12 @@ button[data-tip],a[data-tip]{cursor:pointer}
 <section class="section active" id="section-upload">
 
   <!-- VENCIMIENTO WIDGET -->
-  <div class="venc-widget" id="vencWidget" data-tip="Cuenta regresiva al próximo vencimiento del D-150 (IVA mensual). El plazo es el día 15 de cada mes.">
+  <div class="venc-widget" id="vencWidget" data-tip="Cuenta regresiva al próximo vencimiento del D-150 (IVA mensual). El plazo es el día 15 hábil de cada mes.">
     <div class="venc-countdown" id="vencCountdown"></div>
     <div class="venc-info">
       <div class="venc-title" id="vencTitle">Cargando...</div>
       <div class="venc-sub" id="vencSub"></div>
+      <div style="font-size:10px;color:var(--faint);margin-top:4px">⏰ Recordá: tu cuenta en TRIBU-CR se desactiva tras <strong style="color:var(--muted)">180 días sin uso</strong>. Ingresá periódicamente.</div>
     </div>
     <div id="vencStatus"></div>
   </div>
@@ -545,6 +546,61 @@ button[data-tip],a[data-tip]{cursor:pointer}
     <div class="stat-card red" data-tip="Documentos rechazados por Hacienda. Revisá el Centro de Alertas para ver el motivo de cada rechazo."><div class="stat-label">Rechazados</div><div class="stat-value" id="s-rejected">0</div><div class="stat-sub">Con error Hacienda</div></div>
     <div class="stat-card yellow" data-tip="IVA generado en tus ventas gravadas. Este monto es lo que 'debés' a Hacienda antes de restar el crédito fiscal."><div class="stat-label">IVA Débito</div><div class="stat-value" id="s-iva">₡0</div><div class="stat-sub">Ventas gravadas</div></div>
     <div class="stat-card purple" data-tip="IVA pagado en tus compras y gastos. Podés acreditarlo contra el débito fiscal para reducir lo que pagás."><div class="stat-label">IVA Crédito</div><div class="stat-value" id="s-credito">₡0</div><div class="stat-sub">De compras deducibles</div></div>
+  </div>
+
+  <!-- PERFIL DEL CONTRIBUYENTE -->
+  <div class="card" style="margin-top:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <div class="t-card-title" style="margin-bottom:0">👤 Perfil del Contribuyente <span style="font-size:10px;font-weight:400;color:var(--faint)">(aparece en PDF y exports)</span></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-xs" onclick="autoDetectFromXMLs()" data-tip="Detecta automáticamente tu cédula y nombre desde las facturas emitidas ya cargadas.">🔎 Detectar desde XML</button>
+        <button class="btn btn-ghost btn-xs" onclick="buscarEnHacienda()" data-tip="Consulta la API oficial de Hacienda con la cédula ingresada y completa nombre, tipo y actividad económica.">🌐 Buscar en Hacienda</button>
+        <button class="btn btn-ghost btn-xs" onclick="saveProfile()" data-tip="Guardá el perfil para que persista entre sesiones.">💾 Guardar</button>
+      </div>
+    </div>
+
+    <!-- Status bar de Hacienda -->
+    <div id="prof-hacienda-status" style="display:none;margin-bottom:12px;padding:10px 14px;border-radius:var(--rs);font-size:12px;border:1px solid"></div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+      <div>
+        <label class="sim-lbl">Nombre / Razón Social</label>
+        <input type="text" id="prof-nombre" class="search-box" placeholder="Ej: Juan Pérez Rodríguez" maxlength="120" style="width:100%;margin-bottom:0" data-tip="Nombre o razón social del contribuyente tal como aparece en Hacienda.">
+      </div>
+      <div>
+        <label class="sim-lbl">Cédula / RUC</label>
+        <input type="text" id="prof-cedula" class="search-box" placeholder="Ej: 102340567 o 3101234567" maxlength="30" style="width:100%;margin-bottom:0"
+          data-tip="Cédula física (9 dígitos sin guiones), jurídica (10 dígitos) o DIMEX. Se usa para buscar en Hacienda."
+          onkeydown="if(event.key==='Enter'){buscarEnHacienda();}">
+      </div>
+      <div>
+        <label class="sim-lbl">Tipo de Contribuyente</label>
+        <select id="prof-tipo" class="filter-sel" style="width:100%" data-tip="Tipo legal del contribuyente según TRIBU-CR.">
+          <option value="">— Seleccioná —</option>
+          <option value="fisica">01 — Persona Física</option>
+          <option value="juridica">02 — Persona Jurídica</option>
+          <option value="dimex">03 — DIMEX</option>
+          <option value="nite">04 — NITE</option>
+        </select>
+      </div>
+      <div>
+        <label class="sim-lbl">Actividad Económica Principal</label>
+        <input type="text" id="prof-actividad" class="search-box" placeholder="Se completa desde Hacienda" maxlength="120" style="width:100%;margin-bottom:0" data-tip="Actividad económica principal del RUT. Se completa automáticamente al buscar en Hacienda.">
+      </div>
+      <div id="prof-actividades-extra" style="display:none;grid-column:1/-1">
+        <label class="sim-lbl">Actividades Secundarias</label>
+        <div id="prof-actividades-lista" style="font-size:11px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:8px 12px;line-height:2"></div>
+      </div>
+      <div>
+        <label class="sim-lbl">Código CIIU</label>
+        <input type="text" id="prof-ciiu" class="search-box" placeholder="Ej: 620100" maxlength="10" style="width:100%;margin-bottom:0" data-tip="Código CIIU de la actividad principal. Se completa automáticamente desde Hacienda.">
+      </div>
+      <div>
+        <label class="sim-lbl">Estado tributario</label>
+        <div id="prof-estado" style="padding:9px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);font-size:12px;color:var(--faint);min-height:38px;display:flex;align-items:center">Sin verificar</div>
+      </div>
+    </div>
+    <div id="prof-saved-msg" style="display:none;margin-top:10px;font-size:11px;color:var(--accent)">✅ Perfil guardado correctamente.</div>
   </div>
 
   <div class="card" style="margin-top:6px">
@@ -597,6 +653,13 @@ button[data-tip],a[data-tip]{cursor:pointer}
     </select>
     <select class="filter-sel" id="fMonth" onchange="filterInvoices()" data-tip="Filtrá documentos por mes de emisión para revisar períodos específicos.">
       <option value="">Todos los meses</option>
+    </select>
+    <select class="filter-sel" id="fSort" onchange="sortField=this.value;filteredCache=null;renderInvoices()" data-tip="Ordenar la lista por fecha, monto o emisor.">
+      <option value="fecha-desc">📅 Más recientes</option>
+      <option value="fecha-asc">📅 Más antiguas</option>
+      <option value="monto-desc">💰 Mayor monto</option>
+      <option value="monto-asc">💰 Menor monto</option>
+      <option value="emisor-asc">🔤 Emisor A→Z</option>
     </select>
   </div>
   <div class="invoice-grid" id="invoiceGrid"></div>
@@ -669,19 +732,39 @@ button[data-tip],a[data-tip]{cursor:pointer}
     <div class="d150-body" id="d150-sec4">
       <div style="padding:14px 10px">
         <div style="background:rgba(61,122,255,.06);border:1px solid rgba(61,122,255,.18);border-radius:var(--rs);padding:12px 16px;font-size:12px;color:#7aabff;margin-bottom:12px">
-          ℹ️ Esta sección aplica si recibiste pagos con <strong>datáfono (tarjetas)</strong> o si tenés <strong>retenciones bancarias</strong>. El banco te debió entregar un comprobante con el monto retenido.
+          ℹ️ Esta sección aplica si recibiste pagos con <strong>datáfono (tarjetas)</strong> o si tenés <strong>retenciones bancarias</strong>. El banco te debió entregar un comprobante con el monto retenido. Estos valores se descuentan del impuesto determinado en la Sección VI.
         </div>
-        <div class="d150-row">
-          <div class="d150-row-lbl">Retenciones por medios de pago electrónico (datáfono, tarjetas)</div>
+        <div class="d150-row" style="flex-wrap:wrap;gap:8px">
+          <div class="d150-row-lbl" style="flex:1;min-width:200px">Retenciones por medios de pago electrónico (datáfono, tarjetas)</div>
           <div class="d150-row-casilla">IV-1</div>
-          <div class="d150-row-val" style="color:var(--accent)">Ingresá manualmente</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:12px;color:var(--muted)">₡</span>
+            <input type="number" id="sec4-retenciones" min="0" step="1" placeholder="0"
+              value="${getAdj().retenciones||''}"
+              style="width:140px;background:var(--surface2);border:1px solid var(--border-hi);border-radius:var(--rs);padding:7px 10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;outline:none"
+              oninput="updateD150Adj()"
+              onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-hi)'"
+              data-tip="Ingresá el monto retenido por el banco en pagos con datáfono. Se resta del impuesto determinado en Sección VI.">
+          </div>
         </div>
-        <div class="d150-row">
-          <div class="d150-row-lbl">Otras retenciones en la fuente acreditables</div>
+        <div class="d150-row" style="flex-wrap:wrap;gap:8px;margin-top:4px">
+          <div class="d150-row-lbl" style="flex:1;min-width:200px">Saldo a Favor de período anterior (crédito acumulado)</div>
           <div class="d150-row-casilla">IV-2</div>
-          <div class="d150-row-val" style="color:var(--accent)">Ingresá manualmente</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:12px;color:var(--muted)">₡</span>
+            <input type="number" id="sec4-saldo" min="0" step="1" placeholder="0"
+              value="${getAdj().saldoFavor||''}"
+              style="width:140px;background:var(--surface2);border:1px solid var(--border-hi);border-radius:var(--rs);padding:7px 10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;outline:none"
+              oninput="updateD150Adj()"
+              onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-hi)'"
+              data-tip="Si en el período anterior tuviste saldo a favor, ingresalo aquí. Reduce el IVA a pagar de este período.">
+          </div>
         </div>
-        <div style="font-size:11px;color:var(--faint);padding:8px 10px 2px">💡 Estos montos se restan del impuesto determinado en la Sección VI. Consultá con tu banco o contador los comprobantes de retención.</div>
+        <div style="margin-top:12px;padding:10px 12px;background:rgba(0,214,143,.06);border:1px solid rgba(0,214,143,.18);border-radius:var(--rs);display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12px;font-weight:600;color:var(--muted)">Total deducciones Sección IV</span>
+          <span id="sec4-total" style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--accent)">₡0</span>
+        </div>
+        <div style="font-size:11px;color:var(--faint);padding:8px 10px 2px">💡 Los valores de esta sección se reflejan automáticamente en la Sección VI (Liquidación final). Consultá con tu banco o contador los comprobantes de retención.</div>
       </div>
     </div>
   </div>
@@ -761,6 +844,12 @@ button[data-tip],a[data-tip]{cursor:pointer}
   <div id="proporcionalidadBox" style="display:none;margin-top:18px" class="info-box" data-tip="Cuando tenés ventas gravadas Y exentas, solo podés acreditar una parte del IVA de tus compras. La proporción = ventas gravadas ÷ total ventas. Ej: si el 70% de tus ventas son gravadas, solo acreditás el 70% del IVA pagado en compras.">
     ⚠️ <strong>Proporcionalidad de Crédito:</strong> Tu empresa tiene ventas gravadas y exentas. En la Sección II del D-150 deberás calcular y registrar el % de proporcionalidad (ventas gravadas ÷ total ventas). Consultá con tu contador para aplicarlo correctamente.
   </div>
+
+  <!-- TABLA TODOS LOS PERÍODOS -->
+  <div class="t-card" style="margin-top:18px" id="allPeriodsPanel">
+    <div class="t-card-title">📅 Resumen por Período (todos los meses)</div>
+    <div id="allPeriodsTable" style="overflow-x:auto"></div>
+  </div>
 </section>
 
 <!-- ════ SIMULADOR RENTA ════ -->
@@ -778,8 +867,26 @@ button[data-tip],a[data-tip]{cursor:pointer}
       <label class="sim-lbl">Período Fiscal</label>
       <select class="sim-input" id="sim-period" onchange="calcSim()" data-tip="El año fiscal en Costa Rica va del 1° de octubre al 30 de setiembre. Seleccioná el período que vas a declarar.">
         <option value="2025">2024–2025 (1 oct 2024 – 30 set 2025)</option>
-        <option value="2026" selected>2025–2026 (1 oct 2025 – 30 set 2026)</option>
+        <option value="2026">2025–2026 (1 oct 2025 – 30 set 2026)</option>
       </select>
+      <script>
+      (function(){
+        // Auto-select current CR fiscal year: Oct 1 → Sep 30
+        const n = new Date();
+        const fiscalEnd = n.getMonth() >= 9 // Oct=9 or later → next calendar year ends the period
+          ? n.getFullYear() + 1
+          : n.getFullYear();
+        const sel = document.getElementById('sim-period');
+        if (sel) {
+          // Try to find matching option, else select the last one
+          let found = false;
+          for (const opt of sel.options) {
+            if (opt.value === String(fiscalEnd)) { opt.selected = true; found = true; break; }
+          }
+          if (!found) sel.options[sel.options.length-1].selected = true;
+        }
+      })();
+      </script>
       <label class="sim-lbl">Tipo de Contribuyente</label>
       <select class="sim-input" id="sim-tipo" onchange="calcSim()" data-tip="Persona Física: profesionales independientes, comerciantes físicos. Persona Jurídica: S.A., S.R.L., cooperativas, etc.">
         <option value="fisica">Persona Física con Actividad Lucrativa (D-101)</option>
@@ -842,17 +949,30 @@ button[data-tip],a[data-tip]{cursor:pointer}
       <div class="export-desc">Solo las 6 secciones del D-150 con las casillas mapeadas, para ingresar a TRIBU-CR.</div>
       <button class="btn btn-primary" onclick="exportD150Excel()">Exportar D-150</button>
     </div>
+    <div class="export-card" data-tip="Genera un PDF del borrador D-150 con todas las secciones, casillas y montos. Ideal para archivar o enviar al contador.">
+      <div class="export-icon">📑</div>
+      <div class="export-title">Borrador D-150 (.pdf)</div>
+      <div class="export-desc">PDF del borrador D-150 con las 6 secciones, casillas numeradas y montos calculados. Listo para archivar o compartir.</div>
+      <button class="btn btn-danger" onclick="exportD150PDF()">Exportar PDF</button>
+    </div>
     <div class="export-card" data-tip="Archivo de texto separado por comas, compatible con Excel, Google Sheets, contabilidades y sistemas ERP.">
       <div class="export-icon">📄</div>
       <div class="export-title">CSV</div>
       <div class="export-desc">Formato plano compatible con cualquier sistema contable o hoja de cálculo.</div>
       <button class="btn btn-ghost" onclick="exportCSV()">Descargar CSV</button>
     </div>
-    <div class="export-card" data-tip="Todos los datos en formato JSON estructurado. Útil para integraciones con sistemas propios o respaldo completo.">
+    <div class="export-card" data-tip="Todos los datos en formato JSON: facturas, perfil del contribuyente y ajustes de Sección IV. Respaldo completo que podés reimportar.">
       <div class="export-icon">📋</div>
-      <div class="export-title">JSON Raw</div>
-      <div class="export-desc">Datos completos en JSON para integración con otros sistemas o respaldo.</div>
+      <div class="export-title">JSON Backup</div>
+      <div class="export-desc">Backup completo: facturas + perfil + ajustes D-150. Podés reimportarlo para restaurar la sesión.</div>
       <button class="btn btn-ghost" onclick="exportJSON()">Exportar JSON</button>
+    </div>
+    <div class="export-card" data-tip="Importá un backup JSON exportado desde esta app para restaurar todas tus facturas, perfil y ajustes de Sección IV.">
+      <div class="export-icon">📂</div>
+      <div class="export-title">Importar Backup JSON</div>
+      <div class="export-desc">Restaurá una sesión desde un archivo .json exportado previamente con esta app.</div>
+      <button class="btn btn-ghost" onclick="document.getElementById('jsonImportInput').click()">Importar JSON</button>
+      <input type="file" id="jsonImportInput" accept=".json" style="display:none" onchange="importJSON(event)">
     </div>
   </div>
 </section>
@@ -999,7 +1119,7 @@ button[data-tip],a[data-tip]{cursor:pointer}
       <div style="font-size:12px;color:var(--muted);line-height:2">
         <div>🌐 <a href="https://tribu.hacienda.go.cr" target="_blank" style="color:#7aabff">tribu.hacienda.go.cr</a></div>
         <div>🌐 <a href="https://www.hacienda.go.cr" target="_blank" style="color:#7aabff">hacienda.go.cr</a></div>
-        <div>📞 Call center: <strong style="color:var(--text)">2539-6240</strong></div>
+        <div>📞 Call center TRIBU-CR: <strong style="color:var(--text)">2539-4000</strong></div>
         <div>📧 Consultas DGT en el portal</div>
         <div style="color:var(--faint);font-size:11px;margin-top:4px">Esta app es una herramienta de apoyo. Siempre verificá con un CPA antes de declarar.</div>
       </div>
@@ -1023,8 +1143,15 @@ button[data-tip],a[data-tip]{cursor:pointer}
 <div class="modal-overlay" id="invModal">
   <div class="modal">
     <div class="modal-hdr">
-      <div class="modal-title" data-tip="Detalle completo del comprobante: clave, emisor, receptor, líneas y resumen fiscal.">Detalle del Documento</div>
-      <button class="modal-close" onclick="closeModal()" data-tip="Cerrar detalle">✕</button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button id="modalPrev" class="modal-close" onclick="navigateModal(-1)" data-tip="Documento anterior (←)">‹</button>
+        <button id="modalNext" class="modal-close" onclick="navigateModal(1)"  data-tip="Documento siguiente (→)">›</button>
+        <div class="modal-title" data-tip="Detalle completo del comprobante: clave, emisor, receptor, líneas y resumen fiscal.">Detalle del Documento</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span id="modalIdxLabel" style="font-size:10px;color:var(--faint)"></span>
+        <button class="modal-close" onclick="closeModal()" data-tip="Cerrar detalle (ESC)">✕</button>
+      </div>
     </div>
     <div class="modal-body" id="modalBody"></div>
   </div>
@@ -1047,7 +1174,20 @@ let currentYearD150  = new Date().getFullYear();
 let currentYearSum   = new Date().getFullYear();
 let currentPage      = 1;
 let filteredCache    = null;
+let sortField        = 'fecha-desc'; // 'fecha-desc'|'fecha-asc'|'monto-desc'|'monto-asc'|'emisor-asc'
 const PAGE_SIZE_DEF  = 24;
+let d150Adjustments  = {};   // Sección IV — keyed by 'YYYY-MM' or 'all', persisted in storage
+
+function getAdjKey() {
+  return currentMonthD150 === -1
+    ? 'all'
+    : `${currentYearD150}-${String(currentMonthD150 + 1).padStart(2, '0')}`;
+}
+function getAdj() {
+  const k = getAdjKey();
+  if (!d150Adjustments[k]) d150Adjustments[k] = { retenciones: 0, saldoFavor: 0 };
+  return d150Adjustments[k];
+}
 
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
                 'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -1069,6 +1209,8 @@ async function saveStorage() {
     for (let c = chunks.length; c < chunks.length + 5; c++) {
       try { await window.storage.delete(SK+'-c'+c); } catch(e) {}
     }
+    // Persist adjustments map
+    await window.storage.set(SK+'-adj', JSON.stringify(d150Adjustments));
   } catch(e) { console.warn('save error', e); }
 }
 
@@ -1082,8 +1224,13 @@ async function loadStorage() {
     for (let c = 0; c < meta.chunks; c++) {
       try { const r = await window.storage.get(SK+'-c'+c); if (r) arr.push(...JSON.parse(r.value)); } catch(e) {}
     }
-    if (arr.length > 0) { invoices = arr; return true; }
-    return false;
+    if (arr.length > 0) { invoices = arr; }
+    // Restore adjustments map
+    try {
+      const adjR = await window.storage.get(SK+'-adj');
+      if (adjR) d150Adjustments = JSON.parse(adjR.value);
+    } catch(e) {}
+    return arr.length > 0;
   } catch(e) { return false; }
 }
 
@@ -1096,6 +1243,7 @@ async function clearStorage() {
       for (let c = 0; c < meta.chunks + 3; c++) { try { await window.storage.delete(SK+'-c'+c); } catch(e) {} }
       await window.storage.delete(SK+'-meta');
     }
+    try { await window.storage.delete(SK+'-adj'); } catch(e) {}
   } catch(e) {}
 }
 
@@ -1107,9 +1255,9 @@ function switchTab(t) {
   document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
   document.getElementById('section-'+t).classList.add('active');
   document.getElementById('tab-'+t).classList.add('active');
-  if (t === 'invoices')  { populateMonthFilter(); renderInvoices(); }
+  if (t === 'invoices')  { populateMonthFilter(); filteredCache=null; renderInvoices(); }
   if (t === 'd150')      renderD150();
-  if (t === 'summary')   renderSummary();
+  if (t === 'summary')   { renderSummary(); renderAllPeriods(); }
   if (t === 'export')    document.getElementById('exp-count').textContent = invoices.length + ' documentos';
 }
 
@@ -1129,7 +1277,14 @@ async function processFiles(files) {
   showProgress(true);
   let xmlFiles = [];
   let i = 0;
+  const MAX_MB = 50;
   for (const file of files) {
+    if (file.size > MAX_MB * 1024 * 1024) {
+      addWarning('error', 'Archivo demasiado grande: '+file.name,
+        `Tamaño: ${(file.size/1024/1024).toFixed(1)} MB. Máximo permitido: ${MAX_MB} MB. Dividí el ZIP en partes más pequeñas.`);
+      setProgress(++i / files.length * 40);
+      continue;
+    }
     if (file.name.endsWith('.zip')) {
       try {
         const zip = await JSZip.loadAsync(file);
@@ -1162,6 +1317,11 @@ async function processFiles(files) {
   toast(ok > 0 ? 'success' : 'error', ok > 0
     ? `✅ ${ok} documento${ok!==1?'s':''} cargado${ok!==1?'s':''}. Total: ${invoices.length}`
     : '❌ No se pudo procesar ningún archivo');
+
+  // Auto-detect profile from loaded XMLs if profile is still empty
+  if (ok > 0 && !contributorProfile.nombre && !contributorProfile.cedula) {
+    setTimeout(() => autoDetectFromXMLs(), 800);
+  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1176,7 +1336,17 @@ function parseXML(xmlText, filename) {
 
   if (rn.includes('mensajehacienda')) return parseMensaje(doc, filename);
   if (rn.includes('notacredito'))     return parseFactura(doc, filename, 'NotaCredito', 'emitida');
-  if (rn.includes('notadebito'))      return parseFactura(doc, filename, 'NotaDebito', 'emitida');
+  if (rn.includes('notadebito'))      {
+    // Detect direction: if contributor cédula matches receptor → received (recibida = adds to credit),
+    // otherwise emitida (adds to debit). Fall back to emitida.
+    const receptorId = getSecId(doc,'Receptor') || '';
+    const isRecibida = contributorProfile.cedula &&
+      receptorId.replace(/[-\s]/g,'') === contributorProfile.cedula.replace(/[-\s]/g,'');
+    const ndDir = isRecibida ? 'recibida' : 'emitida';
+    if (isRecibida) addWarning('info', 'NotaDebito recibida: '+filename,
+      'Esta ND tiene al contribuyente como receptor. Se clasifica como recibida y suma al crédito fiscal.');
+    return parseFactura(doc, filename, 'NotaDebito', ndDir);
+  }
   if (rn.includes('facturacompra'))   return parseFactura(doc, filename, 'FacturaCompra', 'recibida');
   if (rn.includes('tiquete'))         return parseFactura(doc, filename, 'TiqueteElectronico', 'emitida');
   if (rn.includes('rep'))             return parseREP(doc, filename);
@@ -1244,7 +1414,7 @@ function parseFactura(doc, filename, type, direction) {
   for (const ln of lineas) {
     const imps = [...ln.getElementsByTagName('*')].filter(e => e.localName === 'Impuesto');
     const cabys = getChild(ln,'CodigoComercial') || getChild(ln,'CodigoCabys') || getChild(ln,'CABYS') || '';
-    // MEJORA 7: validate CABYS length
+  // MEJORA 7: validate CABYS length
     if (cabys && cabys.length !== 13) inv.cabysWarnings.push('CABYS inválido ('+cabys.length+' dígitos): '+cabys);
     inv.lineas.push({
       numero:   getChild(ln,'NumeroLinea'),
@@ -1286,6 +1456,11 @@ function parseFactura(doc, filename, type, direction) {
   if (!inv.resumen.totalComprobante)
     addWarning('warn','Campos fiscales vacíos: '+filename,'No se encontraron montos en el resumen.');
 
+  // Validar longitud exacta de la clave numérica (debe ser 50 dígitos)
+  if (inv.clave && inv.clave.replace(/\D/g,'').length !== 50)
+    addWarning('warn','Clave con longitud inválida en: '+filename,
+      `Se esperaban 50 dígitos, se encontraron ${inv.clave.replace(/\D/g,'').length}. El documento puede no ser válido ante Hacienda.`);
+
   return inv;
 }
 
@@ -1320,6 +1495,9 @@ function parseMensaje(doc, filename) {
     estado, ivaRates: [], clasificacion: [], cabysWarnings:[],
   };
   if (isR) addWarning('error','Factura RECHAZADA por Hacienda: '+inv.clave?.slice(0,20), inv.mensajeHacienda);
+  if (inv.clave && inv.clave.replace(/\D/g,'').length !== 50)
+    addWarning('warn','Clave inválida en MensajeHacienda: '+filename,
+      `Se esperaban 50 dígitos, se encontraron ${inv.clave.replace(/\D/g,'').length}.`);
   return inv;
 }
 
@@ -1366,7 +1544,8 @@ function filterInvoices() {
     if (search && !(inv.emisor.nombre||'').toLowerCase().includes(search)
                && !(inv.receptor.nombre||'').toLowerCase().includes(search)
                && !(inv.clave||'').toLowerCase().includes(search)
-               && !(inv.numeroConsec||'').toLowerCase().includes(search)) return false;
+               && !(inv.numeroConsec||'').toLowerCase().includes(search)
+               && !inv.lineas.some(l=>(l.detalle||'').toLowerCase().includes(search))) return false;
     if (fStatus && inv.status !== fStatus) return false;
     if (fDir && inv.direction !== fDir) return false;
     if (fType && inv.type !== fType) return false;
@@ -1376,6 +1555,18 @@ function filterInvoices() {
       if (key !== fMonth) return false;
     }
     return true;
+  });
+
+  // Apply sort
+  const sf = document.getElementById('fSort')?.value || sortField;
+  sortField = sf;
+  filteredCache.sort((a,b) => {
+    if (sf === 'fecha-desc') return new Date(b.fechaEmision||0) - new Date(a.fechaEmision||0);
+    if (sf === 'fecha-asc')  return new Date(a.fechaEmision||0) - new Date(b.fechaEmision||0);
+    if (sf === 'monto-desc') return (b.resumen.totalComprobante||0) - (a.resumen.totalComprobante||0);
+    if (sf === 'monto-asc')  return (a.resumen.totalComprobante||0) - (b.resumen.totalComprobante||0);
+    if (sf === 'emisor-asc') return (a.emisor.nombre||'').localeCompare(b.emisor.nombre||'', 'es');
+    return 0;
   });
 
   currentPage = 1;
@@ -1483,11 +1674,35 @@ function changePageSize() { currentPage=1; renderInvoices(); }
 async function deleteInv(idx) { invoices.splice(idx,1); filteredCache=null; await saveStorage(); updateStats(); updateBadges(); filterInvoices(); toast('success','🗑 Documento eliminado'); }
 
 // ═══════════════════════════════════════════════════════
-//  DETAIL MODAL
+//  DETAIL MODAL — with prev/next navigation
 // ═══════════════════════════════════════════════════════
+let modalCurrentIdx = -1;
+
 function showDetail(idx) {
+  const list = filteredCache !== null ? filteredCache : invoices;
+  // Map filtered index to global invoices index if needed
+  const globalIdx = typeof idx === 'number' && idx >= 0 && idx < invoices.length ? idx : -1;
+  if (globalIdx < 0) return;
+  modalCurrentIdx = globalIdx;
+  _renderModal(globalIdx, list);
+}
+
+function _renderModal(idx, list) {
   const inv = invoices[idx];
   if (!inv) return;
+
+  // Update prev/next state
+  const filtList = filteredCache !== null ? filteredCache : invoices;
+  const posInFilter = filtList.indexOf(inv);
+  const hasPrev = posInFilter > 0;
+  const hasNext = posInFilter < filtList.length - 1;
+  const prevEl = document.getElementById('modalPrev');
+  const nextEl = document.getElementById('modalNext');
+  const lblEl  = document.getElementById('modalIdxLabel');
+  if (prevEl) { prevEl.disabled = !hasPrev; prevEl.style.opacity = hasPrev ? '1' : '0.3'; }
+  if (nextEl) { nextEl.disabled = !hasNext; nextEl.style.opacity = hasNext ? '1' : '0.3'; }
+  if (lblEl)  lblEl.textContent = filtList.length > 1 ? `${posInFilter+1} / ${filtList.length}` : '';
+
   const sc = inv.status==='accepted'?'s-accepted':inv.status==='rejected'?'s-rejected':'s-warn';
   const sl = inv.status==='accepted'?'Aceptada':inv.status==='rejected'?'Rechazada':'Advertencia';
   const dt = inv.fechaEmision ? new Date(inv.fechaEmision).toLocaleString('es-CR') : 'N/D';
@@ -1550,9 +1765,32 @@ function showDetail(idx) {
     ${inv.mensajeHacienda?`<div class="detail-sec"><div class="detail-sec-title">Mensaje Hacienda</div><div style="background:var(--surface3);border-radius:var(--rs);padding:10px 14px;font-size:12px;color:var(--muted)">${inv.mensajeHacienda}</div></div>`:''}
   `;
   document.getElementById('invModal').classList.add('open');
+  document.getElementById('modalBody').scrollTop = 0;
 }
-function closeModal() { document.getElementById('invModal').classList.remove('open'); }
+
+function navigateModal(dir) {
+  const filtList = filteredCache !== null ? filteredCache : invoices;
+  const inv = invoices[modalCurrentIdx];
+  const pos = filtList.indexOf(inv);
+  const newPos = pos + dir;
+  if (newPos < 0 || newPos >= filtList.length) return;
+  const newInv = filtList[newPos];
+  modalCurrentIdx = invoices.indexOf(newInv);
+  _renderModal(modalCurrentIdx, filtList);
+}
+
+function closeModal() {
+  document.getElementById('invModal').classList.remove('open');
+  modalCurrentIdx = -1;
+}
 document.getElementById('invModal').addEventListener('click', e => { if(e.target===document.getElementById('invModal'))closeModal(); });
+// ESC key closes modal, arrow keys navigate
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('invModal').classList.contains('open')) return;
+  if (e.key === 'Escape') { closeModal(); }
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   navigateModal(-1);
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown')  navigateModal(1);
+});
 
 // ═══════════════════════════════════════════════════════
 //  MONTH HELPERS
@@ -1568,19 +1806,51 @@ function getFilteredByMonth(monthIdx, yearHint) {
   });
 }
 
+// Detect year range present in invoices
+function invoiceYearRange() {
+  const years = invoices
+    .map(i => i.fechaEmision ? new Date(i.fechaEmision).getFullYear() : null)
+    .filter(Boolean);
+  if (!years.length) { const y = new Date().getFullYear(); return { min: y, max: y }; }
+  return { min: Math.min(...years), max: Math.max(...years) };
+}
+
 function changeMonth(dir) {
-  currentMonthD150 += dir;
-  if (currentMonthD150 > 11) { currentMonthD150 = -1; }
-  else if (currentMonthD150 < -1) { currentMonthD150 = 11; }
-  const lbl = currentMonthD150 === -1 ? 'Todos los meses' : MONTHS[currentMonthD150] + ' ' + currentYearD150;
+  const { min, max } = invoiceYearRange();
+  if (currentMonthD150 === -1) {
+    if (dir > 0) { currentMonthD150 = 0;  currentYearD150 = min; }
+    else         { currentMonthD150 = 11; currentYearD150 = max; }
+  } else {
+    currentMonthD150 += dir;
+    if (currentMonthD150 > 11) {
+      currentMonthD150 = 0;
+      currentYearD150 = Math.min(currentYearD150 + 1, max);
+    } else if (currentMonthD150 < 0) {
+      currentMonthD150 = -1;  // back to "All"
+    }
+  }
+  const lbl = currentMonthD150 === -1 ? 'Todos los meses'
+    : MONTHS[currentMonthD150] + ' ' + currentYearD150;
   document.getElementById('d150MonthLabel').textContent = lbl;
   renderD150();
 }
+
 function changeMonthSum(dir) {
-  currentMonthSum += dir;
-  if (currentMonthSum > 11) { currentMonthSum = -1; }
-  else if (currentMonthSum < -1) { currentMonthSum = 11; }
-  const lbl = currentMonthSum === -1 ? 'Todos los meses' : MONTHS[currentMonthSum] + ' ' + currentYearSum;
+  const { min, max } = invoiceYearRange();
+  if (currentMonthSum === -1) {
+    if (dir > 0) { currentMonthSum = 0;  currentYearSum = min; }
+    else         { currentMonthSum = 11; currentYearSum = max; }
+  } else {
+    currentMonthSum += dir;
+    if (currentMonthSum > 11) {
+      currentMonthSum = 0;
+      currentYearSum = Math.min(currentYearSum + 1, max);
+    } else if (currentMonthSum < 0) {
+      currentMonthSum = -1;
+    }
+  }
+  const lbl = currentMonthSum === -1 ? 'Todos los meses'
+    : MONTHS[currentMonthSum] + ' ' + currentYearSum;
   document.getElementById('sumMonthLabel').textContent = lbl;
   renderSummary();
 }
@@ -1595,35 +1865,91 @@ function calcD150Data(list) {
   const nc       = list.filter(i => i.type === 'NotaCredito');
   const nd       = list.filter(i => i.type === 'NotaDebito');
 
-  // Ventas gravadas por tarifa
+  // ── Ventas + REP gravadas por tarifa ──────────────────
   const ivaByRate = {};
+  const addToRate = (bucket, tarifa, base, impuesto) => {
+    if (!bucket[tarifa]) bucket[tarifa] = { base: 0, impuesto: 0 };
+    bucket[tarifa].base     += base;
+    bucket[tarifa].impuesto += impuesto;
+  };
+
   for (const inv of ventas) {
-    for (const ln of inv.lineas) {
-      for (const im of ln.impuestos) {
-        if (!ivaByRate[im.tarifa]) ivaByRate[im.tarifa] = { base: 0, impuesto: 0 };
-        ivaByRate[im.tarifa].base      += ln.base || ln.subtotal;
-        ivaByRate[im.tarifa].impuesto  += im.monto;
+    if (inv.lineas.length) {
+      for (const ln of inv.lineas) {
+        for (const im of ln.impuestos) {
+          addToRate(ivaByRate, im.tarifa, ln.base || ln.subtotal, im.monto);
+        }
       }
-    }
-    // Fallback for docs without lineas
-    if (!inv.lineas.length && inv.resumen.totalImpuesto) {
-      if (!ivaByRate[13]) ivaByRate[13] = { base:0,impuesto:0 };
-      ivaByRate[13].base     += inv.resumen.totalServGravados + inv.resumen.totalMercGravadas;
-      ivaByRate[13].impuesto += inv.resumen.totalImpuesto;
+    } else if (inv.resumen.totalImpuesto) {
+      // Fallback for REP / docs without line detail
+      const base = (inv.resumen.totalServGravados + inv.resumen.totalMercGravadas)
+                || Math.max(0, inv.resumen.totalComprobante - inv.resumen.totalImpuesto);
+      addToRate(ivaByRate, 13, base, inv.resumen.totalImpuesto);
     }
   }
 
-  const totalServGrav = sum(ventas, i=>i.resumen.totalServGravados);
+  // ── NC: restar por tarifa (no descuento global) ────────
+  const ncByRate = {};
+  for (const inv of nc) {
+    if (inv.lineas.length) {
+      for (const ln of inv.lineas) {
+        for (const im of ln.impuestos) {
+          addToRate(ncByRate, im.tarifa, ln.base || ln.subtotal, im.monto);
+        }
+      }
+    } else if (inv.resumen.totalImpuesto) {
+      addToRate(ncByRate, 13,
+        Math.max(0, inv.resumen.totalComprobante - inv.resumen.totalImpuesto),
+        inv.resumen.totalImpuesto);
+    }
+  }
+  for (const [t, v] of Object.entries(ncByRate)) {
+    if (ivaByRate[t]) {
+      ivaByRate[t].base      = Math.max(0, ivaByRate[t].base      - v.base);
+      ivaByRate[t].impuesto  = Math.max(0, ivaByRate[t].impuesto  - v.impuesto);
+    }
+  }
+
+  // ── ND: sumar por tarifa ───────────────────────────────
+  const ndByRate = {};
+  for (const inv of nd) {
+    if (inv.lineas.length) {
+      for (const ln of inv.lineas) {
+        for (const im of ln.impuestos) {
+          addToRate(ndByRate, im.tarifa, ln.base || ln.subtotal, im.monto);
+        }
+      }
+    } else if (inv.resumen.totalImpuesto) {
+      addToRate(ndByRate, 13,
+        Math.max(0, inv.resumen.totalComprobante - inv.resumen.totalImpuesto),
+        inv.resumen.totalImpuesto);
+    }
+  }
+  for (const [t, v] of Object.entries(ndByRate)) {
+    addToRate(ivaByRate, t, v.base, v.impuesto);
+  }
+
+  // Totales de ventas (incluir REP en base gravada para proporcionalidad)
+  const repGrav = sum(ventas.filter(i=>i.type==='REP'), i=>
+    (i.resumen.totalServGravados + i.resumen.totalMercGravadas)
+    || Math.max(0, i.resumen.totalComprobante - i.resumen.totalImpuesto));
+  const totalServGrav = sum(ventas, i=>i.resumen.totalServGravados) + repGrav;
   const totalMercGrav = sum(ventas, i=>i.resumen.totalMercGravadas);
   const totalServExen = sum(ventas, i=>i.resumen.totalServExentos);
   const totalMercExen = sum(ventas, i=>i.resumen.totalMercExentas);
   const totalNoSuj    = sum(ventas, i=>i.resumen.totalNoSujeto);
-  const totalDebitoIVA= sum(ventas, i=>i.resumen.totalImpuesto);
-  const ajusteNC      = sum(nc,     i=>i.resumen.totalImpuesto);
-  const ajusteND      = sum(nd,     i=>i.resumen.totalImpuesto);
-  const debitoNeto    = totalDebitoIVA - ajusteNC + ajusteND;
 
-  // MEJORA 2: crédito fiscal de compras
+  // Ajuste informativo NC/ND (ya aplicado en ivaByRate)
+  const ajusteNC_info = sum(nc, i=>i.resumen.totalImpuesto);
+  const ajusteND_info = sum(nd, i=>i.resumen.totalImpuesto);
+
+  // Débito neto = suma de ivaByRate (ya incluye NC/ND por tarifa)
+  const totalDebitoIVA= Object.values(ivaByRate).reduce((s,v)=>s+v.impuesto, 0);
+  const ajusteNC      = ajusteNC_info;
+  const ajusteND      = ajusteND_info;
+  const debitoNeto    = totalDebitoIVA; // ya descontadas NC, ya sumadas ND
+
+  // crédito fiscal de compras
   const totalCompras  = sum(compras, i=>i.resumen.totalComprobante);
   const creditoFiscal = sum(compras, i=>i.resumen.totalImpuesto);
 
@@ -1636,10 +1962,12 @@ function calcD150Data(list) {
   const ivaPagar = Math.max(0, debitoNeto - creditoAjustado);
   const credFavor= Math.max(0, creditoAjustado - debitoNeto);
 
-  return { ivaByRate, totalServGrav, totalMercGrav, totalServExen, totalMercExen, totalNoSuj,
-           totalDebitoIVA, ajusteNC, ajusteND, debitoNeto,
+  const repCount = ventas.filter(i=>i.type==='REP'&&i.resumen.totalImpuesto>0).length;
+
+  return { ivaByRate, ncByRate, ndByRate, totalServGrav, totalMercGrav, totalServExen, totalMercExen, totalNoSuj,
+           totalDebitoIVA, ajusteNC, ajusteND, debitoNeto, repCount,
            totalCompras, creditoFiscal, proporcion, creditoAjustado,
-           ivaPagar, credFavor, hasMixtas: totalServExen+totalMercExen>0 && totalServGrav+totalMercGrav>0 };
+           ivaPagar, credFavor, hasMixtas: totalServExen+totalMercExen>0 && (totalServGrav+totalMercGrav)>0 };
 }
 
 function renderD150() {
@@ -1673,17 +2001,68 @@ function renderD150() {
       <button class="d150-copy-btn" onclick="copyVal('${Math.round(val)}')" data-tip="Copiar ₡${Math.round(val).toLocaleString('es-CR')} al portapapeles">📋</button>
     </div>`;
 
-  // SECCIÓN I
+  // SECCIÓN I — Servicios y Mercancías separados por tarifa (como exige TRIBU-CR)
+  // ivaByRate agrupa por tarifa pero mezcla serv+merc; usamos los totales del resumen para desglosar
+  const ncByRateInfo = Object.entries(d.ncByRate||{}).filter(([,v])=>v.impuesto>0);
+  const ndByRateInfo = Object.entries(d.ndByRate||{}).filter(([,v])=>v.impuesto>0);
+
+  // Build per-rate Servicios vs Mercancías breakdown from raw invoice data
+  const rateServMerc = {};
+  for (const inv of list.filter(i=>i.direction==='emitida'&&i.type!=='MensajeHacienda')) {
+    if (inv.lineas.length) {
+      for (const ln of inv.lineas) {
+        for (const im of ln.impuestos) {
+          if (!rateServMerc[im.tarifa]) rateServMerc[im.tarifa] = { serv:0, merc:0, iva:0 };
+          // Heuristic: if CABYS starts with digit 1–5 → mercancía, else servicio
+          // Real v4.4 uses Tipo field; fallback to resumen totals distribution
+          rateServMerc[im.tarifa].iva += im.monto;
+          // Use actual line totals — base = ln.base || ln.subtotal
+          const base = ln.base || ln.subtotal || 0;
+          rateServMerc[im.tarifa].serv += base;   // conservative: report as servicios
+        }
+      }
+    } else if (inv.resumen.totalImpuesto) {
+      const t = 13;
+      if (!rateServMerc[t]) rateServMerc[t] = { serv:0, merc:0, iva:0 };
+      rateServMerc[t].serv += inv.resumen.totalServGravados;
+      rateServMerc[t].merc += inv.resumen.totalMercGravadas;
+      rateServMerc[t].iva  += inv.resumen.totalImpuesto;
+    }
+  }
+  // Use resumen-level ServsGrav vs MercGrav totals per tarifa where possible
+  // Override with calcD150 ivaByRate totals for accuracy
+  const sec1rows = Object.entries(d.ivaByRate).sort((a,b)=>+b[0]-+a[0]).map(([tarifa, v]) => {
+    const sm = rateServMerc[+tarifa] || { serv: v.base, merc: 0, iva: v.impuesto };
+    // Distribute base proportionally using global Serv/Merc ratio if both exist
+    const totalGravBase = d.totalServGrav + d.totalMercGrav;
+    const servRatio = totalGravBase > 0 ? d.totalServGrav / totalGravBase : 1;
+    const mercRatio = totalGravBase > 0 ? d.totalMercGrav / totalGravBase : 0;
+    const servBase  = Math.round(v.base * servRatio);
+    const mercBase  = Math.round(v.base * mercRatio);
+    return (
+      (servBase > 0 ? mkRow(`Servicios Gravados — base ${tarifa}%`, `SG${tarifa}`, servBase, 'blue') : '') +
+      (mercBase > 0 ? mkRow(`Mercancías Gravadas — base ${tarifa}%`, `MG${tarifa}`, mercBase, 'blue') : '') +
+      mkRow(`IVA ${tarifa}% (neto NC/ND)`, `IVA${tarifa}`, v.impuesto, 'blue')
+    );
+  }).join('');
+
   document.getElementById('d150-sec1').innerHTML =
-    Object.entries(d.ivaByRate).sort((a,b)=>b[0]-a[0]).map(([tarifa,v]) =>
-      mkRow(`Ventas Generales — Base imponible ${tarifa}%`, `${tarifa}%`, v.base,'blue') +
-      mkRow(`IVA ${tarifa}% generado`, '→IVA', v.impuesto,'blue')
-    ).join('') +
+    sec1rows +
+    (ncByRateInfo.length ? `<div style="background:rgba(255,77,106,.06);border:1px solid rgba(255,77,106,.18);border-radius:var(--rs);padding:8px 14px;margin:6px 0;font-size:11px;color:var(--danger)">
+      ✂️ <strong>NC descontadas por tarifa:</strong> ${ncByRateInfo.map(([t,v])=>`IVA ${t}%: −${fmt(v.impuesto)}`).join(' · ')}
+    </div>` : '') +
+    (ndByRateInfo.length ? `<div style="background:rgba(251,146,60,.06);border:1px solid rgba(251,146,60,.18);border-radius:var(--rs);padding:8px 14px;margin:6px 0;font-size:11px;color:#fb923c">
+      ➕ <strong>ND sumadas por tarifa:</strong> ${ndByRateInfo.map(([t,v])=>`IVA ${t}%: +${fmt(v.impuesto)}`).join(' · ')}
+    </div>` : '') +
+    (d.repCount > 0 ? `<div style="background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.2);border-radius:var(--rs);padding:8px 14px;margin:6px 0;font-size:11px;color:#a78bfa">
+      🧾 <strong>${d.repCount} REP${d.repCount>1?'s':''} incluido${d.repCount>1?'s':''}</strong> en el cálculo del débito.
+    </div>` : '') +
     mkRow('Ventas Exentas (sin IVA)', 'EX', d.totalServExen+d.totalMercExen, 'green') +
     mkRow('Ventas No Sujetas', 'NS', d.totalNoSuj, 'warn') +
-    mkRow('(-) Ajuste Notas de Crédito', 'NC', d.ajusteNC, '') +
-    mkRow('(+) Ajuste Notas de Débito', 'ND', d.ajusteND, '') +
-    `<div class="t-total" style="margin-top:10px"><span class="t-total-lbl">Total Débito Fiscal (IVA ventas)</span><span class="t-total-val" style="color:var(--danger)">${fmt(d.debitoNeto)}</span></div>`;
+    `<div style="background:rgba(61,122,255,.06);border:1px solid rgba(61,122,255,.2);border-radius:var(--rs);padding:7px 14px;margin:6px 0;font-size:10px;color:var(--muted)">
+      ℹ️ TRIBU-CR pide Servicios y Mercancías en filas separadas por tarifa. La distribución Serv/Merc se estima del resumen del XML. Verificá antes de declarar.
+    </div>` +
+    `<div class="t-total" style="margin-top:10px"><span class="t-total-lbl">Total Débito Fiscal (IVA ventas neto)</span><span class="t-total-val" style="color:var(--danger)">${fmt(d.debitoNeto)}</span></div>`;
 
   // SECCIÓN II
   document.getElementById('d150-sec2').innerHTML =
@@ -1717,22 +2096,45 @@ function renderD150() {
 
   // SECCIÓN VI
   const impDet = Math.max(0, d.debitoNeto - d.creditoAjustado);
+  const retenciones  = getAdj().retenciones  || 0;
+  const saldoAnterior= getAdj().saldoFavor   || 0;
+  const totalDedSec4 = retenciones + saldoAnterior;
+  const ivaPagarFinal= Math.max(0, impDet - totalDedSec4);
+  const credFavorFinal= Math.max(0, totalDedSec4 - impDet + (impDet > 0 ? 0 : d.credFavor));
+  // Recalc: if credFavor from II > debitoNeto, plus sec4 deductions
+  const saldoFinalFavor = impDet === 0
+    ? d.credFavor + totalDedSec4
+    : (totalDedSec4 > impDet ? totalDedSec4 - impDet : 0);
+
   document.getElementById('d150-sec6').innerHTML =
     mkRow('Impuesto Determinado (de Sección V)', 'L1', impDet, 'warn') +
-    mkRow('(-) Retenciones bancarias (datáfono, etc.)', 'L2', 0) +
-    mkRow('(-) Saldo a Favor período anterior', 'L3', 0) +
-    `<div class="t-total ${impDet>0?'style="background:rgba(255,77,106,.08);border-color:rgba(255,77,106,.25)"':''}">
-      <span class="t-total-lbl">${d.ivaPagar>0?'⚠️ IVA a PAGAR':'✅ Saldo a FAVOR'}</span>
-      <span class="t-total-val" style="color:${d.ivaPagar>0?'var(--danger)':'var(--accent)'}">${fmt(d.ivaPagar||d.credFavor)}</span>
+    `<div class="d150-row" style="background:rgba(0,214,143,.04);border-radius:6px">
+      <div class="d150-row-lbl">(-) Retenciones bancarias (datáfono) <span style="font-size:10px;color:var(--accent)">[Sección IV-1]</span></div>
+      <div class="d150-row-casilla">L2</div>
+      <div class="d150-row-val green">${fmt(retenciones)}</div>
+      <button class="d150-copy-btn" onclick="copyVal('${Math.round(retenciones)}')" data-tip="Copiar al portapapeles">📋</button>
+    </div>` +
+    `<div class="d150-row" style="background:rgba(0,214,143,.04);border-radius:6px">
+      <div class="d150-row-lbl">(-) Saldo a Favor período anterior <span style="font-size:10px;color:var(--accent)">[Sección IV-2]</span></div>
+      <div class="d150-row-casilla">L3</div>
+      <div class="d150-row-val green">${fmt(saldoAnterior)}</div>
+      <button class="d150-copy-btn" onclick="copyVal('${Math.round(saldoAnterior)}')" data-tip="Copiar al portapapeles">📋</button>
+    </div>` +
+    (totalDedSec4 > 0 ? `<div style="font-size:11px;color:var(--accent);padding:4px 10px 8px">✅ Total deducciones Sección IV aplicadas: ${fmt(totalDedSec4)}</div>` : '') +
+    `<div class="t-total ${ivaPagarFinal>0?'style="background:rgba(255,77,106,.08);border-color:rgba(255,77,106,.25)"':''}">
+      <span class="t-total-lbl">${ivaPagarFinal>0?'⚠️ IVA a PAGAR':'✅ Saldo a FAVOR'}</span>
+      <span class="t-total-val" style="color:${ivaPagarFinal>0?'var(--danger)':'var(--accent)'}">${fmt(ivaPagarFinal > 0 ? ivaPagarFinal : (d.credFavor + saldoFinalFavor))}</span>
     </div>
     <div style="font-size:11px;color:var(--faint);padding:10px 10px 4px">
       💳 Podés pagar directo en TRIBU-CR con cuenta IBAN, o en ventanilla del BCR / BAC.
     </div>`;
 
-  // Grand total
-  document.getElementById('d150FinalResult').textContent = fmt(d.ivaPagar||d.credFavor);
-  document.getElementById('d150FinalResult').style.color = d.ivaPagar>0?'var(--danger)':'var(--accent)';
-  document.getElementById('d150FinalLabel').textContent  = d.ivaPagar>0?'IVA a pagar a Hacienda':'Saldo a favor (crédito)';
+  // Grand total — reflects Sec IV adjustments
+  const finalPayable = ivaPagarFinal > 0 ? ivaPagarFinal : 0;
+  const finalFavor   = ivaPagarFinal === 0 ? (d.credFavor + saldoFinalFavor) : 0;
+  document.getElementById('d150FinalResult').textContent = fmt(finalPayable || finalFavor);
+  document.getElementById('d150FinalResult').style.color = finalPayable > 0 ? 'var(--danger)' : 'var(--accent)';
+  document.getElementById('d150FinalLabel').textContent  = finalPayable > 0 ? 'IVA a pagar a Hacienda' : 'Saldo a favor (crédito)';
 
   // Proporcionalidad reminder in summary
   document.getElementById('proporcionalidadBox').style.display = hasMixtas ? 'block' : 'none';
@@ -1742,34 +2144,495 @@ function copyVal(v) {
   navigator.clipboard?.writeText(v).then(() => toast('success','📋 Copiado: ₡'+Number(v).toLocaleString('es-CR'))).catch(()=>{});
 }
 
+// ═══════════════════════════════════════════════════════
+//  SECCIÓN IV — Actualiza ajustes manuales y recalcula VI
+// ═══════════════════════════════════════════════════════
+function updateD150Adj() {
+  const retEl  = document.getElementById('sec4-retenciones');
+  const saldEl = document.getElementById('sec4-saldo');
+  const adj    = getAdj();
+  adj.retenciones = parseF(retEl?.value);
+  adj.saldoFavor  = parseF(saldEl?.value);
+  // Update Sec IV total badge
+  const tot = adj.retenciones + adj.saldoFavor;
+  const totEl = document.getElementById('sec4-total');
+  if (totEl) { totEl.textContent = fmt(tot); totEl.style.color = tot > 0 ? 'var(--accent)' : 'var(--muted)'; }
+  // Re-render only sections V and VI (not full D150 to preserve input focus)
+  const list = currentMonthD150 === -1 ? invoices : invoices.filter(inv => {
+    if (!inv.fechaEmision) return false;
+    const d = new Date(inv.fechaEmision);
+    return d.getMonth() === currentMonthD150 && d.getFullYear() === currentYearD150;
+  });
+  const d = calcD150Data(list);
+  const mkRow = (lbl, casilla, val, color='') => `
+    <div class="d150-row">
+      <div class="d150-row-lbl">${lbl}</div>
+      <div class="d150-row-casilla">${casilla}</div>
+      <div class="d150-row-val ${color}">${fmt(val)}</div>
+      <button class="d150-copy-btn" onclick="copyVal('${Math.round(val)}')" data-tip="Copiar ₡${Math.round(val).toLocaleString('es-CR')} al portapapeles">📋</button>
+    </div>`;
+  // Section V
+  const impDet = Math.max(0, d.debitoNeto - d.creditoAjustado);
+  document.getElementById('d150-sec5').innerHTML =
+    mkRow('Total Débito Fiscal (de Sección I)', 'V1', d.debitoNeto, 'warn') +
+    mkRow('(-) Total Crédito Fiscal (de Sección II)', 'V2', d.creditoAjustado, 'green') +
+    `<div class="t-total" style="background:rgba(255,77,106,.08);border-color:rgba(255,77,106,.25)">
+      <span class="t-total-lbl">Impuesto Determinado (V1 − V2)</span>
+      <span class="t-total-val" style="color:var(--danger)">${fmt(Math.max(0, d.debitoNeto - d.creditoAjustado))}</span>
+    </div>`;
+  // Section VI
+  const retenciones   = getAdj().retenciones  || 0;
+  const saldoAnterior = getAdj().saldoFavor    || 0;
+  const totalDedSec4  = retenciones + saldoAnterior;
+  const ivaPagarFinal = Math.max(0, impDet - totalDedSec4);
+  const saldoFinalFavor = impDet === 0 ? d.credFavor + totalDedSec4 : (totalDedSec4 > impDet ? totalDedSec4 - impDet : 0);
+  document.getElementById('d150-sec6').innerHTML =
+    mkRow('Impuesto Determinado (de Sección V)', 'L1', impDet, 'warn') +
+    `<div class="d150-row" style="background:rgba(0,214,143,.04);border-radius:6px">
+      <div class="d150-row-lbl">(-) Retenciones bancarias (datáfono) <span style="font-size:10px;color:var(--accent)">[Sección IV-1]</span></div>
+      <div class="d150-row-casilla">L2</div>
+      <div class="d150-row-val green">${fmt(retenciones)}</div>
+      <button class="d150-copy-btn" onclick="copyVal('${Math.round(retenciones)}')" data-tip="Copiar al portapapeles">📋</button>
+    </div>` +
+    `<div class="d150-row" style="background:rgba(0,214,143,.04);border-radius:6px">
+      <div class="d150-row-lbl">(-) Saldo a Favor período anterior <span style="font-size:10px;color:var(--accent)">[Sección IV-2]</span></div>
+      <div class="d150-row-casilla">L3</div>
+      <div class="d150-row-val green">${fmt(saldoAnterior)}</div>
+      <button class="d150-copy-btn" onclick="copyVal('${Math.round(saldoAnterior)}')" data-tip="Copiar al portapapeles">📋</button>
+    </div>` +
+    (totalDedSec4 > 0 ? `<div style="font-size:11px;color:var(--accent);padding:4px 10px 8px">✅ Total deducciones Sección IV aplicadas: ${fmt(totalDedSec4)}</div>` : '') +
+    `<div class="t-total ${ivaPagarFinal>0?'style="background:rgba(255,77,106,.08);border-color:rgba(255,77,106,.25)"':''}">
+      <span class="t-total-lbl">${ivaPagarFinal>0?'⚠️ IVA a PAGAR':'✅ Saldo a FAVOR'}</span>
+      <span class="t-total-val" style="color:${ivaPagarFinal>0?'var(--danger)':'var(--accent)'}">${fmt(ivaPagarFinal > 0 ? ivaPagarFinal : (d.credFavor + saldoFinalFavor))}</span>
+    </div>
+    <div style="font-size:11px;color:var(--faint);padding:10px 10px 4px">
+      💳 Podés pagar directo en TRIBU-CR con cuenta IBAN, o en ventanilla del BCR / BAC.
+    </div>`;
+  // Update grand total
+  const finalPayable  = ivaPagarFinal > 0 ? ivaPagarFinal : 0;
+  const finalFavor    = ivaPagarFinal === 0 ? (d.credFavor + saldoFinalFavor) : 0;
+  const frEl = document.getElementById('d150FinalResult');
+  const flEl = document.getElementById('d150FinalLabel');
+  if (frEl) { frEl.textContent = fmt(finalPayable || finalFavor); frEl.style.color = finalPayable > 0 ? 'var(--danger)' : 'var(--accent)'; }
+  if (flEl)   flEl.textContent = finalPayable > 0 ? 'IVA a pagar a Hacienda' : 'Saldo a favor (crédito)';
+}
+
 function copyAllD150() {
   const list = currentMonthD150 === -1 ? invoices : invoices.filter(inv => {
     const d = new Date(inv.fechaEmision||'');
     return d.getMonth() === currentMonthD150 && d.getFullYear() === currentYearD150;
   });
-  const d = calcD150Data(list);
-  const txt = `BORRADOR D-150 — Tribu Fácil CR
-Período: ${currentMonthD150===-1?'Todos':MONTHS[currentMonthD150]}
+  const d            = calcD150Data(list);
+  const adj          = getAdj();
+  const retenciones  = adj.retenciones  || 0;
+  const saldoAnt     = adj.saldoFavor   || 0;
+  const impDet       = Math.max(0, d.debitoNeto - d.creditoAjustado);
+  const ivaPagar     = Math.max(0, impDet - retenciones - saldoAnt);
+  const saldoFav     = ivaPagar === 0
+    ? d.credFavor + Math.max(0, retenciones + saldoAnt - impDet) : 0;
+  const periodoStr   = currentMonthD150 === -1 ? 'Todos los meses'
+    : MONTHS[currentMonthD150] + ' ' + currentYearD150;
+  const prof = contributorProfile;
 
-=== SECCIÓN I (Ventas) ===
-Total Servicios Gravados: ${Math.round(d.totalServGrav)}
-Total Mercancías Gravadas: ${Math.round(d.totalMercGrav)}
-Total Exentas: ${Math.round(d.totalServExen+d.totalMercExen)}
-Total No Sujetas: ${Math.round(d.totalNoSuj)}
-Ajuste NC: ${Math.round(d.ajusteNC)}
-Total Débito IVA: ${Math.round(d.debitoNeto)}
+  const rateLines = Object.entries(d.ivaByRate).sort((a,b)=>+b[0]-+a[0]).map(([t,v])=>
+    `  Base ${t}%:        ₡${Math.round(v.base).toLocaleString('es-CR')}\n` +
+    `  IVA ${t}% neto NC/ND: ₡${Math.round(v.impuesto).toLocaleString('es-CR')}`
+  ).join('\n');
 
-=== SECCIÓN II (Compras) ===
-Total Compras: ${Math.round(d.totalCompras)}
-IVA soportado: ${Math.round(d.creditoFiscal)}
-Crédito aplicable: ${Math.round(d.creditoAjustado)}
-${d.hasMixtas?'Proporción: '+(d.proporcion*100).toFixed(2)+'%\n':''}
-=== SECCIÓN V (Determinación) ===
-Impuesto Determinado: ${Math.round(Math.max(0,d.debitoNeto-d.creditoAjustado))}
+  const ncInfo = Object.entries(d.ncByRate||{}).filter(([,v])=>v.impuesto>0)
+    .map(([t,v])=>`  NC descontada ${t}%: ₡${Math.round(v.impuesto).toLocaleString('es-CR')}`).join('\n');
+  const ndInfo = Object.entries(d.ndByRate||{}).filter(([,v])=>v.impuesto>0)
+    .map(([t,v])=>`  ND sumada ${t}%: ₡${Math.round(v.impuesto).toLocaleString('es-CR')}`).join('\n');
 
-=== RESULTADO ===
-${d.ivaPagar>0?'IVA A PAGAR: '+Math.round(d.ivaPagar):'SALDO A FAVOR: '+Math.round(d.credFavor)}`;
-  navigator.clipboard?.writeText(txt).then(() => toast('success','📋 Borrador D-150 copiado al portapapeles')).catch(()=>{});
+  const txt = [
+    '═══════════════════════════════════════════',
+    'BORRADOR D-150 — Tribu Fácil CR',
+    `Período:        ${periodoStr}`,
+    prof.nombre  ? `Contribuyente:  ${prof.nombre}` : null,
+    prof.cedula  ? `Cédula/RUC:     ${prof.cedula}`  : null,
+    prof.actividad?`Actividad:      ${prof.actividad}`: null,
+    `Generado:       ${new Date().toLocaleString('es-CR')}`,
+    '═══════════════════════════════════════════',
+    '',
+    '─── SECCIÓN I — Ventas y Operaciones ───────',
+    rateLines,
+    ncInfo ? ncInfo : null,
+    ndInfo ? ndInfo : null,
+    `  Ventas Exentas (EX):     ₡${Math.round(d.totalServExen+d.totalMercExen).toLocaleString('es-CR')}`,
+    `  Ventas No Sujetas (NS):  ₡${Math.round(d.totalNoSuj).toLocaleString('es-CR')}`,
+    `  ► TOTAL DÉBITO FISCAL:   ₡${Math.round(d.debitoNeto).toLocaleString('es-CR')}`,
+    '',
+    '─── SECCIÓN II — Compras y Crédito ──────────',
+    `  Total Compras (C1):      ₡${Math.round(d.totalCompras).toLocaleString('es-CR')}`,
+    `  IVA soportado (C2):      ₡${Math.round(d.creditoFiscal).toLocaleString('es-CR')}`,
+    d.hasMixtas ? `  Proporción (C3):          ${(d.proporcion*100).toFixed(2)}%` : null,
+    `  ► CRÉDITO APLICABLE:     ₡${Math.round(d.creditoAjustado).toLocaleString('es-CR')}`,
+    '',
+    d.hasMixtas ? '─── SECCIÓN III — Proporcionalidad ──────────' : null,
+    d.hasMixtas ? `  Ventas gravadas (P1):     ₡${Math.round(d.totalServGrav+d.totalMercGrav).toLocaleString('es-CR')}` : null,
+    d.hasMixtas ? `  Total ventas (P2):        ₡${Math.round(d.totalServGrav+d.totalMercGrav+d.totalServExen+d.totalMercExen+d.totalNoSuj).toLocaleString('es-CR')}` : null,
+    d.hasMixtas ? `  ► Proporción:             ${(d.proporcion*100).toFixed(2)}%` : null,
+    d.hasMixtas ? '' : null,
+    '─── SECCIÓN IV — Ajustes Manuales ───────────',
+    `  Retenciones (IV-1):      ₡${Math.round(retenciones).toLocaleString('es-CR')}`,
+    `  Saldo anterior (IV-2):   ₡${Math.round(saldoAnt).toLocaleString('es-CR')}`,
+    '',
+    '─── SECCIÓN V — Determinación ───────────────',
+    `  Débito Fiscal (V1):      ₡${Math.round(d.debitoNeto).toLocaleString('es-CR')}`,
+    `  Crédito Fiscal (V2):     ₡${Math.round(d.creditoAjustado).toLocaleString('es-CR')}`,
+    `  ► IMP. DETERMINADO:      ₡${Math.round(impDet).toLocaleString('es-CR')}`,
+    '',
+    '─── SECCIÓN VI — Liquidación ────────────────',
+    `  Imp. Determinado (L1):   ₡${Math.round(impDet).toLocaleString('es-CR')}`,
+    `  Retenciones (L2):        ₡${Math.round(retenciones).toLocaleString('es-CR')}`,
+    `  Saldo anterior (L3):     ₡${Math.round(saldoAnt).toLocaleString('es-CR')}`,
+    '',
+    '═══════════════════════════════════════════',
+    ivaPagar > 0
+      ? `▶ IVA A PAGAR:  ₡${Math.round(ivaPagar).toLocaleString('es-CR')}`
+      : `▶ SALDO A FAVOR: ₡${Math.round(saldoFav).toLocaleString('es-CR')}`,
+    '═══════════════════════════════════════════',
+    '* Borrador orientativo. Verificá con tu contador antes de declarar.',
+  ].filter(l => l !== null).join('\n');
+
+  navigator.clipboard?.writeText(txt)
+    .then(() => toast('success','📋 D-150 copiado al portapapeles'))
+    .catch(()  => toast('error','❌ No se pudo copiar — usá HTTPS'));
+}
+
+// ═══════════════════════════════════════════════════════
+//  PERFIL DEL CONTRIBUYENTE
+// ═══════════════════════════════════════════════════════
+let contributorProfile = { nombre:'', cedula:'', tipo:'', actividad:'', ciiu:'', estado:'' };
+
+// ── Helpers UI ──────────────────────────────────────────
+function profSet(field, value) {
+  contributorProfile[field] = value;
+  const el = document.getElementById('prof-'+field);
+  if (el) el.value = value;
+}
+function profGet(field) {
+  return (document.getElementById('prof-'+field)?.value || '').trim();
+}
+function profStatus(msg, type='info') {
+  const el = document.getElementById('prof-hacienda-status');
+  if (!el) return;
+  const styles = {
+    info:    'background:rgba(61,122,255,.07);border-color:rgba(61,122,255,.25);color:#7aabff',
+    success: 'background:rgba(0,214,143,.07);border-color:rgba(0,214,143,.25);color:var(--accent)',
+    warn:    'background:rgba(255,201,71,.07);border-color:rgba(255,201,71,.25);color:var(--warn)',
+    error:   'background:rgba(255,77,106,.07);border-color:rgba(255,77,106,.25);color:var(--danger)',
+    loading: 'background:rgba(61,122,255,.05);border-color:rgba(61,122,255,.15);color:var(--muted)',
+  };
+  el.style.cssText += ';' + (styles[type]||styles.info);
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function tipoIdMap(code) {
+  const m = { '01':'fisica','02':'juridica','03':'dimex','04':'nite' };
+  return m[code] || '';
+}
+
+// ── Opción A: Auto-detectar desde XMLs cargados ─────────
+function autoDetectFromXMLs() {
+  if (!invoices.length) {
+    toast('warn','⚠️ Cargá facturas XML primero para detectar tu perfil.'); return;
+  }
+  // Count emisor frequency among emitidas (not MensajeHacienda)
+  const freq = {};
+  for (const inv of invoices.filter(i => i.direction === 'emitida' && i.type !== 'MensajeHacienda')) {
+    const id = (inv.emisor.id || '').replace(/[-\s]/g,'');
+    if (!id) continue;
+    if (!freq[id]) freq[id] = { nombre: inv.emisor.nombre || '', count: 0 };
+    freq[id].count++;
+    if (inv.emisor.nombre && inv.emisor.nombre.length > (freq[id].nombre||'').length)
+      freq[id].nombre = inv.emisor.nombre; // prefer longer name
+  }
+  const entries = Object.entries(freq).sort((a,b)=>b[1].count - a[1].count);
+  if (!entries.length) {
+    toast('warn','⚠️ No se encontraron facturas emitidas para detectar el emisor.'); return;
+  }
+  const [topId, topData] = entries[0];
+  const alreadySet = profGet('cedula') && profGet('nombre');
+  if (alreadySet) {
+    const ok = confirm(`Se detectó: ${topData.nombre} (${topId}) en ${topData.count} factura(s).\n¿Reemplazar el perfil actual?`);
+    if (!ok) return;
+  }
+  if (profGet('cedula') !== topId)  profSet('cedula', topId);
+  if (!profGet('nombre'))           profSet('nombre', topData.nombre);
+
+  profStatus(`✅ Detectado: ${topData.nombre || topId} — ${topData.count} factura(s) emitidas. Buscando en Hacienda...`, 'success');
+
+  // Auto-trigger API lookup with detected cédula
+  buscarEnHacienda(topId);
+}
+
+// ── Opción B: API oficial de Hacienda con fallback CORS proxies ─────────
+// La API de Hacienda no incluye CORS headers → el browser bloquea la respuesta.
+// Solución: intentar la llamada directa primero (falla en browser) y luego
+// cascada de proxies CORS públicos gratuitos.
+async function buscarEnHacienda(cedulaOverride) {
+  const cedula = (cedulaOverride || profGet('cedula')).replace(/[-\s]/g,'');
+  if (!cedula) {
+    toast('warn','⚠️ Ingresá la cédula primero (o cargá facturas XML).'); return;
+  }
+  if (!/^\d{9,12}$/.test(cedula)) {
+    profStatus('❌ Cédula inválida — debe tener entre 9 y 12 dígitos numéricos sin guiones.', 'error'); return;
+  }
+
+  profStatus('⏳ Consultando padrón de Hacienda...', 'loading');
+  const btnEl = document.querySelector('[onclick="buscarEnHacienda()"]');
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = '⏳ Buscando...'; }
+
+  const targetUrl = `https://api.hacienda.go.cr/fe/ae?identificacion=${cedula}`;
+
+  // Cascada de estrategias: directa → proxy1 → proxy2 → proxy3
+  const strategies = [
+    // 1. Directo (funciona si el servidor algún día agrega CORS, o desde extensiones)
+    async () => {
+      const r = await fetch(targetUrl, { signal: AbortSignal.timeout(5000) });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    },
+    // 2. corsproxy.io — proxy CORS público confiable
+    async () => {
+      const r = await fetch(`https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
+        { signal: AbortSignal.timeout(8000) });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    },
+    // 3. allorigins.win
+    async () => {
+      const r = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+        { signal: AbortSignal.timeout(8000) });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    },
+    // 4. cors.sh (requiere header Origin, pero funciona desde navegador)
+    async () => {
+      const r = await fetch(`https://proxy.cors.sh/${targetUrl}`, {
+        headers: { 'x-cors-api-key': 'temp_' + Math.random().toString(36).slice(2) },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    },
+  ];
+
+  let data = null;
+  let lastError = '';
+  for (let i = 0; i < strategies.length; i++) {
+    try {
+      data = await strategies[i]();
+      if (data && (data.nombre || data.actividades)) break;  // success
+    } catch(e) {
+      lastError = e.message || String(e);
+      // continue to next strategy
+    }
+  }
+
+  if (btnEl) { btnEl.disabled = false; btnEl.textContent = '🌐 Buscar en Hacienda'; }
+
+  if (!data) {
+    profStatus(
+      '❌ No se pudo conectar con la API de Hacienda. ' +
+      'Revisá tu conexión a internet o completá el perfil manualmente. ' +
+      '(Error: ' + lastError.slice(0,60) + ')',
+      'error'
+    );
+    return;
+  }
+
+  if (data.status === 404 || (data.error && String(data.error).includes('404'))) {
+    profStatus('⚠️ Cédula no encontrada en el padrón de Hacienda. Verificá el número.', 'warn'); return;
+  }
+
+  // ── Nombre ────────────────────────────────────────────────
+  const nombre = (data.nombre || '').trim();
+  if (nombre) profSet('nombre', nombre);
+
+  // ── Tipo de identificación ─────────────────────────────────
+  const tipo = tipoIdMap(data.tipoIdentificacion || '');
+  if (tipo) profSet('tipo', tipo);
+
+  // ── Cédula normalizada ─────────────────────────────────────
+  profSet('cedula', cedula);
+
+  // ── Actividades económicas ─────────────────────────────────
+  const actividades = Array.isArray(data.actividades) ? data.actividades : [];
+  const principal   = actividades.find(a => a.tipo === 'P') || actividades[0];
+  const secundarias = actividades.filter(a => a !== principal);
+
+  if (principal) {
+    profSet('actividad', principal.descripcion || '');
+    profSet('ciiu',      principal.codigo      || '');
+    contributorProfile.actividadCompleta = `${principal.codigo} — ${principal.descripcion}`;
+  }
+
+  // Actividades secundarias
+  const extraEl = document.getElementById('prof-actividades-extra');
+  const listaEl = document.getElementById('prof-actividades-lista');
+  if (secundarias.length && extraEl && listaEl) {
+    listaEl.innerHTML = secundarias.map(a =>
+      `<span style="margin-right:16px">📎 <strong>${a.codigo}</strong> — ${a.descripcion}</span>`
+    ).join('<br>');
+    extraEl.style.display = 'block';
+  } else if (extraEl) {
+    extraEl.style.display = 'none';
+  }
+
+  // ── Estado tributario ──────────────────────────────────────
+  const sit     = data.situacion || {};
+  const moroso  = sit.moroso === 'Y' || sit.moroso === 'S' || sit.moroso === true;
+  const omiso   = sit.omiso  === 'Y' || sit.omiso  === 'S' || sit.omiso  === true;
+  const estado  = moroso ? '🔴 Moroso' : omiso ? '🟡 Omiso' : '🟢 Al día';
+  contributorProfile.estado = estado;
+  const estadoEl = document.getElementById('prof-estado');
+  if (estadoEl) {
+    estadoEl.textContent = estado;
+    estadoEl.style.color = moroso ? 'var(--danger)' : omiso ? 'var(--warn)' : 'var(--accent)';
+  }
+
+  // ── Barra de estado ────────────────────────────────────────
+  const actStr = principal ? `· ${principal.codigo} ${principal.descripcion}` : '';
+  profStatus(
+    `✅ ${nombre || cedula} ${actStr} ${moroso ? '· ⚠️ MOROSO' : omiso ? '· ⚠️ OMISO' : '· 🟢 Al día'}`,
+    moroso || omiso ? 'warn' : 'success'
+  );
+
+  if (moroso) addWarning('error', 'Contribuyente MOROSO con Hacienda',
+    `La cédula ${cedula} (${nombre}) tiene estado MOROSO. Regularizá antes de declarar en TRIBU-CR.`);
+  else if (omiso) addWarning('warn', 'Contribuyente OMISO con Hacienda',
+    `La cédula ${cedula} (${nombre}) tiene declaraciones pendientes. Verificá en TRIBU-CR.`);
+
+  await saveProfile();
+  toast('success', `✅ Perfil actualizado desde Hacienda: ${nombre || cedula}`);
+}
+
+async function saveProfile() {
+  contributorProfile.nombre    = profGet('nombre');
+  contributorProfile.cedula    = profGet('cedula').replace(/[-\s]/g,'');
+  contributorProfile.tipo      = profGet('tipo');
+  contributorProfile.actividad = profGet('actividad');
+  contributorProfile.ciiu      = profGet('ciiu');
+  if (typeof window.storage !== 'undefined')
+    try { await window.storage.set('tribu-facil-profile', JSON.stringify(contributorProfile)); } catch(e){}
+  const msg = document.getElementById('prof-saved-msg');
+  if (msg) { msg.style.display='block'; setTimeout(()=>{ msg.style.display='none'; }, 2500); }
+}
+
+async function loadProfile() {
+  if (typeof window.storage === 'undefined') return;
+  try {
+    const r = await window.storage.get('tribu-facil-profile');
+    if (!r) return;
+    contributorProfile = { nombre:'', cedula:'', tipo:'', actividad:'', ciiu:'', estado:'', ...JSON.parse(r.value) };
+    ['nombre','cedula','tipo','actividad','ciiu'].forEach(f => {
+      const el = document.getElementById('prof-'+f);
+      if (el && contributorProfile[f]) el.value = contributorProfile[f];
+    });
+    if (contributorProfile.estado) {
+      const el = document.getElementById('prof-estado');
+      if (el) {
+        el.textContent = contributorProfile.estado;
+        el.style.color = contributorProfile.estado.includes('🔴') ? 'var(--danger)'
+          : contributorProfile.estado.includes('🟡') ? 'var(--warn)' : 'var(--accent)';
+      }
+    }
+  } catch(e){}
+}
+
+// ═══════════════════════════════════════════════════════
+//  TABLA TODOS LOS PERÍODOS
+// ═══════════════════════════════════════════════════════
+function renderAllPeriods() {
+  const panel = document.getElementById('allPeriodsTable');
+  if (!panel) return;
+  if (!invoices.length) {
+    panel.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:14px 0">Sin documentos cargados.</div>';
+    document.getElementById('allPeriodsPanel').style.display = 'none';
+    return;
+  }
+  document.getElementById('allPeriodsPanel').style.display = 'block';
+
+  // Group by YYYY-MM
+  const periodos = new Map();
+  for (const inv of invoices) {
+    if (!inv.fechaEmision) continue;
+    const d = new Date(inv.fechaEmision);
+    if (isNaN(d)) continue;
+    const k = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    if (!periodos.has(k)) periodos.set(k, []);
+    periodos.get(k).push(inv);
+  }
+  if (!periodos.size) {
+    document.getElementById('allPeriodsPanel').style.display = 'none';
+    return;
+  }
+
+  const sorted = [...periodos.entries()].sort(([a],[b]) => a.localeCompare(b));
+  let totDeb=0, totCred=0, totPagar=0;
+
+  const rows = sorted.map(([k, list]) => {
+    const [yr, mo] = k.split('-');
+    const d    = calcD150Data(list);
+    const adj  = d150Adjustments[k] || { retenciones:0, saldoFavor:0 };
+    const impDet  = Math.max(0, d.debitoNeto - d.creditoAjustado);
+    const pagar   = Math.max(0, impDet - (adj.retenciones||0) - (adj.saldoFavor||0));
+    const favor   = pagar === 0 ? Math.max(0, d.creditoAjustado - d.debitoNeto) : 0;
+    totDeb   += d.debitoNeto;
+    totCred  += d.creditoAjustado;
+    totPagar += pagar;
+
+    const resultCell = pagar > 0
+      ? `<span style="color:var(--danger);font-weight:700">${fmt(pagar)}</span>`
+      : favor > 0
+        ? `<span style="color:var(--accent);font-weight:600">Favor: ${fmt(favor)}</span>`
+        : `<span style="color:var(--faint)">—</span>`;
+
+    const docsEmit  = list.filter(i=>i.direction==='emitida'&&i.type!=='MensajeHacienda').length;
+    const docsComp  = list.filter(i=>i.direction==='recibida').length;
+
+    return `<tr style="cursor:default" onmouseenter="this.style.background='var(--surface2)'" onmouseleave="this.style.background=''">
+      <td style="padding:9px 12px;font-weight:600;color:var(--text);white-space:nowrap">${MONTHS[+mo-1]} ${yr}</td>
+      <td style="padding:9px 8px;color:var(--muted);text-align:right;font-size:11px">
+        <span style="color:var(--accent)">↑${docsEmit}</span> <span style="color:#a78bfa">↓${docsComp}</span>
+      </td>
+      <td style="padding:9px 12px;color:#7aabff;text-align:right;font-family:'Syne',sans-serif;font-size:13px">${fmt(d.debitoNeto)}</td>
+      <td style="padding:9px 12px;color:var(--accent);text-align:right;font-family:'Syne',sans-serif;font-size:13px">${fmt(d.creditoAjustado)}</td>
+      <td style="padding:9px 12px;text-align:right;font-family:'Syne',sans-serif;font-size:13px">${resultCell}</td>
+      <td style="padding:9px 6px;text-align:center">
+        <button onclick="jumpToD150('${yr}',${+mo-1})" class="btn btn-ghost btn-xs" data-tip="Abrir D-150 de ${MONTHS[+mo-1]} ${yr}">📋 D-150</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  panel.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr style="border-bottom:1px solid var(--border)">
+      <th style="padding:8px 12px;text-align:left;font-size:9px;letter-spacing:.6px;text-transform:uppercase;color:var(--faint)">Período</th>
+      <th style="padding:8px 8px;text-align:right;font-size:9px;letter-spacing:.6px;text-transform:uppercase;color:var(--faint)">Docs</th>
+      <th style="padding:8px 12px;text-align:right;font-size:9px;letter-spacing:.6px;text-transform:uppercase;color:var(--faint)">IVA Débito</th>
+      <th style="padding:8px 12px;text-align:right;font-size:9px;letter-spacing:.6px;text-transform:uppercase;color:var(--faint)">IVA Crédito</th>
+      <th style="padding:8px 12px;text-align:right;font-size:9px;letter-spacing:.6px;text-transform:uppercase;color:var(--faint)">A Pagar / Favor</th>
+      <th style="padding:8px 6px"></th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+    <tfoot><tr style="border-top:2px solid var(--border-hi);background:var(--surface3)">
+      <td style="padding:10px 12px;font-weight:700;color:var(--text)">TOTAL ACUMULADO</td>
+      <td></td>
+      <td style="padding:10px 12px;text-align:right;font-family:'Syne',sans-serif;color:var(--danger);font-weight:700">${fmt(totDeb)}</td>
+      <td style="padding:10px 12px;text-align:right;font-family:'Syne',sans-serif;color:var(--accent);font-weight:700">${fmt(totCred)}</td>
+      <td style="padding:10px 12px;text-align:right;font-family:'Syne',sans-serif;color:var(--danger);font-weight:700">${fmt(totPagar)}</td>
+      <td></td>
+    </tr></tfoot>
+  </table>`;
+}
+
+function jumpToD150(yr, monthIdx) {
+  currentYearD150  = +yr;
+  currentMonthD150 = monthIdx;
+  document.getElementById('d150MonthLabel').textContent = MONTHS[monthIdx] + ' ' + yr;
+  switchTab('d150');
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1831,6 +2694,7 @@ function renderSummary() {
     </div>`).join('') || '<div style="color:var(--muted);font-size:13px;padding:14px 0">Sin datos de IVA para este período.</div>';
 
   document.getElementById('proporcionalidadBox').style.display = (sE+mE>0&&sG+mG>0)?'block':'none';
+  renderAllPeriods();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1950,15 +2814,56 @@ function resetSim() {
 }
 
 // ═══════════════════════════════════════════════════════
-//  VENCIMIENTO WIDGET  (MEJORA 3)
+//  VENCIMIENTO WIDGET — con feriados CR y fines de semana
 // ═══════════════════════════════════════════════════════
+
+// Feriados de ley en CR (mes 0-indexado, día)
+const CR_HOLIDAYS = [
+  [0,1],  // 1 ene - Año Nuevo
+  [3,11], // 11 abr - Juan Santamaría
+  [4,1],  // 1 may - Día del Trabajador
+  [6,25], // 25 jul - Anexión de Nicoya
+  [7,2],  // 2 ago - Virgen de los Ángeles
+  [7,15], // 15 ago - Día de la Madre
+  [8,15], // 15 sep - Independencia
+  [11,25],// 25 dic - Navidad
+  // Semana Santa (variables) — se omite, se maneja con nota
+];
+
+function isCRHoliday(d) {
+  return CR_HOLIDAYS.some(([m,day]) => d.getMonth()===m && d.getDate()===day);
+}
+
+function nextBusinessDay(d) {
+  // Advance d while it's Saturday (6), Sunday (0) or CR holiday
+  let result = new Date(d);
+  while (result.getDay() === 0 || result.getDay() === 6 || isCRHoliday(result)) {
+    result.setDate(result.getDate() + 1);
+  }
+  return result;
+}
+
+function getNextVencimiento() {
+  const now  = new Date();
+  const yr   = now.getFullYear();
+  const mo   = now.getMonth();
+  // Try day-15 of next month
+  let base   = new Date(yr, mo + 1, 15, 23, 59, 59);
+  let venc   = nextBusinessDay(new Date(yr, mo + 1, 15));
+  venc.setHours(23, 59, 59);
+  if (now > venc) {
+    base = new Date(yr, mo + 2, 15, 23, 59, 59);
+    venc = nextBusinessDay(new Date(yr, mo + 2, 15));
+    venc.setHours(23, 59, 59);
+  }
+  const rawDay15 = new Date(venc.getFullYear(), venc.getMonth(), 15);
+  const adjusted = venc.getDate() !== 15;
+  return { venc, adjusted, rawDay15 };
+}
+
 function renderVencimiento() {
   const now   = new Date();
-  const yr    = now.getFullYear();
-  const mo    = now.getMonth();
-  // Vencimiento D-150: día 15 del mes siguiente
-  let venc    = new Date(yr, mo+1, 15, 23, 59, 59);
-  if (now > venc) venc = new Date(yr, mo+2, 15, 23, 59, 59);
+  const { venc, adjusted } = getNextVencimiento();
   const diff  = venc - now;
   const days  = Math.floor(diff / 86400000);
   const hrs   = Math.floor((diff % 86400000) / 3600000);
@@ -1966,7 +2871,6 @@ function renderVencimiento() {
   const periodoDeclarar = new Date(venc.getFullYear(), venc.getMonth()-1, 1);
   const periodoLabel    = MONTHS[periodoDeclarar.getMonth()]+' '+periodoDeclarar.getFullYear();
 
-  // Color
   const urgente = days < 5;
   const aviso   = days < 10;
   const color   = urgente?'var(--danger)':aviso?'var(--warn)':'var(--accent)';
@@ -1976,10 +2880,12 @@ function renderVencimiento() {
     <div class="venc-unit"><div class="venc-num" style="color:${color}">${hrs}</div><div class="venc-lbl">hrs</div></div>
     <div class="venc-unit"><div class="venc-num" style="color:${color}">${mins}</div><div class="venc-lbl">min</div></div>`;
 
+  const fechaFmt = venc.toLocaleDateString('es-CR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
   document.getElementById('vencTitle').textContent = `Vencimiento D-150 · ${periodoLabel}`;
-  document.getElementById('vencSub').textContent   = `Declaración IVA en TRIBU-CR · Plazo: ${venc.toLocaleDateString('es-CR',{day:'2-digit',month:'long',year:'numeric'})}`;
+  document.getElementById('vencSub').innerHTML = adjusted
+    ? `Plazo oficial: <strong>${fechaFmt}</strong> <span style="font-size:10px;color:var(--warn);background:rgba(255,201,71,.1);padding:1px 7px;border-radius:100px;border:1px solid rgba(255,201,71,.25)">⚠️ ajustado por fin de semana/feriado</span>`
+    : `Declaración IVA en TRIBU-CR · Plazo: <strong>${fechaFmt}</strong>`;
 
-  // Check if this month has invoices
   const hasInvoicesThisPeriod = invoices.some(inv => {
     const d = new Date(inv.fechaEmision||'');
     return d.getMonth() === periodoDeclarar.getMonth() && d.getFullYear() === periodoDeclarar.getFullYear();
@@ -1992,7 +2898,7 @@ function renderVencimiento() {
     statusEl.innerHTML = `<div class="venc-status" style="background:rgba(255,201,71,.1);color:var(--warn);border:1px solid rgba(255,201,71,.25)">⚠️ Sin facturas cargadas de ${periodoLabel}</div>`;
   }
 
-  setTimeout(renderVencimiento, 60000); // refresh each minute
+  setTimeout(renderVencimiento, 60000);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2024,8 +2930,10 @@ function clearWarnings() { warnings=[]; updateBadges(); renderWarnings(); }
 // ═══════════════════════════════════════════════════════
 function exportExcel() {
   if (!invoices.length) { toast('error','⚠️ Sin datos para exportar'); return; }
-  const wb = XLSX.utils.book_new();
-  // Sheet 1: Facturas
+  const wb   = XLSX.utils.book_new();
+  const prof = contributorProfile;
+
+  // Sheet 1: Documentos
   const rows = [['Dirección','Tipo','Clave','Consecutivo','Fecha','Emisor','ID Emisor','Receptor','ID Receptor','Serv.Gravados','Merc.Gravadas','Serv.Exentos','Merc.Exentas','No Sujeto','IVA','Total','Estado']];
   for (const inv of invoices) rows.push([
     inv.direction, inv.type, inv.clave, inv.numeroConsec,
@@ -2038,67 +2946,133 @@ function exportExcel() {
   ]);
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Documentos');
 
-  // Sheet 2: D-150
+  // Sheet 2: Resumen por período
+  const periodos = new Map();
+  for (const inv of invoices) {
+    if (!inv.fechaEmision) continue;
+    const dd = new Date(inv.fechaEmision);
+    if (isNaN(dd)) continue;
+    const k = dd.getFullYear()+'-'+String(dd.getMonth()+1).padStart(2,'0');
+    if (!periodos.has(k)) periodos.set(k, []);
+    periodos.get(k).push(inv);
+  }
+  const pRows = [
+    prof.nombre ? ['Contribuyente:', prof.nombre] : null,
+    prof.cedula ? ['Cédula/RUC:',   prof.cedula]  : null,
+    ['Generado:', new Date().toLocaleString('es-CR')],
+    [],
+    ['Período','Docs Emitidos','Docs Compras','IVA Débito','IVA Crédito','Imp. Determinado','A Pagar','Saldo Favor'],
+  ].filter(Boolean);
+  for (const [k, list] of [...periodos.entries()].sort()) {
+    const [yr,mo] = k.split('-');
+    const dd  = calcD150Data(list);
+    const adj = d150Adjustments[k] || { retenciones:0, saldoFavor:0 };
+    const impDet = Math.max(0, dd.debitoNeto - dd.creditoAjustado);
+    const pagar  = Math.max(0, impDet - (adj.retenciones||0) - (adj.saldoFavor||0));
+    const favor  = pagar === 0 ? Math.max(0, dd.creditoAjustado - dd.debitoNeto) : 0;
+    pRows.push([
+      MONTHS[+mo-1]+' '+yr,
+      list.filter(i=>i.direction==='emitida'&&i.type!=='MensajeHacienda').length,
+      list.filter(i=>i.direction==='recibida').length,
+      Math.round(dd.debitoNeto), Math.round(dd.creditoAjustado),
+      Math.round(impDet), Math.round(pagar), Math.round(favor),
+    ]);
+  }
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(pRows), 'Resumen Períodos');
+
+  // Sheet 3: D-150 global
   const d = calcD150Data(invoices);
   const d150rows = [
-    ['BORRADOR D-150 — Tribu Fácil CR'],['Generado:', new Date().toLocaleString('es-CR')],[''],
+    prof.nombre ? ['Contribuyente:', prof.nombre,'',''] : null,
+    ['BORRADOR D-150 — Tribu Fácil CR','','',''],
+    ['Generado:', new Date().toLocaleString('es-CR'),'',''],
+    [''],
     ['SECCIÓN','CASILLA','DESCRIPCIÓN','MONTO (₡)'],
-    ['I','13%','Ventas Base 13%', Object.values(d.ivaByRate).reduce((s,v)=>s+v.base,0)],
-    ['I','IVA','Débito IVA generado',d.totalDebitoIVA],
-    ['I','EX','Ventas Exentas',d.totalServExen+d.totalMercExen],
-    ['I','NS','Ventas No Sujetas',d.totalNoSuj],
-    ['I','NC','Ajuste Notas Crédito',d.ajusteNC],
-    ['I','TOT','Total Débito Fiscal',d.debitoNeto],[''],
-    ['II','C1','Total Compras',d.totalCompras],
-    ['II','C2','IVA soportado (compras)',d.creditoFiscal],
-    ['II','%','Proporción',+(d.proporcion*100).toFixed(2)],
-    ['II','C3','Crédito Fiscal Aplicable',d.creditoAjustado],[''],
-    ['V','V1','Débito Fiscal',d.debitoNeto],
-    ['V','V2','Crédito Fiscal',d.creditoAjustado],
-    ['V','DET','Impuesto Determinado',Math.max(0,d.debitoNeto-d.creditoAjustado)],[''],
-    ['VI','PAGAR',d.ivaPagar>0?'IVA A PAGAR':'SALDO A FAVOR', d.ivaPagar||d.credFavor],
-  ];
+    ...Object.entries(d.ivaByRate).flatMap(([t,v])=>[
+      ['I', t+'% Base', 'Base imponible ventas '+t+'%', Math.round(v.base)],
+      ['I', t+'% IVA',  'IVA '+t+'% (neto NC/ND)',      Math.round(v.impuesto)],
+    ]),
+    ['I','EX','Ventas Exentas',           Math.round(d.totalServExen+d.totalMercExen)],
+    ['I','NS','Ventas No Sujetas',         Math.round(d.totalNoSuj)],
+    ['I','TOT','TOTAL DÉBITO FISCAL',      Math.round(d.debitoNeto)], [''],
+    ['II','C1','Total Compras',            Math.round(d.totalCompras)],
+    ['II','C2','IVA soportado (compras)',  Math.round(d.creditoFiscal)],
+    ['II','%','Proporción',               +(d.proporcion*100).toFixed(2)],
+    ['II','C3','Crédito Fiscal Aplicable', Math.round(d.creditoAjustado)], [''],
+    ['V','V1','Débito Fiscal',             Math.round(d.debitoNeto)],
+    ['V','V2','Crédito Fiscal',            Math.round(d.creditoAjustado)],
+    ['V','DET','Impuesto Determinado',     Math.round(Math.max(0,d.debitoNeto-d.creditoAjustado))], [''],
+    ['VI','PAGAR', d.ivaPagar>0?'IVA A PAGAR':'SALDO A FAVOR', Math.round(d.ivaPagar||d.credFavor)],
+  ].filter(Boolean);
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(d150rows), 'Borrador D-150');
+
   XLSX.writeFile(wb, 'tribu-facil-cr.xlsx');
-  toast('success','📊 Excel exportado');
+  toast('success','📊 Excel exportado (3 hojas)');
 }
 
 function exportD150Excel() {
-  const d = calcD150Data(invoices);
-  const wb = XLSX.utils.book_new();
+  // Use the same filtered list as the current D-150 view
+  const list = currentMonthD150 === -1 ? invoices : invoices.filter(inv => {
+    if (!inv.fechaEmision) return false;
+    const dd = new Date(inv.fechaEmision);
+    return dd.getMonth() === currentMonthD150 && dd.getFullYear() === currentYearD150;
+  });
+  const d    = calcD150Data(list);
+  const adj  = getAdj();                   // snapshot of the active period's adjustments
+  const ret  = adj.retenciones || 0;
+  const sal  = adj.saldoFavor  || 0;
+  const impDet  = Math.max(0, d.debitoNeto - d.creditoAjustado);
+  const pagar   = Math.max(0, impDet - ret - sal);
+  const favor   = pagar === 0 ? Math.max(0, d.creditoAjustado - d.debitoNeto + ret + sal) : 0;
+  const periodoStr = currentMonthD150 === -1 ? 'Todos los meses'
+    : MONTHS[currentMonthD150] + ' ' + currentYearD150;
+  const prof = contributorProfile;
+
+  const wb   = XLSX.utils.book_new();
   const rows = [
-    ['BORRADOR FORMULARIO D-150','','',''],['Generado con Tribu Fácil CR',new Date().toLocaleString('es-CR'),'',''],['','','',''],
+    ['BORRADOR FORMULARIO D-150','','',''],
+    ['Generado con Tribu Fácil CR', new Date().toLocaleString('es-CR'),'',''],
+    prof.nombre ? ['Contribuyente:', prof.nombre,'',''] : null,
+    prof.cedula ? ['Cédula/RUC:',   prof.cedula, '',''] : null,
+    ['Período:', periodoStr,'',''],
+    ['','','',''],
     ['SECCIÓN','CASILLA','DESCRIPCIÓN','MONTO (₡)'],
     ['I','','=== VENTAS Y OPERACIONES ===',''],
     ...Object.entries(d.ivaByRate).flatMap(([t,v])=>[
-      ['I',t+'% Base','Base imponible ventas '+t+'%',Math.round(v.base)],
-      ['I',t+'% IVA','IVA '+t+'% generado',Math.round(v.impuesto)],
+      ['I', t+'% Base', 'Base imponible ventas '+t+'%', Math.round(v.base)],
+      ['I', t+'% IVA',  'IVA '+t+'% (neto NC/ND)',      Math.round(v.impuesto)],
     ]),
-    ['I','EX','Ventas Exentas',Math.round(d.totalServExen+d.totalMercExen)],
-    ['I','NS','Ventas No Sujetas',Math.round(d.totalNoSuj)],
-    ['I','NC','Ajuste Notas Crédito',Math.round(d.ajusteNC)],
-    ['I','TOT','TOTAL DÉBITO FISCAL',Math.round(d.debitoNeto)],['','','',''],
+    ['I','EX','Ventas Exentas',          Math.round(d.totalServExen+d.totalMercExen)],
+    ['I','NS','Ventas No Sujetas',        Math.round(d.totalNoSuj)],
+    ['I','TOT','TOTAL DÉBITO FISCAL',     Math.round(d.debitoNeto)],['','','',''],
     ['II','','=== COMPRAS Y CRÉDITOS ===',''],
     ['II','C1','Total Compras del período',Math.round(d.totalCompras)],
-    ['II','C2','IVA soportado en compras',Math.round(d.creditoFiscal)],
-    ['II','%','Proporción provisional (%)',+(d.proporcion*100).toFixed(2)],
-    ['II','C3','CRÉDITO FISCAL APLICABLE',Math.round(d.creditoAjustado)],['','','',''],
+    ['II','C2','IVA soportado en compras', Math.round(d.creditoFiscal)],
+    d.hasMixtas ? ['II','%','Proporción provisional (%)', +(d.proporcion*100).toFixed(2)] : null,
+    ['II','C3','CRÉDITO FISCAL APLICABLE', Math.round(d.creditoAjustado)],['','','',''],
     ['III','','=== PROPORCIONALIDAD ===',''],
     ['III','P1','Ventas con derecho a crédito',Math.round(d.totalServGrav+d.totalMercGrav)],
     ['III','P2','Total ventas',Math.round(d.totalServGrav+d.totalMercGrav+d.totalServExen+d.totalMercExen+d.totalNoSuj)],
-    ['III','PROP',d.hasMixtas?'Proporción (manual en TRIBU-CR 2025)':'No aplica (ventas uniformes)',d.hasMixtas?+(d.proporcion*100).toFixed(2):'N/A'],['','','',''],
+    ['III','PROP', d.hasMixtas ? 'Proporción provisional' : 'No aplica (ventas uniformes)',
+                   d.hasMixtas ? +(d.proporcion*100).toFixed(2) : 'N/A'],['','','',''],
+    ['IV','','=== AJUSTES MANUALES ===',''],
+    ['IV','IV-1','Retenciones bancarias datáfono', Math.round(ret)],
+    ['IV','IV-2','Saldo a favor período anterior',  Math.round(sal)],['','','',''],
     ['V','','=== DETERMINACIÓN ===',''],
-    ['V','V1','Débito Fiscal',Math.round(d.debitoNeto)],
-    ['V','V2','(-) Crédito Fiscal',Math.round(d.creditoAjustado)],
-    ['V','DET','IMPUESTO DETERMINADO',Math.round(Math.max(0,d.debitoNeto-d.creditoAjustado))],['','','',''],
+    ['V','V1','Débito Fiscal',             Math.round(d.debitoNeto)],
+    ['V','V2','(-) Crédito Fiscal',        Math.round(d.creditoAjustado)],
+    ['V','DET','IMPUESTO DETERMINADO',     Math.round(impDet)],['','','',''],
     ['VI','','=== LIQUIDACIÓN ===',''],
-    ['VI','L2','(-) Retenciones bancarias (ingresá manualmente)',0],
-    ['VI','L3','(-) Saldo a favor período anterior (ingresá manualmente)',0],
-    ['VI','FINAL',d.ivaPagar>0?'⚠️ IVA A PAGAR':' ✅ SALDO A FAVOR',Math.round(d.ivaPagar||d.credFavor)],
-  ];
+    ['VI','L1','Impuesto Determinado',     Math.round(impDet)],
+    ['VI','L2','(-) Retenciones (IV-1)',   Math.round(ret)],
+    ['VI','L3','(-) Saldo anterior (IV-2)',Math.round(sal)],
+    ['VI','FINAL', pagar>0 ? '⚠️ IVA A PAGAR' : '✅ SALDO A FAVOR', Math.round(pagar || favor)],
+  ].filter(Boolean);
+
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'D-150');
-  XLSX.writeFile(wb, 'd150-tribu-facil-cr.xlsx');
-  toast('success','📋 D-150 exportado');
+  const filename = `d150-${periodoStr.replace(/\s+/g,'-').toLowerCase()}.xlsx`;
+  XLSX.writeFile(wb, filename);
+  toast('success','📋 D-150 exportado: '+filename);
 }
 
 function exportCSV() {
@@ -2110,8 +3084,381 @@ function exportCSV() {
 }
 function exportJSON() {
   if (!invoices.length) { toast('error','⚠️ Sin datos'); return; }
-  dlFile(JSON.stringify({date:new Date().toISOString(),invoices},null,2),'tribu-facil-cr.json','application/json');
-  toast('success','📋 JSON exportado');
+  const backup = {
+    date:        new Date().toISOString(),
+    version:     '2.0',
+    profile:     contributorProfile,
+    adjustments: d150Adjustments,
+    invoices,
+  };
+  dlFile(JSON.stringify(backup, null, 2), 'tribu-facil-cr-backup.json', 'application/json');
+  toast('success','📋 JSON exportado (facturas + perfil + ajustes)');
+}
+
+// ═══════════════════════════════════════════════════════
+//  IMPORT JSON BACKUP
+// ═══════════════════════════════════════════════════════
+async function importJSON(event) {
+  const file = event.target.files?.[0];
+  event.target.value = ''; // reset input so same file can be re-imported
+  if (!file) return;
+
+  if (file.size > 20 * 1024 * 1024) {
+    toast('error','❌ Archivo demasiado grande (máx. 20 MB)'); return;
+  }
+
+  let parsed;
+  try {
+    const text = await file.text();
+    parsed = JSON.parse(text);
+  } catch(e) {
+    toast('error','❌ JSON inválido: ' + e.message.slice(0,60)); return;
+  }
+
+  // Support both old format {invoices:[]} and new {version, profile, adjustments, invoices}
+  const importedInvoices = Array.isArray(parsed) ? parsed : (parsed.invoices || []);
+  if (!importedInvoices.length) {
+    toast('error','❌ El backup no contiene facturas válidas.'); return;
+  }
+
+  const hasExisting = invoices.length > 0;
+  let mode = 'replace';
+
+  if (hasExisting) {
+    const choice = confirm(
+      `Ya tenés ${invoices.length} documento(s) cargado(s).\n\n` +
+      `• Aceptar → REEMPLAZAR todo con el backup (${importedInvoices.length} documentos)\n` +
+      `• Cancelar → AGREGAR los documentos del backup a los existentes`
+    );
+    mode = choice ? 'replace' : 'merge';
+  }
+
+  if (mode === 'replace') {
+    invoices        = importedInvoices;
+    d150Adjustments = parsed.adjustments || {};
+    warnings        = [];
+    filteredCache   = null;
+    // Restore profile if present
+    if (parsed.profile && typeof parsed.profile === 'object') {
+      contributorProfile = parsed.profile;
+      ['nombre','cedula','tipo','actividad'].forEach(f => {
+        const el = document.getElementById('prof-'+f);
+        if (el && contributorProfile[f]) el.value = contributorProfile[f];
+      });
+    }
+    toast('success',`✅ Backup restaurado: ${invoices.length} documentos, perfil y ajustes.`);
+  } else {
+    // Merge: add only documents not already present (by clave+direction)
+    let added = 0;
+    for (const inv of importedInvoices) {
+      if (!invoices.find(x => x.clave === inv.clave && x.direction === inv.direction)) {
+        invoices.push(inv); added++;
+      }
+    }
+    // Merge adjustments without overwriting existing keys
+    if (parsed.adjustments && typeof parsed.adjustments === 'object') {
+      for (const [k, v] of Object.entries(parsed.adjustments)) {
+        if (!d150Adjustments[k]) d150Adjustments[k] = v;
+      }
+    }
+    filteredCache = null;
+    toast('success',`✅ ${added} documento(s) agregado(s) (${importedInvoices.length - added} duplicado(s) ignorado(s)).`);
+  }
+
+  await saveStorage();
+  updateStats(); updateBadges(); renderWarnings(); renderVencimiento(); populateMonthFilter();
+}
+
+// ═══════════════════════════════════════════════════════
+//  EXPORT D-150 PDF
+// ═══════════════════════════════════════════════════════
+function exportD150PDF() {
+  if (typeof window.jspdf === 'undefined' && typeof jsPDF === 'undefined') {
+    toast('error','⚠️ Librería PDF no disponible. Revisá la conexión.'); return;
+  }
+  const { jsPDF } = window.jspdf || { jsPDF };
+  const doc  = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const prof = contributorProfile;
+  const d    = calcD150Data(invoices);
+  const adj  = getAdj();
+  const retenciones   = adj.retenciones  || 0;
+  const saldoAnterior = adj.saldoFavor   || 0;
+  const impDet        = Math.max(0, d.debitoNeto - d.creditoAjustado);
+  const ivaPagarFinal = Math.max(0, impDet - retenciones - saldoAnterior);
+  const saldoFav      = ivaPagarFinal === 0
+    ? d.credFavor + Math.max(0, retenciones + saldoAnterior - impDet) : 0;
+  const periodoLabel  = currentMonthD150 === -1
+    ? 'Todos los meses' : (MONTHS[currentMonthD150] + ' ' + currentYearD150);
+
+  // ── FIX 1: fmtPDF usa punto como separador de miles (compatible con Helvetica)
+  //           y 'CRC' en lugar de '₡' (que no existe en la fuente base de jsPDF)
+  const fmtPDF = v => {
+    const n = Math.round(v || 0);
+    // Format with dots as thousands separator (es-CR uses punto)
+    const str = n.toLocaleString('de-DE'); // de-DE uses dots: 1.234.567
+    return 'CRC ' + str;
+  };
+
+  // ── Page geometry ────────────────────────────────────
+  const W = 210, ML = 12, MR = 12;
+  const contentW = W - ML - MR;   // 186 mm
+  const colCasilla = ML + contentW * 0.62;  // ~127 mm from left
+  const colVal     = W - MR;                // right edge 198 mm
+
+  // ── HEADER ──────────────────────────────────────────
+  // Dark header band — fixed height = 30mm
+  doc.setFillColor(15, 25, 50);
+  doc.rect(0, 0, W, 32, 'F');
+
+  doc.setTextColor(220, 235, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.text('BORRADOR FORMULARIO D-150', ML, 10);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(120, 160, 210);
+  doc.text('Tribu Facil CR  |  Hacienda Digital  |  TRIBU-CR', ML, 17);
+
+  // Contributor line
+  const profLine = [
+    prof.nombre ? prof.nombre.slice(0, 50) : null,
+    prof.cedula ? 'Cedula: ' + prof.cedula : null,
+    prof.ciiu   ? 'CIIU: '  + prof.ciiu   : null,
+  ].filter(Boolean).join('   ');
+  if (profLine) {
+    doc.setTextColor(160, 200, 255);
+    doc.text(profLine, ML, 23);
+  }
+
+  // Period + date right-aligned
+  const dateStr = 'Periodo: ' + periodoLabel + '   |   ' +
+    new Date().toLocaleDateString('es-CR', { day:'2-digit', month:'short', year:'numeric' });
+  doc.setTextColor(100, 140, 190);
+  doc.setFontSize(7.5);
+  doc.text(dateStr, W - MR, 29, { align: 'right' });
+
+  // ── Monto helper — strips ₡ from fmt, applies fmtPDF ──
+  let y = 38;
+  const lineH = 7;
+  const checkPage = (extra = 0) => {
+    if (y + extra > 278) {
+      doc.addPage();
+      y = 16;
+      // Thin header on continuation pages
+      doc.setFillColor(15, 25, 50);
+      doc.rect(0, 0, W, 10, 'F');
+      doc.setTextColor(120, 160, 210);
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(7);
+      doc.text('D-150  ' + periodoLabel + '  (cont.)', ML, 7);
+    }
+  };
+
+  // ── SUMMARY BAR ─────────────────────────────────────
+  checkPage(14);
+  doc.setFillColor(22, 38, 72);
+  doc.rect(ML, y, contentW, 14, 'F');
+  doc.setDrawColor(40, 70, 130);
+  doc.rect(ML, y, contentW, 14, 'S');
+
+  const sumItems = [
+    { lbl: 'IVA DEBITO',     val: fmtPDF(d.debitoNeto),       col: [100, 160, 255] },
+    { lbl: 'IVA CREDITO',    val: fmtPDF(d.creditoAjustado),  col: [0,   190, 130] },
+    { lbl: ivaPagarFinal > 0 ? 'A PAGAR' : 'SALDO A FAVOR',
+           val: fmtPDF(ivaPagarFinal || saldoFav),
+           col: ivaPagarFinal > 0 ? [255, 80, 90] : [0, 200, 140] },
+  ];
+  const colW = contentW / 3;
+  sumItems.forEach(({ lbl, val, col }, i) => {
+    const cx = ML + i * colW + colW / 2;
+    doc.setTextColor(140, 170, 220);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.text(lbl, cx, y + 5, { align: 'center' });
+    doc.setTextColor(...col);
+    doc.setFontSize(9);
+    doc.text(val, cx, y + 11, { align: 'center' });
+  });
+  y += 18;
+
+  // ── SECTION HELPERS ──────────────────────────────────
+  const secHeader = (title, num) => {
+    checkPage(10);
+    doc.setFillColor(25, 42, 80);
+    doc.rect(ML, y, contentW, 8, 'F');
+    doc.setTextColor(210, 230, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.text(title, ML + 3, y + 5.5);
+    doc.setTextColor(120, 160, 220);
+    doc.setFontSize(8);
+    doc.text(num, W - MR - 2, y + 5.5, { align: 'right' });
+    y += 10;
+  };
+
+  const row = (lbl, casilla, val, highlight = false) => {
+    checkPage(lineH);
+    if (highlight) {
+      doc.setFillColor(30, 50, 90);
+      doc.rect(ML, y, contentW, lineH, 'F');
+    }
+    // Label — clip long labels
+    doc.setTextColor(highlight ? 190 : 130, highlight ? 215 : 165, highlight ? 255 : 210);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    // max label width: up to colCasilla - 4mm
+    const maxLblW = colCasilla - ML - 6;
+    doc.text(lbl, ML + 3, y + 5, { maxWidth: maxLblW });
+
+    // Casilla code — centered between label and value zones
+    doc.setTextColor(90, 130, 200);
+    doc.setFontSize(7.5);
+    doc.text(casilla, colCasilla, y + 5, { align: 'right' });
+
+    // Value — right-aligned, bold, within margin
+    doc.setTextColor(highlight ? 120 : 80, highlight ? 220 : 200, highlight ? 180 : 160);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.text(val, W - MR - 2, y + 5, { align: 'right' });
+
+    // Separator line
+    doc.setDrawColor(35, 55, 95);
+    doc.line(ML, y + lineH, W - MR, y + lineH);
+    y += lineH;
+  };
+
+  const totalRow = (lbl, val, danger = false) => {
+    checkPage(10);
+    if (danger) {
+      doc.setFillColor(80, 15, 25);
+      doc.setDrawColor(200, 50, 60);
+    } else {
+      doc.setFillColor(15, 55, 40);
+      doc.setDrawColor(30, 160, 100);
+    }
+    doc.rect(ML, y, contentW, 9, 'FD');
+    doc.setTextColor(danger ? 255 : 100, danger ? 120 : 230, danger ? 130 : 165);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text(lbl, ML + 3, y + 6.5);
+    doc.text(val, W - MR - 2, y + 6.5, { align: 'right' });
+    y += 12;
+  };
+
+  const spacer = (h = 4) => { y += h; };
+
+  const infoRow = (msg) => {
+    checkPage(8);
+    doc.setFillColor(20, 35, 65);
+    doc.rect(ML, y, contentW, 7, 'F');
+    doc.setTextColor(80, 130, 200);
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(7);
+    doc.text(msg, ML + 3, y + 4.8, { maxWidth: contentW - 6 });
+    y += 9;
+  };
+
+  // ── SECCIÓN I ────────────────────────────────────────
+  secHeader('SECCION I  -  Ventas y Operaciones del Periodo', 'I');
+  const rates = Object.entries(d.ivaByRate).sort((a,b) => +b[0] - +a[0]);
+  const totalGravBase = d.totalServGrav + d.totalMercGrav || 1;
+  for (const [t, v] of rates) {
+    const servBase = Math.round(v.base * d.totalServGrav / totalGravBase);
+    const mercBase = Math.round(v.base * d.totalMercGrav / totalGravBase);
+    if (servBase > 0) row(`Servicios Gravados  ${t}%`, `SG${t}`, fmtPDF(servBase));
+    if (mercBase > 0) row(`Mercancias Gravadas ${t}%`, `MG${t}`, fmtPDF(mercBase));
+    row(`IVA ${t}% generado (neto NC/ND)`, `IVA${t}`, fmtPDF(v.impuesto), true);
+  }
+  row('Ventas Exentas (sin IVA)',  'EX', fmtPDF(d.totalServExen + d.totalMercExen));
+  row('Ventas No Sujetas',         'NS', fmtPDF(d.totalNoSuj));
+  if (Object.keys(d.ncByRate||{}).length)
+    infoRow('NC descontadas: ' + Object.entries(d.ncByRate).filter(([,v])=>v.impuesto>0)
+      .map(([t,v])=>`${t}%: -CRC ${Math.round(v.impuesto).toLocaleString('de-DE')}`).join('  '));
+  totalRow('TOTAL DEBITO FISCAL (IVA Ventas)', fmtPDF(d.debitoNeto), true);
+  spacer();
+
+  // ── SECCIÓN II ───────────────────────────────────────
+  secHeader('SECCION II  -  Compras y Creditos del Periodo', 'II');
+  row('Total Compras del periodo',  'C1', fmtPDF(d.totalCompras));
+  row('IVA soportado en compras',   'C2', fmtPDF(d.creditoFiscal));
+  if (d.hasMixtas)
+    row('Proporcion provisional',   'C%', (d.proporcion * 100).toFixed(2) + '%');
+  totalRow('CREDITO FISCAL APLICABLE', fmtPDF(d.creditoAjustado));
+  spacer();
+
+  // ── SECCIÓN III ──────────────────────────────────────
+  if (d.hasMixtas) {
+    secHeader('SECCION III  -  Proporcionalidad', 'III');
+    row('Ventas con derecho a credito (P1)', 'P1', fmtPDF(d.totalServGrav + d.totalMercGrav));
+    row('Total ventas del periodo (P2)',     'P2',
+      fmtPDF(d.totalServGrav+d.totalMercGrav+d.totalServExen+d.totalMercExen+d.totalNoSuj));
+    row('Proporcion provisional (P1/P2)',    'PROP', (d.proporcion*100).toFixed(2)+'%', true);
+    infoRow('Ingresa este porcentaje manualmente en la Seccion II de TRIBU-CR.');
+    spacer();
+  }
+
+  // ── SECCIÓN IV ───────────────────────────────────────
+  secHeader('SECCION IV  -  Ajustes Manuales', 'IV');
+  row('Retenciones bancarias (datáfono)', 'IV-1', fmtPDF(retenciones));
+  row('Saldo a favor periodo anterior',   'IV-2', fmtPDF(saldoAnterior));
+  spacer();
+
+  // ── SECCIÓN V ────────────────────────────────────────
+  secHeader('SECCION V  -  Determinacion del Impuesto', 'V');
+  row('Total Debito Fiscal (Sec. I)',    'V1', fmtPDF(d.debitoNeto));
+  row('(-) Credito Fiscal (Sec. II)',    'V2', fmtPDF(d.creditoAjustado));
+  totalRow('IMPUESTO DETERMINADO  (V1 - V2)', fmtPDF(impDet), impDet > 0);
+  spacer();
+
+  // ── SECCIÓN VI ───────────────────────────────────────
+  secHeader('SECCION VI  -  Liquidacion de la Deuda', 'VI');
+  row('Impuesto Determinado (Sec. V)',        'L1', fmtPDF(impDet));
+  row('(-) Retenciones bancarias [IV-1]',    'L2', fmtPDF(retenciones));
+  row('(-) Saldo a favor anterior [IV-2]',   'L3', fmtPDF(saldoAnterior));
+  spacer(2);
+  totalRow(
+    ivaPagarFinal > 0 ? '>>> IVA A PAGAR A HACIENDA' : '<<< SALDO A FAVOR (credito)',
+    fmtPDF(ivaPagarFinal || saldoFav),
+    ivaPagarFinal > 0
+  );
+
+  // ── DISCLAIMER BOX ───────────────────────────────────
+  checkPage(18);
+  spacer(4);
+  doc.setFillColor(20, 30, 55);
+  doc.setDrawColor(50, 80, 140);
+  doc.rect(ML, y, contentW, 14, 'FD');
+  doc.setTextColor(100, 140, 200);
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(7.5);
+  doc.text(
+    'NOTA: Este borrador es orientativo. Los valores de Servicios vs Mercancias son estimados ' +
+    'basados en el resumen del XML. Verificá con tu contador antes de declarar en TRIBU-CR. ' +
+    'El simbolo CRC equivale al Colon costarricense (CRC).',
+    ML + 3, y + 5, { maxWidth: contentW - 6 }
+  );
+  y += 16;
+
+  // ── FOOTER en cada página ─────────────────────────────
+  const pages = doc.internal.getNumberOfPages();
+  for (let p = 1; p <= pages; p++) {
+    doc.setPage(p);
+    doc.setFontSize(7);
+    doc.setTextColor(60, 90, 140);
+    doc.setFont('helvetica', 'normal');
+    doc.text(
+      'Tribu Facil CR  |  TRIBU-CR Hacienda Digital  |  Pag ' + p + ' / ' + pages,
+      W / 2, 292, { align: 'center' }
+    );
+    // Bottom line
+    doc.setDrawColor(40, 65, 120);
+    doc.line(ML, 288, W - MR, 288);
+  }
+
+  const filename = 'd150-' + periodoLabel.replace(/\s+/g, '-').toLowerCase() + '.pdf';
+  doc.save(filename);
+  toast('success', '📑 PDF exportado: ' + filename);
 }
 function dlFile(content,name,mime) {
   const a = document.createElement('a');
@@ -2145,7 +3492,13 @@ function updateStats() {
   const sb = document.getElementById('storageBadge');
   if (invoices.length>0) {
     sb.style.display='block';
-    sb.innerHTML = `💾 <strong style="color:var(--text)">${invoices.length}</strong> doc${invoices.length!==1?'s':''} guardado${invoices.length!==1?'s':''} · <span style="color:var(--accent)">Auto-guardado ✓</span>`;
+    const limitWarn = invoices.length > 500
+      ? ` · <span style="color:var(--warn)">⚠️ +500 docs — el almacenamiento puede ser lento</span>`
+      : '';
+    sb.innerHTML = `💾 <strong style="color:var(--text)">${invoices.length}</strong> doc${invoices.length!==1?'s':''} guardado${invoices.length!==1?'s':''} · <span style="color:var(--accent)">Auto-guardado ✓</span>${limitWarn}`;
+    if (invoices.length > 500 && !warnings.find(w=>w.title&&w.title.includes('500 documentos')))
+      addWarning('warn', 'Más de 500 documentos en sesión',
+        'Con muchos documentos el guardado puede ser lento o fallar. Considerá exportar y limpiar la sesión antes de cargar más archivos.');
   } else sb.style.display='none';
 }
 
@@ -2166,7 +3519,14 @@ function setProgress(p) {
 
 async function clearAll() {
   if (invoices.length && !confirm(`¿Eliminar los ${invoices.length} documentos guardados? Esta acción no se puede deshacer.`)) return;
-  invoices=[]; warnings=[]; filteredCache=null;
+  invoices = []; warnings = []; filteredCache = null;
+  d150Adjustments = {};           // reset per-period adjustments
+  currentMonthD150 = -1; currentMonthSum = -1;
+  currentYearD150  = new Date().getFullYear();
+  currentYearSum   = new Date().getFullYear();
+  document.getElementById('d150MonthLabel').textContent = 'Todos los meses';
+  const sml = document.getElementById('sumMonthLabel');
+  if (sml) sml.textContent = 'Todos los meses';
   await clearStorage();
   updateStats(); updateBadges(); renderWarnings(); renderInvoices(); renderVencimiento();
   toast('success','🗑 Datos eliminados');
@@ -2177,6 +3537,13 @@ async function loadDemo() {
   invoices = demoData();
   warnings = [];
   filteredCache = null;
+  d150Adjustments = {};
+  currentMonthD150 = -1; currentMonthSum = -1;
+  currentYearD150 = new Date().getFullYear();
+  currentYearSum  = new Date().getFullYear();
+  document.getElementById('d150MonthLabel').textContent = 'Todos los meses';
+  const sml = document.getElementById('sumMonthLabel');
+  if (sml) sml.textContent = 'Todos los meses';
   await saveStorage();
   updateStats(); updateBadges(); renderWarnings(); renderVencimiento(); populateMonthFilter();
   toast('success', '🎲 6 documentos demo cargados. Explorá las pestañas.');
@@ -2259,11 +3626,17 @@ function demoData() {
 async function init() {
   setText('s-total','0');
   let loaded = false;
-  if (typeof window.storage !== 'undefined') loaded = await loadStorage();
+  if (typeof window.storage !== 'undefined') {
+    loaded = await loadStorage();
+    await loadProfile();
+  }
   if (loaded && invoices.length > 0) {
     toast('success','✅ '+invoices.length+' documento'+(invoices.length!==1?'s':'')+' restaurado'+(invoices.length!==1?'s':'')+' de tu sesión anterior');
   }
   updateStats(); updateBadges(); renderWarnings(); renderVencimiento(); populateMonthFilter();
+  // Hide allPeriodsPanel until summary tab is first opened
+  const ap = document.getElementById('allPeriodsPanel');
+  if (ap) ap.style.display = 'none';
 }
 
 // ═══════════════════════════════════════════════════════
