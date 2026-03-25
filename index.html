@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://cdnjs.cloudflare.com; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; connect-src 'self' https://api.hacienda.go.cr https://corsproxy.io https://api.allorigins.win https://proxy.cors.sh; object-src 'none';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://cdnjs.cloudflare.com; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; connect-src 'self' https://api.hacienda.go.cr https://corsproxy.io https://api.allorigins.win https://proxy.cors.sh https://sheets.googleapis.com; object-src 'none';">
 <title>Tribu Fácil CR — Gestión Fiscal Inteligente</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,6 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root{
   --bg:#060c1a;--surface:#0d1628;--surface2:#131e35;--surface3:#1a2847;
@@ -273,67 +274,44 @@ footer span{color:var(--muted)}
 button[data-tip],a[data-tip]{cursor:pointer}
 [data-tip]:not(button):not(a):not(input):not(select){cursor:help}
 
-[data-tip]::after{
-  content:attr(data-tip);
-  position:absolute;
-  bottom:calc(100% + 10px);
-  left:50%;
-  transform:translateX(-50%) translateY(4px);
-  background:rgba(8,15,35,.98);
+/* ── Tooltip bubble — rendered via JS into a fixed overlay ── */
+#tipBox{
+  position:fixed;
+  z-index:999999;
+  pointer-events:none;
+  background:rgba(8,15,35,.97);
   color:#e8eeff;
   font-family:'DM Sans',sans-serif;
-  font-size:11.5px;font-weight:400;line-height:1.55;
+  font-size:11.5px;
+  font-weight:400;
+  line-height:1.6;
   white-space:normal;
-  width:max-content;
-  max-width:min(260px, calc(100vw - 32px));
-  min-width:100px;
-  padding:8px 12px;
+  max-width:min(280px, calc(100vw - 24px));
+  min-width:90px;
+  padding:8px 13px;
   border-radius:9px;
   border:1px solid rgba(99,143,255,.35);
-  box-shadow:0 8px 32px rgba(0,0,0,.6);
-  pointer-events:none;
-  opacity:0;
-  transition:opacity .15s ease, transform .15s ease;
-  z-index:99999;
+  box-shadow:0 8px 32px rgba(0,0,0,.65);
   text-align:left;
   letter-spacing:0;
   text-transform:none;
-  font-weight:400;
-}
-[data-tip]::before{
-  content:'';
-  position:absolute;
-  bottom:calc(100% + 5px);
-  left:50%;
-  transform:translateX(-50%);
-  border:5px solid transparent;
-  border-top-color:rgba(99,143,255,.35);
-  pointer-events:none;
   opacity:0;
-  transition:opacity .15s ease;
-  z-index:99999;
+  transition:opacity .12s ease;
+  word-break:break-word;
 }
-[data-tip]:hover::after{opacity:1;transform:translateX(-50%) translateY(0)}
-[data-tip]:hover::before{opacity:1}
-/* Active state for JS-triggered mobile tap */
-[data-tip].tip-active::after{opacity:1;transform:translateX(-50%) translateY(0)}
-[data-tip].tip-active::before{opacity:1}
-
-/* Direction variants */
-[data-tip].tip-right::after{left:auto;right:0;transform:translateY(4px)}
-[data-tip].tip-right:hover::after,[data-tip].tip-right.tip-active::after{transform:translateY(0)}
-[data-tip].tip-right::before{left:auto;right:14px;transform:none}
-[data-tip].tip-left::after{left:0;right:auto;transform:translateY(4px)}
-[data-tip].tip-left:hover::after,[data-tip].tip-left.tip-active::after{transform:translateY(0)}
-[data-tip].tip-left::before{left:14px;transform:none}
-[data-tip].tip-below::after{top:calc(100% + 10px);bottom:auto;transform:translateX(-50%) translateY(-4px)}
-[data-tip].tip-below:hover::after,[data-tip].tip-below.tip-active::after{transform:translateX(-50%) translateY(0)}
-[data-tip].tip-below::before{top:calc(100% + 5px);bottom:auto;border-top-color:transparent;border-bottom-color:rgba(99,143,255,.35)}
-
-/* On touch devices, hide CSS :hover tooltips — JS handles tap instead */
-@media(hover:none){
-  [data-tip]:hover::after,[data-tip]:hover::before{opacity:0}
+#tipBox.visible{opacity:1}
+#tipArrow{
+  position:fixed;
+  z-index:999998;
+  pointer-events:none;
+  width:0;height:0;
+  border:5px solid transparent;
+  opacity:0;
+  transition:opacity .12s ease;
 }
+#tipArrow.visible{opacity:1}
+#tipArrow.up{border-bottom-color:rgba(99,143,255,.4)}
+#tipArrow.down{border-top-color:rgba(99,143,255,.4)}
 
 /* ═══════════════════════════════════════════════════════
    RESPONSIVE — TABLET  (max 1024px)
@@ -354,25 +332,27 @@ button[data-tip],a[data-tip]{cursor:pointer}
   .app{padding:0 12px 100px}
 
   /* Header */
-  header{
-    padding:12px 14px;
-    margin:0 -12px;
-    flex-wrap:wrap;
-    gap:8px;
-  }
+  header{padding:12px 14px;margin:0 -12px;flex-wrap:wrap;gap:8px}
   .logo-name{font-size:15px}
   .logo-tag{display:none}
   .hdr-right{gap:6px;width:100%;justify-content:flex-end}
-  .hdr-right > div:first-child{display:none} /* hide version badge */
+  .hdr-right > div:first-child{display:none}
   .btn-sm{padding:6px 10px;font-size:11px}
 
-  /* Nav tabs — scrollable row, smaller */
-  .nav-tabs{margin:14px 0 20px;padding:3px;gap:2px}
-  .nav-tab{min-width:72px;padding:7px 10px;font-size:11px;gap:3px}
+  /* Nav tabs */
+  .nav-tabs{margin:14px 0 0;padding:3px;gap:2px}
+  .nav-tab{min-width:66px;padding:7px 8px;font-size:10px;gap:2px}
+
+  /* Progress flow — compact on mobile */
+  .progress-flow{padding:0 12px;margin:0 -12px}
+  .pf-step{padding:7px 10px;gap:5px}
+  .pf-label{font-size:10px}
+  .pf-dot{width:18px;height:18px;font-size:9px}
+  .pf-arrow{font-size:9px;padding:0}
 
   /* Section titles */
   .section-title{font-size:16px}
-  .section-header{margin-bottom:16px}
+  .section-header{margin-bottom:16px;flex-direction:column;align-items:flex-start;gap:8px}
 
   /* Stats grid */
   .stats-row{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
@@ -387,25 +367,21 @@ button[data-tip],a[data-tip]{cursor:pointer}
   .upload-types{gap:4px;margin-top:12px}
   .type-chip{font-size:9px;padding:2px 8px}
 
-  /* Vencimiento widget — stack vertically */
+  /* Vencimiento widget */
   .venc-widget{flex-direction:column;align-items:flex-start;gap:12px;padding:14px}
   .venc-countdown{gap:7px}
   .venc-unit{min-width:48px;padding:8px 10px}
   .venc-num{font-size:22px}
   .venc-title{font-size:13px}
 
-  /* Invoice controls — stack filters */
+  /* Invoice controls */
   .invoice-controls{flex-direction:column;align-items:stretch;gap:8px}
   .search-box{min-width:unset;width:100%}
   .filter-sel{width:100%}
   .invoice-grid{grid-template-columns:1fr;gap:10px}
-
-  /* Invoice card */
   .invoice-card{padding:14px}
   .party-name{max-width:180px}
   .amount-total{font-size:16px}
-
-  /* Pagination */
   .pagination-bar{flex-direction:column;align-items:flex-start;gap:8px;padding:12px 14px}
 
   /* D-150 */
@@ -419,10 +395,13 @@ button[data-tip],a[data-tip]{cursor:pointer}
   #d150FinalResult{font-size:22px}
   .t-total{flex-direction:row}
   .t-total-val{font-size:17px}
+  /* Sec IV inputs full width */
+  #sec4-retenciones,#sec4-saldo{width:100%!important}
 
   /* Summary */
   .grid2{grid-template-columns:1fr;gap:14px}
   .t-card{padding:16px}
+  .chart-wrap{height:200px}
 
   /* Simulator */
   .sim-grid{grid-template-columns:1fr;gap:16px}
@@ -433,6 +412,7 @@ button[data-tip],a[data-tip]{cursor:pointer}
   /* Export */
   .export-grid{grid-template-columns:1fr;gap:10px}
   .export-card{padding:16px}
+  .notif-banner{flex-direction:column;gap:8px}
 
   /* Modal */
   .modal-overlay{padding:12px}
@@ -443,17 +423,51 @@ button[data-tip],a[data-tip]{cursor:pointer}
   .lines-table{font-size:10px}
   .lines-table th,.lines-table td{padding:5px 7px}
 
-  /* Toast + storage badge — avoid overlap */
+  /* Onboarding */
+  .onboard-header{padding:24px 20px 0}
+  .onboard-header h2{font-size:20px}
+  .onboard-steps{grid-template-columns:1fr;padding:14px 20px;gap:8px}
+  .onboard-step{padding:12px}
+  .onboard-footer{padding:12px 20px 22px}
+
+  /* Tools section */
+  .multas-grid{grid-template-columns:1fr}
+  .multa-result{padding:14px}
+  .multa-row{font-size:12px;gap:6px}
+  .multa-total{flex-direction:column;gap:6px;text-align:center}
+  #cabysInput{width:100%}
+
+  /* Context help panels */
+  .ctx-help-title{font-size:12px}
+  .ctx-step p{font-size:12px}
+  .ctx-action-btn{font-size:11px;padding:6px 12px}
+
+  /* Guide flow visual */
+  #section-guia .pf-step-guide{min-width:80px;padding:8px 10px}
+
+  /* Allperiods table scroll */
+  #allPeriodsTable{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+  /* Toast + storage badge */
   .toast-ctr{bottom:70px;right:12px;max-width:calc(100vw - 24px)}
   .toast{min-width:unset;max-width:100%}
   .storage-badge{bottom:14px;left:12px;font-size:10px;padding:6px 10px;max-width:calc(100vw - 100px)}
 
-  /* Guide */
+  /* Card padding */
   .card{padding:16px}
   .card-sm{padding:12px}
+}
 
-  /* Tooltip: constrain width on mobile */
-  [data-tip]::after{max-width:calc(100vw - 24px)}
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE — TABLET  (768px–1024px)
+═══════════════════════════════════════════════════════ */
+@media(min-width:769px) and (max-width:1024px){
+  .app{padding:0 16px 80px}
+  .invoice-grid{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+  .stats-row{grid-template-columns:repeat(3,1fr)}
+  .export-grid{grid-template-columns:repeat(2,1fr)}
+  .multas-grid{grid-template-columns:1fr 1fr}
+  .chart-wrap{height:230px}
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -464,13 +478,178 @@ button[data-tip],a[data-tip]{cursor:pointer}
   .venc-countdown{gap:5px}
   .venc-unit{min-width:42px;padding:6px 8px}
   .venc-num{font-size:19px}
-  .hdr-right .btn-ghost{display:none} /* hide Limpiar on tiny screens */
-  .nav-tab{min-width:60px;padding:6px 8px;font-size:10px}
+  .hdr-right .btn-ghost{display:none}
+  .nav-tab{min-width:56px;padding:6px 7px;font-size:10px}
+  /* Progress bar — hide labels, show only dots and arrows */
+  .pf-label{display:none}
+  .pf-step{padding:6px 8px}
+  /* Chart shorter on tiny screens */
+  .chart-wrap{height:160px}
+  /* D-150 inputs */
+  #sec4-retenciones,#sec4-saldo{width:100%!important}
+  /* Onboarding compact */
+  .onboard-logo{width:44px;height:44px;font-size:20px}
+  .onboard-header h2{font-size:18px}
+  /* Section header wrap */
+  .section-header{gap:6px}
 }
+
+/* ═══════════════════════════════════════════════════════
+   ONBOARDING MODAL
+═══════════════════════════════════════════════════════ */
+.onboard-overlay{position:fixed;inset:0;background:rgba(4,8,20,.88);backdrop-filter:blur(12px);z-index:500;display:none;align-items:center;justify-content:center;padding:20px}
+.onboard-overlay.open{display:flex;animation:fadeIn .35s ease}
+.onboard-modal{background:var(--surface);border:1px solid var(--border-hi);border-radius:20px;max-width:620px;width:100%;max-height:90vh;overflow-y:auto;animation:mIn .3s ease;box-shadow:0 32px 80px rgba(0,0,0,.7);position:relative}
+.onboard-header{padding:32px 32px 0;text-align:center}
+.onboard-logo{width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--primary),#6a9fff);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:24px;color:#fff;margin:0 auto 16px;box-shadow:0 8px 24px rgba(61,122,255,.35)}
+.onboard-header h2{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;margin-bottom:8px}
+.onboard-header p{font-size:14px;color:var(--muted);max-width:380px;margin:0 auto}
+.onboard-steps{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:24px 32px}
+.onboard-step{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px;transition:border-color .2s}
+.onboard-step:hover{border-color:var(--border-hi)}
+.onboard-step-icon{font-size:22px}
+.onboard-step-num{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--primary)}
+.onboard-step h4{font-size:13px;font-weight:700;margin:0}
+.onboard-step p{font-size:12px;color:var(--muted);margin:0;line-height:1.5}
+.onboard-footer{padding:16px 32px 28px;display:flex;flex-direction:column;gap:10px;align-items:center}
+.onboard-footer .btn{width:100%;max-width:320px;justify-content:center;padding:12px 24px;font-size:14px}
+.onboard-skip{font-size:12px;color:var(--faint);cursor:pointer;text-decoration:underline}
+.onboard-skip:hover{color:var(--muted)}
+@media(max-width:560px){
+  .onboard-steps{grid-template-columns:1fr}
+  .onboard-header,.onboard-footer{padding-left:20px;padding-right:20px}
+  .onboard-steps{padding:16px 20px}
+}
+
+/* ═══════════════════════════════════════════════════════
+   PROGRESS BAR
+═══════════════════════════════════════════════════════ */
+.progress-flow{display:flex;align-items:stretch;gap:0;margin:0 -20px;padding:0 20px;background:rgba(13,22,40,.6);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.progress-flow::-webkit-scrollbar{display:none}
+.pf-step{display:flex;align-items:center;gap:8px;padding:9px 14px;position:relative;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background .2s;border-bottom:2px solid transparent}
+.pf-step:hover{background:rgba(99,143,255,.06)}
+.pf-step.active{border-bottom-color:var(--primary)}
+.pf-step.done{border-bottom-color:var(--accent)}
+.pf-dot{width:22px;height:22px;border-radius:50%;background:var(--surface3);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--faint);flex-shrink:0;transition:all .25s}
+.pf-step.active .pf-dot{background:var(--primary);border-color:var(--primary);color:#fff}
+.pf-step.done .pf-dot{background:var(--accent);border-color:var(--accent);color:#03120a}
+.pf-label{font-size:11px;font-weight:600;color:var(--muted);transition:color .2s}
+.pf-step.active .pf-label{color:var(--text)}
+.pf-step.done .pf-label{color:var(--accent)}
+.pf-arrow{font-size:10px;color:var(--faint);padding:0 2px;flex-shrink:0}
+
+/* ═══════════════════════════════════════════════════════
+   CONTEXTUAL HELP PANEL
+═══════════════════════════════════════════════════════ */
+.ctx-help{background:linear-gradient(135deg,rgba(61,122,255,.06),rgba(0,214,143,.03));border:1px solid rgba(61,122,255,.2);border-radius:var(--r);margin-bottom:18px;overflow:hidden;transition:all .25s}
+.ctx-help-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;cursor:pointer;user-select:none}
+.ctx-help-hdr:hover{background:rgba(61,122,255,.05)}
+.ctx-help-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#7aabff}
+.ctx-help-toggle{font-size:11px;color:var(--faint);font-weight:600;transition:transform .2s}
+.ctx-help.open .ctx-help-toggle{transform:rotate(180deg)}
+.ctx-help-body{display:none;padding:0 18px 16px;border-top:1px solid rgba(61,122,255,.12)}
+.ctx-help.open .ctx-help-body{display:block}
+.ctx-steps{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.ctx-step{display:flex;gap:10px;align-items:flex-start}
+.ctx-step-n{width:20px;height:20px;border-radius:50%;background:var(--primary);color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.ctx-step-n.g{background:var(--accent);color:#03120a}
+.ctx-step p{font-size:13px;color:var(--muted);margin:0}
+.ctx-step p strong{color:var(--text)}
+.ctx-action-btn{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:7px 14px;background:var(--primary);color:#fff;border:none;border-radius:var(--rs);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none}
+.ctx-action-btn:hover{background:#2d6aef;transform:translateY(-1px)}
+.ctx-action-btn.ghost{background:transparent;border:1px solid var(--border-hi);color:var(--muted)}
+.ctx-action-btn.ghost:hover{color:var(--text);border-color:var(--primary)}
+
+/* ═══════════════════════════════════════════════════════
+   GRÁFICO DE PERÍODOS
+═══════════════════════════════════════════════════════ */
+.chart-wrap{position:relative;width:100%;height:260px;margin-top:14px}
+
+/* ═══════════════════════════════════════════════════════
+   CALCULADORA DE MULTAS
+═══════════════════════════════════════════════════════ */
+.multas-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:700px){.multas-grid{grid-template-columns:1fr}}
+.multa-result{background:rgba(255,77,106,.07);border:1px solid rgba(255,77,106,.25);border-radius:var(--r);padding:18px;margin-top:16px}
+.multa-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,77,106,.1);font-size:13px}
+.multa-row:last-child{border-bottom:none}
+.multa-total{background:rgba(255,77,106,.15);border-radius:var(--rs);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+
+/* ═══════════════════════════════════════════════════════
+   VALIDADOR CABYS
+═══════════════════════════════════════════════════════ */
+.cabys-result{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-top:14px;font-size:13px;display:none}
+.cabys-result.found{border-color:rgba(0,214,143,.3);background:rgba(0,214,143,.04)}
+.cabys-result.notfound{border-color:rgba(255,77,106,.3);background:rgba(255,77,106,.04)}
+.cabys-field{display:flex;flex-direction:column;gap:3px;margin-bottom:10px}
+.cabys-field-lbl{font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--faint)}
+.cabys-field-val{font-size:13px;color:var(--text);font-weight:500}
+
+/* ═══════════════════════════════════════════════════════
+   NOTIFICACIÓN BANNER
+═══════════════════════════════════════════════════════ */
+.notif-banner{background:linear-gradient(135deg,rgba(0,214,143,.08),rgba(61,122,255,.05));border:1px solid rgba(0,214,143,.25);border-radius:var(--rs);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.notif-banner-text{font-size:13px;color:var(--muted);flex:1}
+.notif-banner-text strong{color:var(--text)}
 
 </style>
 </head>
 <body>
+
+<!-- ════ ONBOARDING MODAL ════ -->
+<div class="onboard-overlay" id="onboardOverlay">
+  <div class="onboard-modal">
+    <div class="onboard-header">
+      <div class="onboard-logo">T</div>
+      <h2>Bienvenido a Tribu Fácil CR</h2>
+      <p>Tu asistente para preparar el borrador D-150 y declarar el IVA en TRIBU-CR. Seguí estos 5 pasos:</p>
+    </div>
+    <div class="onboard-steps">
+      <div class="onboard-step">
+        <div class="onboard-step-icon">👤</div>
+        <div class="onboard-step-num">Paso 1</div>
+        <h4>Configurá tu Perfil</h4>
+        <p>Ingresá tu cédula y buscá en Hacienda para completar automáticamente nombre y actividad económica.</p>
+      </div>
+      <div class="onboard-step">
+        <div class="onboard-step-icon">📁</div>
+        <div class="onboard-step-num">Paso 2</div>
+        <h4>Cargá tus XML</h4>
+        <p>Subí las facturas emitidas (ventas) Y las recibidas (compras del período). Acepta ZIP con todo.</p>
+      </div>
+      <div class="onboard-step">
+        <div class="onboard-step-icon">📋</div>
+        <div class="onboard-step-num">Paso 3</div>
+        <h4>Revisá el D-150</h4>
+        <p>Verificá los montos por sección y completá las retenciones o saldos a favor manuales si los tenés.</p>
+      </div>
+      <div class="onboard-step">
+        <div class="onboard-step-icon">📥</div>
+        <div class="onboard-step-num">Paso 4</div>
+        <h4>Exportá el borrador</h4>
+        <p>Descargá el PDF o Excel, o copiá todos los valores al portapapeles para tenerlos a mano.</p>
+      </div>
+      <div class="onboard-step">
+        <div class="onboard-step-icon">🌐</div>
+        <div class="onboard-step-num">Paso 5</div>
+        <h4>Declarás en TRIBU-CR</h4>
+        <p>Abrí ovitribucr.hacienda.go.cr y copiá los valores del borrador en el formulario D-150 oficial.</p>
+      </div>
+      <div class="onboard-step" style="background:rgba(0,214,143,.05);border-color:rgba(0,214,143,.2)">
+        <div class="onboard-step-icon">📖</div>
+        <div class="onboard-step-num" style="color:var(--accent)">Guía completa</div>
+        <h4>¿Primera vez?</h4>
+        <p>La pestaña <strong>📖 Guía</strong> tiene el manual completo paso a paso con ejemplos y FAQ.</p>
+      </div>
+    </div>
+    <div class="onboard-footer">
+      <button class="btn btn-primary ctx-action-btn" style="width:100%;max-width:320px;padding:12px 24px;font-size:14px" onclick="closeOnboarding(true)">
+        ✅ Entendido — Comenzar
+      </button>
+      <span class="onboard-skip" onclick="closeOnboarding(false)">No mostrar de nuevo</span>
+    </div>
+  </div>
+</div>
 
 <!-- HEADER -->
 <header>
@@ -497,13 +676,65 @@ button[data-tip],a[data-tip]{cursor:pointer}
   <button class="nav-tab" onclick="switchTab('d150')" id="tab-d150" data-tip="Borrador del formulario D-150 (IVA mensual) con las 6 secciones listas para ingresar en TRIBU-CR.">📋 D-150 TRIBU</button>
   <button class="nav-tab" onclick="switchTab('summary')" id="tab-summary" data-tip="Resumen de IVA débito (ventas), crédito (compras) y monto a pagar por período.">📊 Resumen IVA</button>
   <button class="nav-tab" onclick="switchTab('simulator')" id="tab-simulator" data-tip="Estimá tu Impuesto sobre la Renta anual (D-101) con los tramos oficiales de Hacienda.">🧮 Renta</button>
-  <button class="nav-tab" onclick="switchTab('guia')" id="tab-guia" data-tip="Guía paso a paso para declarar el D-150 y el D-101 en el portal TRIBU-CR.">📖 Guía TRIBU-CR</button>
+  <button class="nav-tab" onclick="switchTab('guia')" id="tab-guia" data-tip="Guía completa para declarar el D-150 y el D-101 en el portal TRIBU-CR.">📖 Guía</button>
+  <button class="nav-tab" onclick="switchTab('tools')" id="tab-tools" data-tip="Calculadora de multas por mora, validador de códigos CABYS y otras herramientas fiscales.">🔧 Herramientas</button>
   <button class="nav-tab" onclick="switchTab('warnings')" id="tab-warnings" data-tip="Alertas automáticas sobre facturas rechazadas, CABYS inválidos y proporcionalidad.">⚠️ Alertas <span class="tab-badge warn" id="badge-warn">0</span></button>
   <button class="nav-tab" onclick="switchTab('export')" id="tab-export" data-tip="Exportá tus datos en Excel, D-150 .xlsx, CSV o JSON para tu contador o respaldo.">📥 Exportar</button>
 </div>
 
+<!-- BARRA DE PROGRESO DEL FLUJO -->
+<div class="progress-flow" id="progressFlow">
+  <div class="pf-step active" onclick="switchTab('upload')" id="pf-1" data-tip="Paso 1: Configurá tu perfil y cargá los archivos XML del período a declarar.">
+    <div class="pf-dot">1</div>
+    <div class="pf-label">📤 Subir XMLs</div>
+  </div>
+  <div class="pf-arrow">›</div>
+  <div class="pf-step" onclick="switchTab('invoices')" id="pf-2" data-tip="Paso 2: Revisá que todas las facturas estén correctamente clasificadas.">
+    <div class="pf-dot">2</div>
+    <div class="pf-label">🧾 Verificar</div>
+  </div>
+  <div class="pf-arrow">›</div>
+  <div class="pf-step" onclick="switchTab('d150')" id="pf-3" data-tip="Paso 3: Revisá el borrador D-150 y completá los ajustes manuales de Sección IV.">
+    <div class="pf-dot">3</div>
+    <div class="pf-label">📋 D-150</div>
+  </div>
+  <div class="pf-arrow">›</div>
+  <div class="pf-step" onclick="switchTab('export')" id="pf-4" data-tip="Paso 4: Exportá el borrador en PDF o Excel para tenerlo de referencia.">
+    <div class="pf-dot">4</div>
+    <div class="pf-label">📥 Exportar</div>
+  </div>
+  <div class="pf-arrow">›</div>
+  <div class="pf-step" onclick="window.open('https://ovitribucr.hacienda.go.cr','_blank')" id="pf-5" data-tip="Paso 5: Abrí TRIBU-CR y copiá los valores del borrador en el formulario D-150 oficial.">
+    <div class="pf-dot">5</div>
+    <div class="pf-label">🌐 TRIBU-CR</div>
+  </div>
+  <div style="margin-left:auto;display:flex;align-items:center;padding:0 12px;flex-shrink:0">
+    <button onclick="openOnboarding()" class="btn btn-ghost btn-xs" style="font-size:10px" data-tip="Ver guía de inicio rápido">❓ Ayuda</button>
+  </div>
+</div>
+
 <!-- ════ UPLOAD ════ -->
 <section class="section active" id="section-upload">
+
+  <!-- AYUDA CONTEXTUAL -->
+  <div class="ctx-help open" id="ctx-upload">
+    <div class="ctx-help-hdr" onclick="toggleCtxHelp('ctx-upload')">
+      <div class="ctx-help-title">💡 ¿Qué hacés en esta pestaña? <span style="font-size:11px;font-weight:400;color:var(--faint)">(clic para cerrar)</span></div>
+      <div class="ctx-help-toggle">▲</div>
+    </div>
+    <div class="ctx-help-body">
+      <div class="ctx-steps">
+        <div class="ctx-step"><div class="ctx-step-n">1</div><p><strong>Configurá tu perfil</strong> — Ingresá tu cédula y hacé clic en 🌐 Buscar en Hacienda para completar nombre y actividad automáticamente.</p></div>
+        <div class="ctx-step"><div class="ctx-step-n">2</div><p><strong>Subí tus facturas XML</strong> — Arrastrá los archivos o hacé clic en la zona de carga. Necesitás cargar <strong>tanto las facturas emitidas (ventas) como las recibidas (compras)</strong>.</p></div>
+        <div class="ctx-step"><div class="ctx-step-n">3</div><p><strong>Revisá los contadores</strong> — Verificá que los totales de IVA Débito y Crédito tengan sentido. Si algo parece raro, revisá la pestaña ⚠️ Alertas.</p></div>
+        <div class="ctx-step"><div class="ctx-step-n g">→</div><p>Cuando hayas subido todos los XMLs, pasá a <strong>📋 D-150 TRIBU</strong> para ver el borrador.</p></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+        <button class="ctx-action-btn" onclick="switchTab('d150')">📋 Ver borrador D-150 →</button>
+        <button class="ctx-action-btn ghost" onclick="switchTab('guia')">📖 Ver guía completa</button>
+      </div>
+    </div>
+  </div>
 
   <!-- VENCIMIENTO WIDGET -->
   <div class="venc-widget" id="vencWidget" data-tip="Cuenta regresiva al próximo vencimiento del D-150 (IVA mensual). El plazo es el día 15 hábil de cada mes.">
@@ -616,6 +847,22 @@ button[data-tip],a[data-tip]{cursor:pointer}
 
 <!-- ════ FACTURAS ════ -->
 <section class="section" id="section-invoices">
+  <!-- AYUDA CONTEXTUAL -->
+  <div class="ctx-help" id="ctx-invoices">
+    <div class="ctx-help-hdr" onclick="toggleCtxHelp('ctx-invoices')">
+      <div class="ctx-help-title">💡 ¿Cómo verificar tus documentos?</div>
+      <div class="ctx-help-toggle">▼</div>
+    </div>
+    <div class="ctx-help-body">
+      <div class="ctx-steps">
+        <div class="ctx-step"><div class="ctx-step-n">1</div><p>Verificá que cada factura esté marcada como <strong>VENTA</strong> (emitida por vos) o <strong>COMPRA</strong> (recibida de proveedor). Las compras generan crédito fiscal.</p></div>
+        <div class="ctx-step"><div class="ctx-step-n">2</div><p>Filtrá por mes para ver solo las facturas del período que vas a declarar. Usá el selector <strong>Todos los meses</strong> para elegir el período.</p></div>
+        <div class="ctx-step"><div class="ctx-step-n">3</div><p>Las facturas con estado <span style="color:var(--danger);font-weight:600">Rechazada</span> no tienen validez fiscal — no se incluyen en el D-150. Revisá la pestaña ⚠️ Alertas para el motivo.</p></div>
+        <div class="ctx-step"><div class="ctx-step-n g">→</div><p>Si todo se ve bien, pasá a <strong>📋 D-150 TRIBU</strong> para revisar el borrador del formulario.</p></div>
+      </div>
+      <button class="ctx-action-btn" onclick="switchTab('d150')" style="margin-top:14px">📋 Ir al borrador D-150 →</button>
+    </div>
+  </div>
   <div class="section-header">
     <div class="section-title">🧾 Documentos Cargados</div>
     <div style="display:flex;gap:8px">
@@ -677,6 +924,26 @@ button[data-tip],a[data-tip]{cursor:pointer}
 
 <!-- ════ D-150 BORRADOR ════ -->
 <section class="section" id="section-d150">
+  <!-- AYUDA CONTEXTUAL -->
+  <div class="ctx-help" id="ctx-d150">
+    <div class="ctx-help-hdr" onclick="toggleCtxHelp('ctx-d150')">
+      <div class="ctx-help-title">💡 ¿Cómo usar el borrador D-150?</div>
+      <div class="ctx-help-toggle">▼</div>
+    </div>
+    <div class="ctx-help-body">
+      <div class="ctx-steps">
+        <div class="ctx-step"><div class="ctx-step-n">1</div><p><strong>Seleccioná el período</strong> — Usá los botones ‹ › para elegir el mes a declarar. Recordá: en abril declarás el IVA de <strong>marzo</strong>.</p></div>
+        <div class="ctx-step"><div class="ctx-step-n">2</div><p><strong>Revisá las secciones I y II</strong> — Los montos se calculan automáticamente desde tus XML. Cada casilla tiene un botón 📋 para copiar el valor.</p></div>
+        <div class="ctx-step"><div class="ctx-step-n">3</div><p><strong>Completá la Sección IV</strong> — Ingresá las <strong>retenciones bancarias</strong> (datáfono) y el <strong>saldo a favor del período anterior</strong> si los tenés. Esto afecta el monto final.</p></div>
+        <div class="ctx-step"><div class="ctx-step-n">4</div><p><strong>Exportá el borrador</strong> — Usá "📋 Copiar todo" o exportá en PDF/Excel antes de abrir TRIBU-CR.</p></div>
+        <div class="ctx-step"><div class="ctx-step-n g">→</div><p>Con el borrador en mano, abrí <strong>ovitribucr.hacienda.go.cr</strong> y copiá los valores en el formulario D-150 oficial.</p></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+        <a href="https://ovitribucr.hacienda.go.cr" target="_blank" class="ctx-action-btn">🌐 Abrir TRIBU-CR →</a>
+        <button class="ctx-action-btn ghost" onclick="switchTab('guia')">📖 Ver guía completa</button>
+      </div>
+    </div>
+  </div>
   <div class="section-header">
     <div class="section-title">📋 Borrador Formulario D-150</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -690,7 +957,13 @@ button[data-tip],a[data-tip]{cursor:pointer}
   </div>
 
   <div class="info-box blue" id="d150Notice">
-    📌 <strong>¿Cómo usarlo?</strong> Este borrador refleja los datos de tus XML agrupados según las secciones del formulario D-150 en TRIBU-CR. Revisá cada valor, luego entrá a <strong><a href="https://tribu.hacienda.go.cr" target="_blank" style="color:#7aabff">tribu.hacienda.go.cr</a></strong> y copiá los números en las casillas correspondientes. <a href="https://tribu.hacienda.go.cr" target="_blank" class="btn btn-ghost btn-xs" style="margin-left:8px;display:inline-flex">🌐 Abrir TRIBU-CR →</a>
+    📌 <strong>¿Cómo usarlo?</strong> Este borrador refleja los datos de tus XML agrupados según las secciones del D-150 en TRIBU-CR. Revisá cada valor, luego entrá a <strong><a href="https://ovitribucr.hacienda.go.cr" target="_blank" style="color:#7aabff">ovitribucr.hacienda.go.cr</a></strong> y copiá los números en las casillas correspondientes. <a href="https://ovitribucr.hacienda.go.cr" target="_blank" class="btn btn-ghost btn-xs" style="margin-left:8px;display:inline-flex">🌐 Abrir TRIBU-CR →</a>
+    <div style="margin-top:10px;padding:10px 12px;background:rgba(255,201,71,.07);border:1px solid rgba(255,201,71,.22);border-radius:var(--rs);font-size:11px;color:var(--warn);line-height:1.7">
+      ⚠️ <strong>3 diferencias clave con TRIBU-CR a tener en cuenta:</strong><br>
+      <strong>(1) Retenciones bancarias (Sec. IV):</strong> TRIBU-CR las pre-llena automáticamente con datos que envían los bancos — el campo <em>no es editable</em> manualmente en el portal. Verificá que coincidan con tu comprobante bancario.<br>
+      <strong>(2) Saldo a Favor (Sec. IV):</strong> Se calcula automáticamente desde tu Cuenta Tributaria en TRIBU-CR — no se ingresa manualmente.<br>
+      <strong>(3) Servicios adquiridos al exterior (software, publicidad digital, etc.):</strong> TRIBU-CR tiene una casilla adicional de <em>"Débito por autorepercusión del IVA"</em>. Debés emitir una FacturaCompra y registrar el IVA. Consultá con tu contador si aplica.
+    </div>
   </div>
 
   <!-- RESUMEN SIMPLE TOP -->
@@ -725,12 +998,15 @@ button[data-tip],a[data-tip]{cursor:pointer}
 
   <!-- SECCIÓN IV -->
   <div class="d150-section">
-    <div class="d150-section-header" data-tip="Si recibiste pagos con datáfono, el banco retiene parte del IVA. Ese monto retenido es un crédito adicional que podés acreditar aquí.">
+    <div class="d150-section-header" data-tip="Si recibiste pagos con datáfono, el banco retiene parte del IVA. En TRIBU-CR este campo se PRE-LLENA con datos que los bancos envían a Hacienda — no es editable manualmente en el portal. Usá este campo para verificar y como referencia.">
       <div class="d150-section-title">SECCIÓN IV — Crédito Fiscal por Retención en la Fuente</div>
       <div class="d150-section-num">IV</div>
     </div>
     <div class="d150-body" id="d150-sec4">
       <div style="padding:14px 10px">
+        <div style="background:rgba(255,201,71,.07);border:1px solid rgba(255,201,71,.25);border-radius:var(--rs);padding:12px 16px;font-size:12px;color:var(--warn);margin-bottom:12px">
+          ⚠️ <strong>Importante sobre TRIBU-CR:</strong> En el portal oficial, <strong>las retenciones bancarias son pre-llenadas automáticamente</strong> con los datos que envían los bancos a Hacienda — el campo NO es editable manualmente. Si el banco no reportó la retención, no aparece. El campo de <strong>Saldo a Favor también se calcula automáticamente</strong> desde tu Cuenta Tributaria en TRIBU-CR. Usá estos campos como referencia y para verificar que los montos coincidan con lo que muestra TRIBU-CR.
+        </div>
         <div style="background:rgba(61,122,255,.06);border:1px solid rgba(61,122,255,.18);border-radius:var(--rs);padding:12px 16px;font-size:12px;color:#7aabff;margin-bottom:12px">
           ℹ️ Esta sección aplica si recibiste pagos con <strong>datáfono (tarjetas)</strong> o si tenés <strong>retenciones bancarias</strong>. El banco te debió entregar un comprobante con el monto retenido. Estos valores se descuentan del impuesto determinado en la Sección VI.
         </div>
@@ -744,7 +1020,7 @@ button[data-tip],a[data-tip]{cursor:pointer}
               style="width:140px;background:var(--surface2);border:1px solid var(--border-hi);border-radius:var(--rs);padding:7px 10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;outline:none"
               oninput="updateD150Adj()"
               onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-hi)'"
-              data-tip="Ingresá el monto retenido por el banco en pagos con datáfono. Se resta del impuesto determinado en Sección VI.">
+              data-tip="Referencia: monto retenido por el banco en pagos con datáfono. En TRIBU-CR este campo es pre-llenado por el sistema — verificá que coincida con tu comprobante bancario.">
           </div>
         </div>
         <div class="d150-row" style="flex-wrap:wrap;gap:8px;margin-top:4px">
@@ -757,14 +1033,14 @@ button[data-tip],a[data-tip]{cursor:pointer}
               style="width:140px;background:var(--surface2);border:1px solid var(--border-hi);border-radius:var(--rs);padding:7px 10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;outline:none"
               oninput="updateD150Adj()"
               onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-hi)'"
-              data-tip="Si en el período anterior tuviste saldo a favor, ingresalo aquí. Reduce el IVA a pagar de este período.">
+              data-tip="Referencia: saldo a favor del mes anterior. En TRIBU-CR se calcula automáticamente desde tu Cuenta Tributaria. Verificá que el monto coincida con lo que muestra el portal.">
           </div>
         </div>
         <div style="margin-top:12px;padding:10px 12px;background:rgba(0,214,143,.06);border:1px solid rgba(0,214,143,.18);border-radius:var(--rs);display:flex;justify-content:space-between;align-items:center">
           <span style="font-size:12px;font-weight:600;color:var(--muted)">Total deducciones Sección IV</span>
           <span id="sec4-total" style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--accent)">₡0</span>
         </div>
-        <div style="font-size:11px;color:var(--faint);padding:8px 10px 2px">💡 Los valores de esta sección se reflejan automáticamente en la Sección VI (Liquidación final). Consultá con tu banco o contador los comprobantes de retención.</div>
+        <div style="font-size:11px;color:var(--faint);padding:8px 10px 2px">💡 Los valores de esta sección se reflejan automáticamente en la Sección VI (Liquidación final). Si hay diferencias con TRIBU-CR, el portal tiene precedencia — contactá al banco o a Hacienda.</div>
       </div>
     </div>
   </div>
@@ -842,13 +1118,29 @@ button[data-tip],a[data-tip]{cursor:pointer}
     <div id="ivaRateChart" style="padding-top:6px"></div>
   </div>
   <div id="proporcionalidadBox" style="display:none;margin-top:18px" class="info-box" data-tip="Cuando tenés ventas gravadas Y exentas, solo podés acreditar una parte del IVA de tus compras. La proporción = ventas gravadas ÷ total ventas. Ej: si el 70% de tus ventas son gravadas, solo acreditás el 70% del IVA pagado en compras.">
-    ⚠️ <strong>Proporcionalidad de Crédito:</strong> Tu empresa tiene ventas gravadas y exentas. En la Sección II del D-150 deberás calcular y registrar el % de proporcionalidad (ventas gravadas ÷ total ventas). Consultá con tu contador para aplicarlo correctamente.
+    ⚠️ <strong>Proporcionalidad de Crédito:</strong> Tu empresa tiene ventas gravadas y exentas. La proporción calculada aquí es <strong>solo referencia</strong> — desde enero 2026, TRIBU-CR calcula la proporcionalidad automáticamente. Verificá que el porcentaje en TRIBU-CR coincida con el estimado de la Sección III. Consultá con tu contador si hay diferencias.
   </div>
 
   <!-- TABLA TODOS LOS PERÍODOS -->
   <div class="t-card" style="margin-top:18px" id="allPeriodsPanel">
     <div class="t-card-title">📅 Resumen por Período (todos los meses)</div>
     <div id="allPeriodsTable" style="overflow-x:auto"></div>
+  </div>
+
+  <!-- GRÁFICO COMPARATIVO DE PERÍODOS -->
+  <div class="t-card" style="margin-top:18px" id="periodsChartCard">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+      <div class="t-card-title" style="margin-bottom:0">📈 Comparación Mensual IVA</div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-ghost btn-xs" id="chartTypeBtn" onclick="toggleChartType()" data-tip="Cambiar entre gráfico de barras y de líneas">📊 Barras</button>
+      </div>
+    </div>
+    <div class="chart-wrap"><canvas id="periodsChart"></canvas></div>
+    <div style="display:flex;gap:16px;justify-content:center;margin-top:10px;flex-wrap:wrap;font-size:11px">
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:rgba(255,77,106,.8);display:inline-block"></span>IVA Débito</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:rgba(0,214,143,.8);display:inline-block"></span>IVA Crédito</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:rgba(61,122,255,.8);display:inline-block"></span>A Pagar</span>
+    </div>
   </div>
 </section>
 
@@ -974,169 +1266,285 @@ button[data-tip],a[data-tip]{cursor:pointer}
       <button class="btn btn-ghost" onclick="document.getElementById('jsonImportInput').click()">Importar JSON</button>
       <input type="file" id="jsonImportInput" accept=".json" style="display:none" onchange="importJSON(event)">
     </div>
+    <div class="export-card" data-tip="Descargá el Excel y abrilo directamente en Google Sheets usando Archivo → Importar.">
+      <div class="export-icon">📗</div>
+      <div class="export-title">Abrir en Google Sheets</div>
+      <div class="export-desc">Descarga el Excel y abre Google Sheets listo para importarlo en un clic.</div>
+      <button class="btn btn-ghost" onclick="exportToGoogleSheets()" style="background:rgba(15,157,88,.12);border-color:rgba(15,157,88,.35);color:#4caf88">📗 Exportar para Sheets</button>
+    </div>
+  </div>
+
+  <!-- NOTIFICACIONES -->
+  <div id="notifBanner" class="notif-banner" style="margin-top:20px;display:none">
+    <div class="notif-banner-text">
+      🔔 <strong>Recordatorio de vencimiento:</strong> Recibí una notificación del browser el día antes de que venza el D-150, aunque la app esté cerrada.
+    </div>
+    <button class="btn btn-accent btn-sm" onclick="requestNotifPermission()" id="notifBtn">Activar recordatorio</button>
+  </div>
+  <div id="notifStatus" style="margin-top:8px;font-size:12px;color:var(--accent);display:none"></div>
+</section>
+
+<!-- ════ HERRAMIENTAS ════ -->
+<section class="section" id="section-tools">
+  <div class="section-header">
+    <div class="section-title">🔧 Herramientas Fiscales</div>
+  </div>
+
+  <!-- ── CALCULADORA DE MULTAS ── -->
+  <div class="card" style="margin-bottom:22px">
+    <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px">⚖️ Calculadora de Multas por Mora</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:18px">Calculá el monto total a pagar cuando ya se venció el plazo del D-150. Incluye recargo por mora e intereses según el Código Tributario.</div>
+    <div class="multas-grid">
+      <div>
+        <label class="sim-lbl">Período declarado (mes/año)</label>
+        <input type="month" class="sim-input" id="multa-periodo" oninput="calcMultas()" data-tip="El mes del IVA que se declaró tarde. Ej: enero 2026.">
+        <label class="sim-lbl">Fecha de presentación tardía</label>
+        <input type="date" class="sim-input" id="multa-fecha-pago" oninput="calcMultas()" data-tip="La fecha en que vas a presentar/pagar la declaración atrasada.">
+        <label class="sim-lbl">IVA Determinado (sin ajustes) ₡</label>
+        <input type="number" class="sim-input" id="multa-iva" placeholder="Ej: 150000" oninput="calcMultas()" data-tip="El monto del IVA a pagar calculado en la Sección V del D-150. Sin retenciones ni saldos a favor aún.">
+        <label class="sim-lbl">Tasa de interés anual Banco Central (%)</label>
+        <input type="number" class="sim-input" id="multa-tasa" value="9" step="0.5" oninput="calcMultas()" data-tip="Tasa básica pasiva del BCCR más 1 punto. Consultá la tasa vigente en bccr.fi.cr. Valor orientativo: ~9% anual a inicio 2026.">
+      </div>
+      <div id="multaResult" style="display:flex;flex-direction:column;justify-content:center">
+        <div style="font-size:13px;color:var(--muted);text-align:center;padding:20px">Completá los datos para calcular</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── VALIDADOR CABYS ── -->
+  <div class="card">
+    <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px">🔍 Validador de Código CABYS</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:18px">Buscá cualquier código CABYS de 13 dígitos en el catálogo oficial de Hacienda para verificar la descripción y tarifa del producto o servicio.</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <input type="text" class="search-box" id="cabysInput" placeholder="Ingresá el código CABYS (13 dígitos) o una descripción..." maxlength="80" style="flex:1;min-width:220px"
+        onkeydown="if(event.key==='Enter') buscarCABYS()"
+        data-tip="Podés buscar por código de 13 dígitos o por palabras clave del producto/servicio.">
+      <button class="btn btn-primary" onclick="buscarCABYS()" id="cabysBtn">🔍 Buscar</button>
+    </div>
+    <div id="cabysResult" class="cabys-result"></div>
+
+    <!-- CABYS de facturas cargadas con advertencia -->
+    <div id="cabysInvoicesList" style="margin-top:18px;display:none">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">CABYS en tus facturas</div>
+      <div id="cabysInvoicesContent"></div>
+    </div>
   </div>
 </section>
 
-<!-- ════ GUÍA TRIBU-CR ════ -->
+<!-- ════ GUÍA COMPLETA ════ -->
 <section class="section" id="section-guia">
   <div class="section-header">
-    <div class="section-title">📖 Guía para Declarar en TRIBU-CR</div>
-    <a href="https://tribu.hacienda.go.cr" target="_blank" class="btn btn-primary btn-sm">🌐 Abrir TRIBU-CR</a>
+    <div class="section-title">📖 Guía Completa</div>
+    <a href="https://ovitribucr.hacienda.go.cr" target="_blank" class="btn btn-primary btn-sm">🌐 Abrir TRIBU-CR</a>
   </div>
 
-  <div class="info-box blue">
-    ℹ️ TRIBU-CR (<strong>tribu.hacienda.go.cr</strong>) es el portal oficial del Ministerio de Hacienda de Costa Rica para declarar y pagar impuestos electrónicamente. Esta guía te explica paso a paso cómo declarar el <strong>D-150 (IVA mensual)</strong> y el <strong>D-101 (Renta anual)</strong>.
-  </div>
-
-  <!-- PASO A PASO D-150 -->
-  <div class="card" style="margin-bottom:20px">
-    <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;margin-bottom:18px;display:flex;align-items:center;gap:8px">📋 Cómo declarar el D-150 (IVA mensual) en TRIBU-CR</div>
-
-    <div style="display:flex;flex-direction:column;gap:0">
-
-      <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0" data-tip="Primer paso: accedé al portal oficial de Hacienda en tribu.hacienda.go.cr">1</div>
-        <div>
-          <div style="font-size:13px;font-weight:600;margin-bottom:3px">Ingresá al portal TRIBU-CR</div>
-          <div style="font-size:12px;color:var(--muted)">Andá a <a href="https://tribu.hacienda.go.cr" target="_blank" style="color:#7aabff">tribu.hacienda.go.cr</a> e iniciá sesión con tu usuario y contraseña de la OVi (Oficina Virtual de Hacienda). Si no tenés usuario, registrate con tu cédula en el mismo portal.</div>
-        </div>
+  <!-- FLUJO VISUAL -->
+  <div style="background:linear-gradient(135deg,rgba(61,122,255,.07),rgba(0,214,143,.04));border:1px solid var(--border-hi);border-radius:var(--r);padding:22px;margin-bottom:22px">
+    <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:16px">🗺️ El flujo completo en 5 pasos</div>
+    <div style="display:flex;align-items:center;gap:0;flex-wrap:wrap;gap:4px">
+      <div onclick="switchTab('upload')" style="cursor:pointer;background:var(--surface2);border:1px solid var(--primary);border-radius:var(--rs);padding:10px 14px;text-align:center;flex:1;min-width:100px;transition:all .2s" onmouseover="this.style.background='var(--surface3)'" onmouseleave="this.style.background='var(--surface2)'">
+        <div style="font-size:20px;margin-bottom:4px">📁</div>
+        <div style="font-size:11px;font-weight:700;color:var(--primary)">PASO 1</div>
+        <div style="font-size:12px;font-weight:600">Subir XMLs</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">Ventas + Compras</div>
       </div>
-
-      <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0" data-tip="Navegá al menú de Declaraciones → Impuesto al Valor Agregado → D-150">2</div>
-        <div>
-          <div style="font-size:13px;font-weight:600;margin-bottom:3px">Navegá a "Declaraciones" → "Impuesto al Valor Agregado"</div>
-          <div style="font-size:12px;color:var(--muted)">En el menú principal, seleccioná <strong>Declaraciones juradas</strong> y luego buscá el formulario <strong>D-150 — Declaración IVA</strong>. Elegí el período mensual que vas a declarar (mes y año).</div>
-        </div>
+      <div style="color:var(--faint);font-size:18px;flex-shrink:0">›</div>
+      <div onclick="switchTab('invoices')" style="cursor:pointer;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:10px 14px;text-align:center;flex:1;min-width:100px;transition:all .2s" onmouseover="this.style.background='var(--surface3)'" onmouseleave="this.style.background='var(--surface2)'">
+        <div style="font-size:20px;margin-bottom:4px">🧾</div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted)">PASO 2</div>
+        <div style="font-size:12px;font-weight:600">Verificar</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">Revisar facturas</div>
       </div>
-
-      <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
-        <div>
-          <div style="font-size:13px;font-weight:600;margin-bottom:3px">Completá la Sección I — Ventas y Operaciones</div>
-          <div style="font-size:12px;color:var(--muted)">Ingresá los montos de tus ventas gravadas (base imponible separada por tarifa: 13%, 4%, 2%, 1%) y el IVA correspondiente. Luego ingresá las ventas exentas y no sujetas. Usá los valores del tab <strong>D-150 TRIBU</strong> de esta app (botón 📋 para copiar cada valor).</div>
-        </div>
+      <div style="color:var(--faint);font-size:18px;flex-shrink:0">›</div>
+      <div onclick="switchTab('d150')" style="cursor:pointer;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:10px 14px;text-align:center;flex:1;min-width:100px;transition:all .2s" onmouseover="this.style.background='var(--surface3)'" onmouseleave="this.style.background='var(--surface2)'">
+        <div style="font-size:20px;margin-bottom:4px">📋</div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted)">PASO 3</div>
+        <div style="font-size:12px;font-weight:600">Borrador D-150</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">Revisar y ajustar</div>
       </div>
-
-      <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">4</div>
-        <div>
-          <div style="font-size:13px;font-weight:600;margin-bottom:3px">Completá la Sección II — Compras y Crédito Fiscal</div>
-          <div style="font-size:12px;color:var(--muted)">Ingresá el total de compras del período y el IVA soportado (crédito fiscal). Si tenés ventas mixtas (gravadas y exentas), debés calcular e ingresar el porcentaje de proporcionalidad. Esta app te lo calcula en la Sección III del borrador D-150.</div>
-        </div>
+      <div style="color:var(--faint);font-size:18px;flex-shrink:0">›</div>
+      <div onclick="switchTab('export')" style="cursor:pointer;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:10px 14px;text-align:center;flex:1;min-width:100px;transition:all .2s" onmouseover="this.style.background='var(--surface3)'" onmouseleave="this.style.background='var(--surface2)'">
+        <div style="font-size:20px;margin-bottom:4px">📥</div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted)">PASO 4</div>
+        <div style="font-size:12px;font-weight:600">Exportar</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">PDF o Excel</div>
       </div>
-
-      <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">5</div>
-        <div>
-          <div style="font-size:13px;font-weight:600;margin-bottom:3px">Sección IV — Retenciones en la Fuente (si aplica)</div>
-          <div style="font-size:12px;color:var(--muted)">Si recibiste pagos con <strong>tarjeta de crédito o débito (datáfono)</strong>, el banco retuvo parte del IVA. Ingresá ese monto aquí. Podés obtener el comprobante en el portal del banco o solicitarlo directamente.</div>
-        </div>
-      </div>
-
-      <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">6</div>
-        <div>
-          <div style="font-size:13px;font-weight:600;margin-bottom:3px">Revisá el resultado en Sección V y VI</div>
-          <div style="font-size:12px;color:var(--muted)">TRIBU-CR calculará automáticamente el <strong>Impuesto Determinado</strong> (débito − crédito). En la Sección VI verás si tenés IVA a pagar o saldo a favor. Si hay saldo a favor, se aplica al período siguiente.</div>
-        </div>
-      </div>
-
-      <div style="display:flex;gap:14px;padding:14px 0">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:#03120a;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">7</div>
-        <div>
-          <div style="font-size:13px;font-weight:600;margin-bottom:3px">Presentá y pagá antes del día 15</div>
-          <div style="font-size:12px;color:var(--muted)">El plazo para declarar y pagar el IVA vence el <strong>día 15 del mes siguiente</strong> al período declarado. Podés pagar con cuenta IBAN directamente en TRIBU-CR, o en ventanilla del BCR, BAC u otros bancos autorizados. Guardá el comprobante de presentación.</div>
-        </div>
-      </div>
-
+      <div style="color:var(--faint);font-size:18px;flex-shrink:0">›</div>
+      <a href="https://ovitribucr.hacienda.go.cr" target="_blank" style="text-decoration:none;background:rgba(0,214,143,.08);border:1px solid rgba(0,214,143,.3);border-radius:var(--rs);padding:10px 14px;text-align:center;flex:1;min-width:100px;transition:all .2s" onmouseover="this.style.background='rgba(0,214,143,.15)'" onmouseleave="this.style.background='rgba(0,214,143,.08)'">
+        <div style="font-size:20px;margin-bottom:4px">🌐</div>
+        <div style="font-size:11px;font-weight:700;color:var(--accent)">PASO 5</div>
+        <div style="font-size:12px;font-weight:600;color:var(--text)">TRIBU-CR</div>
+        <div style="font-size:10px;color:var(--accent);margin-top:2px">Declarar oficial</div>
+      </a>
     </div>
   </div>
 
-  <!-- D-101 RENTA -->
-  <div class="card" style="margin-bottom:20px">
-    <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;margin-bottom:18px;display:flex;align-items:center;gap:8px">🧮 Cómo declarar el D-101 (Impuesto sobre la Renta) en TRIBU-CR</div>
-    <div style="display:flex;flex-direction:column;gap:0">
+  <!-- ACORDEÓN DE SECCIONES -->
+  <div style="display:flex;flex-direction:column;gap:10px">
 
-      <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)">
-        <div style="width:32px;height:32px;border-radius:50%;background:#a78bfa;color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
-        <div>
-          <div style="font-size:13px;font-weight:600;margin-bottom:3px">El período fiscal corre del 1° de octubre al 30 de setiembre</div>
-          <div style="font-size:12px;color:var(--muted)">En Costa Rica el año fiscal no coincide con el año calendario. El período 2024–2025 va del 01/10/2024 al 30/09/2025. La declaración se presenta en <strong>TRIBU-CR</strong> antes del <strong>15 de diciembre</strong> siguiente.</div>
-        </div>
+    <!-- PASO 1 -->
+    <div class="ctx-help open" id="g-paso1">
+      <div class="ctx-help-hdr" onclick="toggleCtxHelp('g-paso1')">
+        <div class="ctx-help-title">📁 Paso 1 — Configurar Perfil y Cargar XMLs</div>
+        <div class="ctx-help-toggle">▲</div>
       </div>
-
-      <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)">
-        <div style="width:32px;height:32px;border-radius:50%;background:#a78bfa;color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
-        <div>
-          <div style="font-size:13px;font-weight:600;margin-bottom:3px">En TRIBU-CR seleccioná "Declaraciones" → "Impuesto sobre la Renta" → D-101</div>
-          <div style="font-size:12px;color:var(--muted)">Elegí el período fiscal correcto. El formulario te pedirá ingresos brutos, costos y gastos deducibles, y otras deducciones permitidas por ley.</div>
+      <div class="ctx-help-body">
+        <div class="ctx-steps">
+          <div class="ctx-step"><div class="ctx-step-n">A</div><p><strong>Perfil del contribuyente</strong> — En la pestaña 📤 Subir, ingresá tu cédula y hacé clic en 🌐 Buscar en Hacienda. Se completan automáticamente: nombre oficial, tipo de contribuyente, actividad económica y estado tributario.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n">B</div><p><strong>Obtener los XMLs</strong> — De tu sistema de facturación: las facturas <em>emitidas</em> del período (tus ventas) y las facturas <em>recibidas</em> de proveedores (tus compras). Ambas son necesarias para calcular el IVA neto.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n">C</div><p><strong>Cargar los archivos</strong> — Arrastrá los XML o un ZIP con todos los del período a la zona de carga. La app acepta hasta 50 MB por archivo y detecta automáticamente el tipo de cada comprobante.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n">D</div><p><strong>Verificar contadores</strong> — Los cuadros de estadísticas muestran documentos Aceptados, Rechazados, IVA Débito (ventas) e IVA Crédito (compras). Si los números no cuadran, revisá ⚠️ Alertas.</p></div>
         </div>
-      </div>
-
-      <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)">
-        <div style="width:32px;height:32px;border-radius:50%;background:#a78bfa;color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
-        <div>
-          <div style="font-size:13px;font-weight:600;margin-bottom:3px">Estimá tu impuesto antes con el Simulador de esta app</div>
-          <div style="font-size:12px;color:var(--muted)">Usá el tab <strong>🧮 Renta</strong> para estimar cuánto pagarás. Podés cargar tus ingresos desde las facturas y ajustar los gastos reales. Los tramos vigentes para <strong>personas físicas 2025–2026</strong> van desde 0% (hasta ₡6.244.000) hasta 25% (sobre ₡20.872.000). Para personas jurídicas con ingresos ≤ ₡119.174.000 aplican tramos progresivos del 5% al 20% sobre la renta neta; las que superan ese umbral pagan 30% plano. Fuente: Gaceta N°229 del 05-12-2025.</div>
+        <div style="background:rgba(255,201,71,.06);border:1px solid rgba(255,201,71,.2);border-radius:var(--rs);padding:10px 14px;margin-top:12px;font-size:12px;color:var(--warn)">
+          ⚠️ <strong>Importante:</strong> Debés cargar tanto facturas emitidas (ventas) como recibidas (compras). Sin las compras no se calcula el crédito fiscal y el IVA a pagar quedará sobreestimado.
         </div>
+        <button class="ctx-action-btn" onclick="switchTab('upload')" style="margin-top:12px">📤 Ir a Subir →</button>
       </div>
+    </div>
 
-      <div style="display:flex;gap:14px;padding:14px 0">
-        <div style="width:32px;height:32px;border-radius:50%;background:#a78bfa;color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">4</div>
-        <div>
-          <div style="font-size:13px;font-weight:600;margin-bottom:3px">Pagos parciales (estimaciones) durante el año</div>
-          <div style="font-size:12px;color:var(--muted)">Si tu impuesto estimado supera cierto umbral, Hacienda puede exigirte <strong>pagos parciales trimestrales</strong> (en marzo, junio y setiembre). TRIBU-CR te notificará si aplica. Guardá todos los comprobantes de pago.</div>
+    <!-- PASO 2 -->
+    <div class="ctx-help" id="g-paso2">
+      <div class="ctx-help-hdr" onclick="toggleCtxHelp('g-paso2')">
+        <div class="ctx-help-title">🧾 Paso 2 — Verificar los Documentos</div>
+        <div class="ctx-help-toggle">▼</div>
+      </div>
+      <div class="ctx-help-body">
+        <div class="ctx-steps">
+          <div class="ctx-step"><div class="ctx-step-n">1</div><p>En la pestaña 🧾 Facturas, verificá que cada documento esté marcado como <strong style="color:var(--accent)">VENTA</strong> (emitida) o <strong style="color:#a78bfa">COMPRA</strong> (recibida de proveedor).</p></div>
+          <div class="ctx-step"><div class="ctx-step-n">2</div><p>Filtrá por el <strong>mes del período</strong> a declarar para ver solo los documentos relevantes.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n">3</div><p>Las facturas con estado <span style="color:var(--danger);font-weight:700">Rechazada</span> no tienen validez fiscal. Corrígelas en tu sistema de facturación y reenvialas antes de declarar.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n">4</div><p>Hacé clic en cualquier factura para ver el detalle completo: líneas, CABYS, IVA por tarifa, y el resumen fiscal del XML.</p></div>
+        </div>
+        <div style="background:rgba(61,122,255,.06);border:1px solid rgba(61,122,255,.18);border-radius:var(--rs);padding:10px 14px;margin-top:12px;font-size:12px;color:#7aabff">
+          💡 <strong>Tip:</strong> Usá el selector de ordenamiento para ver primero las facturas de mayor monto o más recientes. La búsqueda también encuentra palabras dentro del detalle de líneas.
+        </div>
+        <button class="ctx-action-btn" onclick="switchTab('invoices')" style="margin-top:12px">🧾 Ir a Facturas →</button>
+      </div>
+    </div>
+
+    <!-- PASO 3 -->
+    <div class="ctx-help" id="g-paso3">
+      <div class="ctx-help-hdr" onclick="toggleCtxHelp('g-paso3')">
+        <div class="ctx-help-title">📋 Paso 3 — Revisar el Borrador D-150</div>
+        <div class="ctx-help-toggle">▼</div>
+      </div>
+      <div class="ctx-help-body">
+        <div class="ctx-steps">
+          <div class="ctx-step"><div class="ctx-step-n">1</div><p><strong>Seleccioná el período</strong> con los botones ‹ ›. Recordá: en abril declarás el IVA de <strong>marzo</strong>.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n">2</div><p><strong>Sección I — Ventas:</strong> Muestra tus ventas separadas en Servicios y Mercancías por tarifa (13%, 4%, 2%, etc.), más Exentas y No Sujetas. Las NC/ND ya están descontadas/sumadas.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n">3</div><p><strong>Sección II — Compras:</strong> Total de compras e IVA pagado a proveedores (crédito fiscal). Si tenés ventas mixtas (gravadas + exentas), la Sección III calcula la proporcionalidad automáticamente.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n">4</div><p><strong>Sección IV — Ajustes manuales:</strong> Ingresá aquí las retenciones bancarias por pagos con datáfono y el saldo a favor del período anterior. Estos valores se aplican directamente al resultado final.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n g">5</div><p><strong>Sección VI — Resultado:</strong> El IVA a pagar (o saldo a favor) final, ya con todos los ajustes aplicados.</p></div>
+        </div>
+        <div style="background:rgba(0,214,143,.06);border:1px solid rgba(0,214,143,.2);border-radius:var(--rs);padding:10px 14px;margin-top:12px;font-size:12px;color:var(--accent)">
+          ✅ <strong>Cada valor tiene un botón 📋</strong> para copiarlo individualmente. Usá "📋 Copiar todo" para copiar el borrador completo al portapapeles con todas las secciones y casillas.
+        </div>
+        <button class="ctx-action-btn" onclick="switchTab('d150')" style="margin-top:12px">📋 Ir al D-150 →</button>
+      </div>
+    </div>
+
+    <!-- PASO 4 -->
+    <div class="ctx-help" id="g-paso4">
+      <div class="ctx-help-hdr" onclick="toggleCtxHelp('g-paso4')">
+        <div class="ctx-help-title">📥 Paso 4 — Exportar el Borrador</div>
+        <div class="ctx-help-toggle">▼</div>
+      </div>
+      <div class="ctx-help-body">
+        <div class="ctx-steps">
+          <div class="ctx-step"><div class="ctx-step-n">1</div><p><strong>PDF del D-150</strong> — Generá un PDF con las 6 secciones, casillas y montos. Incluye datos del perfil del contribuyente. Ideal para archivar o enviarlo a tu contador.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n">2</div><p><strong>Excel completo</strong> — 3 hojas: todas las facturas, resumen por período con un mes por fila, y el borrador D-150 con desglose por tarifa.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n">3</div><p><strong>Borrador D-150 (.xlsx)</strong> — Solo las 6 secciones con las casillas numeradas exactamente como aparecen en TRIBU-CR. Abrila junto al portal oficial para ir copiando casilla por casilla.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n">4</div><p><strong>JSON Backup</strong> — Respaldo completo de facturas, perfil y ajustes. Podés importarlo en otra sesión o dispositivo para restaurar exactamente donde estabas.</p></div>
+        </div>
+        <button class="ctx-action-btn" onclick="switchTab('export')" style="margin-top:12px">📥 Ir a Exportar →</button>
+      </div>
+    </div>
+
+    <!-- PASO 5 -->
+    <div class="ctx-help" id="g-paso5">
+      <div class="ctx-help-hdr" onclick="toggleCtxHelp('g-paso5')">
+        <div class="ctx-help-title">🌐 Paso 5 — Declarar en TRIBU-CR</div>
+        <div class="ctx-help-toggle">▼</div>
+      </div>
+      <div class="ctx-help-body">
+        <div class="ctx-steps">
+          <div class="ctx-step"><div class="ctx-step-n">1</div><p>Abrí <strong>ovitribucr.hacienda.go.cr</strong> e ingresá con tu usuario y contraseña. El sistema enviará un código por SMS y correo (doble factor).</p></div>
+          <div class="ctx-step"><div class="ctx-step-n">2</div><p>Si es tu primera vez, deberás <strong>crear un usuario nuevo</strong> (los del ATV no migran) y actualizar el RUT antes de usar cualquier módulo.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n">3</div><p>Ir a <strong>Declaraciones → "150 Impuesto al Valor Agregado"</strong> → seleccioná el período correcto.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n">4</div><p>Completá <strong>Sección I</strong> con los valores del borrador: Servicios Gravados y Mercancías Gravadas separados por tarifa, Ventas Exentas y No Sujetas.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n">5</div><p>Completá <strong>Sección II</strong> con las compras y el IVA pagado. Si hay proporcionalidad, ingresá el porcentaje de la Sección III del borrador.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n">6</div><p><strong>Sección IV — Retenciones (solo verificar):</strong> En TRIBU-CR este campo se <strong>pre-llena automáticamente</strong> con datos que envían los bancos a Hacienda — no es editable manualmente. El Saldo a Favor también se calcula automáticamente desde tu Cuenta Tributaria. Solo verificá que coincida con tus comprobantes.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n g">7</div><p>Hacé clic en <strong>Presentar</strong> y guardá el comprobante de presentación en PDF. Luego pagá con tu cuenta IBAN registrada o en ventanilla del BCR o BAC.</p></div>
+        </div>
+        <div style="background:rgba(255,77,106,.06);border:1px solid rgba(255,77,106,.2);border-radius:var(--rs);padding:10px 14px;margin-top:12px;font-size:12px;color:var(--danger)">
+          ⚠️ <strong>Plazo:</strong> El D-150 vence el día 15 hábil del mes siguiente. Si cae en fin de semana o feriado, el plazo se corre al siguiente día hábil. La barra de progreso en la parte superior muestra la cuenta regresiva.
+        </div>
+        <a href="https://ovitribucr.hacienda.go.cr" target="_blank" class="ctx-action-btn" style="margin-top:12px">🌐 Abrir TRIBU-CR →</a>
+      </div>
+    </div>
+
+    <!-- FECHAS Y MULTAS -->
+    <div class="ctx-help" id="g-fechas">
+      <div class="ctx-help-hdr" onclick="toggleCtxHelp('g-fechas')">
+        <div class="ctx-help-title">📅 Fechas clave y multas</div>
+        <div class="ctx-help-toggle">▼</div>
+      </div>
+      <div class="ctx-help-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:12px">
+          <div style="background:var(--surface2);border:1px solid rgba(255,77,106,.3);border-radius:var(--rs);padding:14px;text-align:center">
+            <div style="font-size:22px;margin-bottom:4px">📋</div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--danger)">D-150 (IVA)</div>
+            <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--danger)">Día 15</div>
+            <div style="font-size:10px;color:var(--muted)">del mes siguiente</div>
+          </div>
+          <div style="background:var(--surface2);border:1px solid rgba(255,201,71,.3);border-radius:var(--rs);padding:14px;text-align:center">
+            <div style="font-size:22px;margin-bottom:4px">🧮</div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--warn)">D-101 (Renta)</div>
+            <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--warn)">15 Dic</div>
+            <div style="font-size:10px;color:var(--muted)">período Oct-Sep</div>
+          </div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:14px;text-align:center">
+            <div style="font-size:22px;margin-bottom:4px">💳</div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)">Pagos Parciales</div>
+            <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700">Mar / Jun / Set</div>
+            <div style="font-size:10px;color:var(--muted)">estimados de renta</div>
+          </div>
+        </div>
+        <div style="margin-top:14px;font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text)">Multas por incumplimiento</div>
+        <div style="font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:5px;line-height:1.7">
+          <div>🔴 <strong style="color:var(--text)">Declaración tardía:</strong> 2% mensual sobre el impuesto (mínimo ₡1.000)</div>
+          <div>🔴 <strong style="color:var(--text)">Mora en pago:</strong> Intereses del Banco Central + 1% mensual de recargo</div>
+          <div>🔴 <strong style="color:var(--text)">No declarar (omiso):</strong> 50% al 150% del impuesto + mora</div>
+          <div>🟡 <strong style="color:var(--text)">Subsanación voluntaria:</strong> Reducción de hasta 80% de la sanción</div>
+          <div style="margin-top:6px;font-size:11px;color:var(--faint)">💡 Siempre es mejor declarar aunque no puedas pagar el monto completo.</div>
         </div>
       </div>
     </div>
+
+    <!-- FAQ -->
+    <div class="ctx-help" id="g-faq">
+      <div class="ctx-help-hdr" onclick="toggleCtxHelp('g-faq')">
+        <div class="ctx-help-title">❓ Preguntas frecuentes</div>
+        <div class="ctx-help-toggle">▼</div>
+      </div>
+      <div class="ctx-help-body">
+        <div style="display:flex;flex-direction:column;gap:14px;margin-top:12px">
+          <div><div style="font-size:13px;font-weight:700;margin-bottom:4px">¿Mis datos se suben a algún servidor?</div><div style="font-size:13px;color:var(--muted)">No. Todo el procesamiento ocurre en tu navegador. Los XML nunca salen de tu dispositivo. Los datos se guardan solo en el almacenamiento local de tu navegador.</div></div>
+          <div><div style="font-size:13px;font-weight:700;margin-bottom:4px">¿Qué hago si una factura aparece como rechazada?</div><div style="font-size:13px;color:var(--muted)">Una factura rechazada por Hacienda no es fiscalmente válida. Corrígela en tu sistema de facturación, reenvíala y cargá el nuevo XML. Revisá ⚠️ Alertas para ver el motivo del rechazo.</div></div>
+          <div><div style="font-size:13px;font-weight:700;margin-bottom:4px">¿La app reemplaza a TRIBU-CR?</div><div style="font-size:13px;color:var(--muted)">No. Es una herramienta de preparación. La declaración oficial siempre se hace en ovitribucr.hacienda.go.cr. Esta app te genera el borrador con todos los montos calculados para que copies los valores.</div></div>
+          <div><div style="font-size:13px;font-weight:700;margin-bottom:4px">¿Cómo respaldo mis datos?</div><div style="font-size:13px;color:var(--muted)">Usá 📥 Exportar → JSON Backup. Ese archivo incluye facturas, perfil y ajustes. Importálo desde el mismo lugar en otro dispositivo.</div></div>
+          <div><div style="font-size:13px;font-weight:700;margin-bottom:4px">¿Qué es la proporcionalidad?</div><div style="font-size:13px;color:var(--muted)">Si tenés ventas gravadas Y exentas, solo podés acreditar parte del IVA de tus compras. La app lo calcula en la Sección III del borrador. <strong>Desde enero 2026, TRIBU-CR calcula la proporcionalidad automáticamente</strong> — usá el valor de la app para verificar que coincida con lo que muestra el portal.</div></div>
+          <div style="padding-top:8px;border-top:1px solid var(--border)"><div style="font-size:12px;color:var(--muted)">📞 Soporte Hacienda: <strong style="color:var(--text)">2539-4000</strong> (lun-vie 8am-6pm) · 🌐 <a href="https://hacienda.go.cr" target="_blank" style="color:#7aabff">hacienda.go.cr</a></div></div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
-  <!-- INFORMACIÓN ÚTIL -->
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px">
-    <div class="card-sm">
-      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text)" data-tip="Fechas críticas para no caer en mora. El sistema de TRIBU-CR te notifica, pero es bueno tenerlas claras.">⏰ Vencimientos clave</div>
-      <div style="font-size:12px;color:var(--muted);line-height:2">
-        <div>📋 <strong style="color:var(--text)">D-150 (IVA)</strong> — Día 15 de cada mes</div>
-        <div>🧮 <strong style="color:var(--text)">D-101 (Renta)</strong> — 15 de diciembre</div>
-        <div>💳 <strong style="color:var(--text)">Pago estimado 1</strong> — Marzo</div>
-        <div>💳 <strong style="color:var(--text)">Pago estimado 2</strong> — Junio</div>
-        <div>💳 <strong style="color:var(--text)">Pago estimado 3</strong> — Setiembre</div>
-      </div>
-    </div>
-    <div class="card-sm">
-      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text)">🏦 Formas de pago en TRIBU-CR</div>
-      <div style="font-size:12px;color:var(--muted);line-height:2">
-        <div>✅ Cuenta IBAN (débito directo)</div>
-        <div>✅ Ventanilla BCR, BAC y otros bancos</div>
-        <div>✅ Pago en línea con tarjeta</div>
-        <div>✅ CENPagos (Hacienda)</div>
-        <div style="color:var(--faint);font-size:11px;margin-top:4px">Siempre imprimí o guardá el comprobante de pago (PDF).</div>
-      </div>
-    </div>
-    <div class="card-sm">
-      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text)">📞 Ayuda oficial de Hacienda</div>
-      <div style="font-size:12px;color:var(--muted);line-height:2">
-        <div>🌐 <a href="https://tribu.hacienda.go.cr" target="_blank" style="color:#7aabff">tribu.hacienda.go.cr</a></div>
-        <div>🌐 <a href="https://www.hacienda.go.cr" target="_blank" style="color:#7aabff">hacienda.go.cr</a></div>
-        <div>📞 Call center TRIBU-CR: <strong style="color:var(--text)">2539-4000</strong></div>
-        <div>📧 Consultas DGT en el portal</div>
-        <div style="color:var(--faint);font-size:11px;margin-top:4px">Esta app es una herramienta de apoyo. Siempre verificá con un CPA antes de declarar.</div>
-      </div>
-    </div>
-    <div class="card-sm">
-      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text)" data-tip="Las sanciones se aplican automáticamente. Siempre es mejor declarar aunque no puedas pagar — el recargo de mora es menor que la infracción formal por no declarar.">⚠️ Multas por incumplimiento</div>
-      <div style="font-size:12px;color:var(--muted);line-height:2">
-        <div>🔴 Declaración tardía: <strong style="color:var(--danger)">2% mensual</strong> sobre impuesto</div>
-        <div>🔴 Mora en pago: intereses + recargo</div>
-        <div>🔴 No declarar: infracción formal</div>
-        <div>🟡 Subsanación voluntaria: reduce sanción</div>
-        <div style="color:var(--faint);font-size:11px;margin-top:4px">Mejor declarar aunque no puedas pagar completo.</div>
-      </div>
-    </div>
+  <div style="margin-top:18px;padding:14px 18px;background:rgba(255,77,106,.05);border:1px solid rgba(255,77,106,.2);border-radius:var(--rs);font-size:12px;color:var(--muted)">
+    ⚖️ Tribu Fácil CR es una herramienta de apoyo orientativa. <strong style="color:var(--text)">Verificá siempre con un Contador Público Autorizado (CPA) antes de presentar tu declaración oficial en TRIBU-CR.</strong>
   </div>
 </section>
-
 </div><!-- /app -->
 
 <!-- MODAL DETALLE -->
@@ -1158,6 +1566,8 @@ button[data-tip],a[data-tip]{cursor:pointer}
 </div>
 
 <div class="toast-ctr" id="toastCtr"></div>
+<div id="tipBox"></div>
+<div id="tipArrow"></div>
 <div class="storage-badge" id="storageBadge" data-tip="Los documentos se guardan automáticamente en tu navegador y se restauran en la próxima visita."></div>
 
 <footer><span>Tribu Fácil CR</span> · Compatible con TRIBU-CR · Hacienda Digital · Factura Electrónica v4.4 · Formulario D-150 · 2026</footer>
@@ -1257,8 +1667,10 @@ function switchTab(t) {
   document.getElementById('tab-'+t).classList.add('active');
   if (t === 'invoices')  { populateMonthFilter(); filteredCache=null; renderInvoices(); }
   if (t === 'd150')      renderD150();
-  if (t === 'summary')   { renderSummary(); renderAllPeriods(); }
-  if (t === 'export')    document.getElementById('exp-count').textContent = invoices.length + ' documentos';
+  if (t === 'summary')   { renderSummary(); renderAllPeriods(); renderPeriodsChart(); }
+  if (t === 'export')    { document.getElementById('exp-count').textContent = invoices.length + ' documentos'; showNotifBanner(); }
+  if (t === 'tools')     { initToolsTab(); }
+  updateProgress(t);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -3637,33 +4049,630 @@ async function init() {
   // Hide allPeriodsPanel until summary tab is first opened
   const ap = document.getElementById('allPeriodsPanel');
   if (ap) ap.style.display = 'none';
+  // Initialize progress bar
+  updateProgress('upload');
+  // Show onboarding on first visit (after short delay to let page render)
+  setTimeout(() => checkOnboarding(), 600);
 }
 
 // ═══════════════════════════════════════════════════════
-//  MOBILE TAP TOOLTIPS
+//  ONBOARDING
+// ═══════════════════════════════════════════════════════
+const ONBOARD_KEY = 'tribu-facil-onboard-v2';
+
+function openOnboarding() {
+  document.getElementById('onboardOverlay').classList.add('open');
+}
+function closeOnboarding(showAgain = true) {
+  document.getElementById('onboardOverlay').classList.remove('open');
+  if (!showAgain) {
+    try { localStorage.setItem(ONBOARD_KEY, '1'); } catch(e){}
+  }
+}
+function checkOnboarding() {
+  try {
+    if (!localStorage.getItem(ONBOARD_KEY)) openOnboarding();
+  } catch(e) { openOnboarding(); }
+}
+// ESC also closes onboarding
+document.getElementById('onboardOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('onboardOverlay')) closeOnboarding(true);
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('onboardOverlay').classList.contains('open'))
+    closeOnboarding(true);
+});
+
+// ═══════════════════════════════════════════════════════
+//  PROGRESS FLOW — highlight active step
+// ═══════════════════════════════════════════════════════
+const FLOW_MAP = {
+  upload:    'pf-1',
+  invoices:  'pf-2',
+  d150:      'pf-3',
+  summary:   'pf-3',
+  export:    'pf-4',
+  guia:      null,
+  simulator: null,
+  warnings:  null,
+};
+
+function updateProgress(tab) {
+  document.querySelectorAll('.pf-step').forEach(s => {
+    s.classList.remove('active');
+    // Mark as done if invoices loaded and step < active
+  });
+  const activeId = FLOW_MAP[tab];
+  if (activeId) {
+    const el = document.getElementById(activeId);
+    if (el) el.classList.add('active');
+  }
+  // Mark earlier steps as done if we have data
+  if (invoices.length > 0) {
+    document.getElementById('pf-1')?.classList.add('done');
+    if (invoices.length > 0 && (tab === 'd150' || tab === 'export' || tab === 'summary'))
+      document.getElementById('pf-2')?.classList.add('done');
+  }
+  // Remove done from active
+  if (activeId) {
+    document.getElementById(activeId)?.classList.remove('done');
+    document.getElementById(activeId)?.classList.add('active');
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  CONTEXTUAL HELP TOGGLE
+// ═══════════════════════════════════════════════════════
+function toggleCtxHelp(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.toggle('open');
+  const toggle = el.querySelector('.ctx-help-toggle');
+  if (toggle) toggle.textContent = el.classList.contains('open') ? '▲' : '▼';
+}
+
+// ═══════════════════════════════════════════════════════
+//  FEATURE: GRÁFICO COMPARATIVO DE PERÍODOS (Chart.js)
+// ═══════════════════════════════════════════════════════
+let periodsChartInstance = null;
+let periodsChartType = 'bar';
+
+function toggleChartType() {
+  periodsChartType = periodsChartType === 'bar' ? 'line' : 'bar';
+  const btn = document.getElementById('chartTypeBtn');
+  if (btn) btn.textContent = periodsChartType === 'bar' ? '📊 Barras' : '📈 Líneas';
+  renderPeriodsChart();
+}
+
+function renderPeriodsChart() {
+  const canvas = document.getElementById('periodsChart');
+  if (!canvas || typeof Chart === 'undefined') return;
+  if (!invoices.length) return;
+
+  // Build per-month data
+  const periodos = new Map();
+  for (const inv of invoices) {
+    if (!inv.fechaEmision || inv.type === 'MensajeHacienda') continue;
+    const d = new Date(inv.fechaEmision);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    if (!periodos.has(key)) periodos.set(key, { ventas:[], compras:[] });
+    if (inv.direction === 'emitida')  periodos.get(key).ventas.push(inv);
+    else                              periodos.get(key).compras.push(inv);
+  }
+
+  const sorted = [...periodos.entries()].sort(([a],[b]) => a.localeCompare(b)).slice(-12); // last 12 months
+  const labels = sorted.map(([k]) => {
+    const [y, m] = k.split('-');
+    return MONTHS[parseInt(m)-1] + ' ' + y.slice(2);
+  });
+  const debitos  = sorted.map(([,d]) => {
+    const r = calcD150Data(d.ventas);
+    return Math.round(r.debitoNeto / 1000);
+  });
+  const creditos = sorted.map(([,d]) => {
+    const r = calcD150Data([...d.ventas, ...d.compras]);
+    return Math.round(r.creditoAjustado / 1000);
+  });
+  const apagar   = sorted.map(([,d]) => {
+    const r = calcD150Data([...d.ventas, ...d.compras]);
+    return Math.round(Math.max(0, r.debitoNeto - r.creditoAjustado) / 1000);
+  });
+
+  if (periodsChartInstance) { periodsChartInstance.destroy(); periodsChartInstance = null; }
+
+  const isDark = true;
+  periodsChartInstance = new Chart(canvas, {
+    type: periodsChartType,
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'IVA Débito (miles ₡)',
+          data: debitos,
+          backgroundColor: 'rgba(255,77,106,.7)',
+          borderColor: 'rgba(255,77,106,.9)',
+          borderWidth: 2,
+          borderRadius: periodsChartType === 'bar' ? 4 : 0,
+          tension: 0.4,
+          fill: periodsChartType === 'line',
+        },
+        {
+          label: 'IVA Crédito (miles ₡)',
+          data: creditos,
+          backgroundColor: 'rgba(0,214,143,.6)',
+          borderColor: 'rgba(0,214,143,.9)',
+          borderWidth: 2,
+          borderRadius: periodsChartType === 'bar' ? 4 : 0,
+          tension: 0.4,
+          fill: periodsChartType === 'line',
+        },
+        {
+          label: 'A Pagar (miles ₡)',
+          data: apagar,
+          backgroundColor: 'rgba(61,122,255,.7)',
+          borderColor: 'rgba(61,122,255,.9)',
+          borderWidth: 2,
+          borderRadius: periodsChartType === 'bar' ? 4 : 0,
+          tension: 0.4,
+          fill: false,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(8,15,35,.97)',
+          titleColor: '#e8eeff',
+          bodyColor: '#7a90b8',
+          borderColor: 'rgba(99,143,255,.35)',
+          borderWidth: 1,
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label.split(' ')[0]} ${ctx.dataset.label.split(' ')[1]}: ₡${(ctx.raw * 1000).toLocaleString('es-CR')}`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          ticks: { color: '#7a90b8', font: { size: 10 } },
+          grid: { color: 'rgba(99,143,255,.07)' },
+        },
+        y: {
+          ticks: {
+            color: '#7a90b8',
+            font: { size: 10 },
+            callback: v => '₡' + v.toLocaleString('es-CR') + 'k',
+          },
+          grid: { color: 'rgba(99,143,255,.07)' },
+        },
+      },
+    },
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  FEATURE: GOOGLE SHEETS EXPORT
+// ═══════════════════════════════════════════════════════
+function exportToGoogleSheets() {
+  if (!invoices.length) { toast('error','⚠️ Sin datos para exportar'); return; }
+
+  // 1. Generate CSV with BOM for proper encoding
+  const rows = [
+    ['Fecha','Tipo','Dirección','Emisor','Receptor','Clave','Total','IVA','Estado'],
+    ...invoices.map(inv => [
+      inv.fechaEmision ? new Date(inv.fechaEmision).toLocaleDateString('es-CR') : '',
+      inv.type || '',
+      inv.direction === 'emitida' ? 'Venta' : 'Compra',
+      inv.emisor?.nombre || '',
+      inv.receptor?.nombre || '',
+      inv.clave || '',
+      Math.round(inv.resumen?.totalComprobante || 0),
+      Math.round(inv.resumen?.totalImpuesto || 0),
+      inv.status || '',
+    ])
+  ];
+  const csv = '\uFEFF' + rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  dlFile(csv, 'tribu-facil-cr-sheets.csv', 'text/csv;charset=utf-8;');
+
+  // 2. Open Google Sheets import helper after small delay
+  setTimeout(() => {
+    const sheetsUrl = 'https://sheets.new';
+    window.open(sheetsUrl, '_blank');
+    toast('success', '✅ CSV descargado. En Google Sheets: Archivo → Importar → subí el CSV.');
+  }, 800);
+}
+
+// ═══════════════════════════════════════════════════════
+//  FEATURE: CALCULADORA DE MULTAS
+// ═══════════════════════════════════════════════════════
+function calcMultas() {
+  const periodoEl = document.getElementById('multa-periodo');
+  const pagoEl    = document.getElementById('multa-fecha-pago');
+  const ivaEl     = document.getElementById('multa-iva');
+  const tasaEl    = document.getElementById('multa-tasa');
+  const resultEl  = document.getElementById('multaResult');
+  if (!resultEl) return;
+
+  const periodo   = periodoEl?.value;   // YYYY-MM
+  const fechaPago = pagoEl?.value;      // YYYY-MM-DD
+  const iva       = parseFloat(ivaEl?.value) || 0;
+  const tasaAnual = parseFloat(tasaEl?.value) || 9;
+
+  if (!periodo || !fechaPago || !iva) {
+    resultEl.innerHTML = '<div style="font-size:13px;color:var(--muted);text-align:center;padding:20px">Completá todos los campos para calcular</div>';
+    return;
+  }
+
+  // Compute vencimiento: day 15 of month after declared period
+  const [pYear, pMonth] = periodo.split('-').map(Number);
+  let vencDate = new Date(pYear, pMonth, 15); // month+1 because pMonth is 0-based after split? No: split gives '2026','01' → pMonth=1
+  // So nextMonth = pMonth (already +1 from the period), day 15
+  // Adjust for holidays: use nextBusinessDay logic
+  vencDate = nextBusinessDay(vencDate);
+
+  const pago = new Date(fechaPago);
+  if (pago <= vencDate) {
+    resultEl.innerHTML = `<div style="background:rgba(0,214,143,.07);border:1px solid rgba(0,214,143,.25);border-radius:var(--rs);padding:14px 18px;font-size:13px;color:var(--accent)">✅ La presentación es <strong>a tiempo</strong>. El vencimiento era ${vencDate.toLocaleDateString('es-CR')}. No hay multa.</div>`;
+    return;
+  }
+
+  // Days late
+  const msPerDay = 86400000;
+  const diasMora = Math.ceil((pago - vencDate) / msPerDay);
+  const mesesMora = diasMora / 30;
+
+  // Recargo por mora: 1% mensual (Art. 57 Código Tributario CR)
+  const recargoPct = Math.min(mesesMora * 0.01, 0.20); // cap 20%
+  const recargo = Math.round(iva * recargoPct);
+
+  // Intereses: tasa BCCR diaria compuesta
+  const tasaDiaria = tasaAnual / 100 / 365;
+  const intereses = Math.round(iva * (Math.pow(1 + tasaDiaria, diasMora) - 1));
+
+  // Sanción por presentación tardía: 2% mensual sobre IVA (Art. 80 Código Tributario)
+  const sancionPct = Math.min(mesesMora * 0.02, 1.0); // cap 100%
+  const sancion = Math.round(iva * sancionPct);
+
+  const total = iva + recargo + intereses + sancion;
+
+  const fmtM = v => '₡' + Math.round(v).toLocaleString('es-CR');
+  resultEl.innerHTML = `
+    <div style="margin-bottom:12px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Vencimiento original: <strong style="color:var(--text)">${vencDate.toLocaleDateString('es-CR')}</strong> · Días de mora: <strong style="color:var(--danger)">${diasMora} días</strong></div>
+    </div>
+    <div class="multa-result">
+      <div class="multa-row"><span style="color:var(--muted)">IVA Determinado</span><span style="font-weight:600;color:var(--text)">${fmtM(iva)}</span></div>
+      <div class="multa-row"><span style="color:var(--muted)">Recargo por mora (1%/mes · ${(recargoPct*100).toFixed(1)}%)</span><span style="font-weight:600;color:var(--warn)">${fmtM(recargo)}</span></div>
+      <div class="multa-row"><span style="color:var(--muted)">Intereses (${tasaAnual}% anual · ${diasMora}d)</span><span style="font-weight:600;color:var(--warn)">${fmtM(intereses)}</span></div>
+      <div class="multa-row"><span style="color:var(--muted)">Sanción presentación tardía (2%/mes · ${(sancionPct*100).toFixed(0)}%)</span><span style="font-weight:600;color:var(--danger)">${fmtM(sancion)}</span></div>
+      <div class="multa-total">
+        <span style="font-size:13px;font-weight:600;color:var(--text)">TOTAL A PAGAR</span>
+        <span style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--danger)">${fmtM(total)}</span>
+      </div>
+      <div style="font-size:10px;color:var(--faint);margin-top:10px">⚖️ Estimado orientativo basado en Arts. 57 y 80 del Código de Normas y Procedimientos Tributarios. Montos pueden variar según resolución oficial de Hacienda. La subsanación voluntaria antes de requerimiento puede reducir la sanción hasta 80%.</div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  FEATURE: VALIDADOR CABYS
+// ═══════════════════════════════════════════════════════
+async function buscarCABYS() {
+  const input = (document.getElementById('cabysInput')?.value || '').trim();
+  const btn   = document.getElementById('cabysBtn');
+  const resEl = document.getElementById('cabysResult');
+  if (!input || !resEl) return;
+  if (input.length < 2) { toast('warn','⚠️ Ingresá al menos 2 caracteres'); return; }
+
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Buscando...'; }
+  resEl.style.display = 'block';
+  resEl.className = 'cabys-result';
+  resEl.innerHTML = '<div style="color:var(--muted);font-size:13px">Consultando catálogo de Hacienda...</div>';
+
+  const isCode = /^\d{7,13}$/.test(input);
+  const url = isCode
+    ? `https://api.hacienda.go.cr/fe/cabys?codigo=${input}`
+    : `https://api.hacienda.go.cr/fe/cabys?q=${encodeURIComponent(input)}&top=8`;
+
+  const proxies = [
+    u => fetch(u, { signal: AbortSignal.timeout(6000) }),
+    u => fetch(`https://corsproxy.io/?${encodeURIComponent(u)}`, { signal: AbortSignal.timeout(8000) }),
+    u => fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`, { signal: AbortSignal.timeout(8000) }),
+  ];
+
+  let data = null;
+  for (const proxy of proxies) {
+    try {
+      const r = await proxy(url);
+      if (!r.ok) continue;
+      data = await r.json();
+      break;
+    } catch(e) { continue; }
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = '🔍 Buscar'; }
+
+  if (!data) {
+    resEl.className = 'cabys-result notfound';
+    resEl.innerHTML = '<div style="color:var(--danger);font-size:13px">❌ No se pudo conectar con la API de Hacienda. Revisá tu conexión.</div>';
+    return;
+  }
+
+  const items = Array.isArray(data) ? data : (data.cabys || data.items || [data]);
+  if (!items.length || !items[0]) {
+    resEl.className = 'cabys-result notfound';
+    resEl.innerHTML = '<div style="color:var(--danger);font-size:13px">❌ Código o descripción no encontrada en el catálogo.</div>';
+    return;
+  }
+
+  resEl.className = 'cabys-result found';
+  resEl.innerHTML = items.slice(0, 6).map(item => {
+    const iva = item.impuesto ?? item.iva ?? '';
+    const cod = item.codigo || item.code || '';
+    const desc = item.descripcion || item.description || '';
+    const categoria = item.categoria || '';
+    return `<div style="padding:12px 0;border-bottom:1px solid rgba(0,214,143,.1);display:flex;gap:14px;align-items:flex-start">
+      <div style="flex-shrink:0">
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:#7aabff;letter-spacing:.5px">${cod}</div>
+        ${iva !== '' ? `<div style="margin-top:4px;padding:2px 8px;background:rgba(61,122,255,.12);border-radius:4px;font-size:10px;font-weight:700;color:#7aabff;display:inline-block">${iva}% IVA</div>` : ''}
+      </div>
+      <div>
+        <div style="font-size:13px;color:var(--text);font-weight:500;margin-bottom:3px">${desc}</div>
+        ${categoria ? `<div style="font-size:11px;color:var(--faint)">${categoria}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('') + (items.length > 6 ? `<div style="font-size:11px;color:var(--faint);margin-top:8px">+ ${items.length - 6} resultados más. Refiná la búsqueda para ver los más relevantes.</div>` : '');
+}
+
+function initToolsTab() {
+  // Pre-fill multa period with previous month
+  const periodoEl = document.getElementById('multa-periodo');
+  if (periodoEl && !periodoEl.value) {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 1);
+    periodoEl.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  }
+  // Pre-fill today as payment date
+  const pagoEl = document.getElementById('multa-fecha-pago');
+  if (pagoEl && !pagoEl.value) {
+    const t = new Date();
+    pagoEl.value = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+  }
+  // Show CABYS summary from loaded invoices
+  renderCABYSSummary();
+  calcMultas();
+}
+
+function renderCABYSSummary() {
+  const panel = document.getElementById('cabysInvoicesList');
+  const content = document.getElementById('cabysInvoicesContent');
+  if (!panel || !content || !invoices.length) return;
+
+  // Collect unique CABYS from loaded invoices
+  const cabysMap = new Map();
+  for (const inv of invoices) {
+    for (const ln of (inv.lineas || [])) {
+      const cod = ln.cabys || '';
+      if (!cod) continue;
+      const valid = /^\d{13}$/.test(cod);
+      if (!cabysMap.has(cod)) cabysMap.set(cod, { detalle: ln.detalle||'', count:0, valid });
+      cabysMap.get(cod).count++;
+    }
+  }
+  if (!cabysMap.size) return;
+
+  panel.style.display = 'block';
+  const sorted = [...cabysMap.entries()].sort((a,b) => b[1].count - a[1].count).slice(0, 20);
+  content.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
+    <tr style="border-bottom:1px solid var(--border)">
+      <th style="text-align:left;padding:7px 10px;color:var(--faint);font-size:10px;font-weight:700;text-transform:uppercase">CABYS</th>
+      <th style="text-align:left;padding:7px 10px;color:var(--faint);font-size:10px;font-weight:700;text-transform:uppercase">Detalle</th>
+      <th style="text-align:right;padding:7px 10px;color:var(--faint);font-size:10px;font-weight:700;text-transform:uppercase">Usos</th>
+      <th style="text-align:center;padding:7px 10px;color:var(--faint);font-size:10px;font-weight:700;text-transform:uppercase">Estado</th>
+    </tr>
+    ${sorted.map(([cod, info]) => `
+    <tr style="border-bottom:1px solid rgba(99,143,255,.06);cursor:pointer" onclick="document.getElementById('cabysInput').value='${cod}';buscarCABYS()">
+      <td style="padding:8px 10px;color:#7aabff;font-family:monospace;font-weight:600">${cod}</td>
+      <td style="padding:8px 10px;color:var(--muted)">${(info.detalle||'').slice(0,45)}</td>
+      <td style="padding:8px 10px;color:var(--text);text-align:right">${info.count}</td>
+      <td style="padding:8px 10px;text-align:center">${info.valid ? '<span style="color:var(--accent);font-size:11px">✓ válido</span>' : '<span style="color:var(--danger);font-size:11px">⚠ formato</span>'}</td>
+    </tr>`).join('')}
+  </table></div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  FEATURE: NOTIFICACIONES DEL BROWSER
+// ═══════════════════════════════════════════════════════
+function showNotifBanner() {
+  const banner = document.getElementById('notifBanner');
+  if (!banner) return;
+  if (!('Notification' in window)) return; // not supported
+  if (Notification.permission === 'denied') return;
+  if (Notification.permission === 'granted') {
+    banner.style.display = 'flex';
+    const btn = document.getElementById('notifBtn');
+    if (btn) { btn.textContent = '✅ Activo'; btn.disabled = true; btn.style.opacity = '.6'; }
+    return;
+  }
+  banner.style.display = 'flex';
+}
+
+async function requestNotifPermission() {
+  if (!('Notification' in window)) {
+    toast('error','⚠️ Tu navegador no soporta notificaciones.');
+    return;
+  }
+  const permission = await Notification.requestPermission();
+  const statusEl = document.getElementById('notifStatus');
+  const btn = document.getElementById('notifBtn');
+
+  if (permission === 'granted') {
+    scheduleVencimientoNotification();
+    if (btn) { btn.textContent = '✅ Activo'; btn.disabled = true; btn.style.opacity = '.6'; }
+    if (statusEl) { statusEl.style.display = 'block'; statusEl.textContent = '✅ Recordatorio activado. Recibirás una notificación el día antes del vencimiento del D-150.'; }
+    toast('success', '🔔 Recordatorio activado');
+  } else {
+    if (statusEl) { statusEl.style.display = 'block'; statusEl.style.color = 'var(--danger)'; statusEl.textContent = '❌ Permiso denegado. Habilitá las notificaciones en la configuración del navegador.'; }
+  }
+}
+
+function scheduleVencimientoNotification() {
+  if (Notification.permission !== 'granted') return;
+  const { venc } = getNextVencimiento();
+  if (!venc) return;
+
+  // Schedule notification for 9am on the day before vencimiento
+  const notifDate = new Date(venc);
+  notifDate.setDate(notifDate.getDate() - 1);
+  notifDate.setHours(9, 0, 0, 0);
+
+  const ms = notifDate.getTime() - Date.now();
+  if (ms <= 0) return; // already past
+
+  // Use setTimeout (only works if tab stays open or is reopened before the time)
+  if (ms < 7 * 24 * 60 * 60 * 1000) { // only schedule if within 7 days
+    setTimeout(() => {
+      if (Notification.permission === 'granted') {
+        new Notification('⏰ Vence mañana el D-150 — Tribu Fácil CR', {
+          body: `Recordá declarar el IVA antes del ${venc.toLocaleDateString('es-CR')} en TRIBU-CR.`,
+          icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="%233d7aff"/><text x="50%" y="60%" text-anchor="middle" font-size="18" fill="white">T</text></svg>',
+          tag: 'tribu-facil-vencimiento',
+        });
+      }
+    }, ms);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  SMART TOOLTIP SYSTEM — viewport-aware, never clipped
 // ═══════════════════════════════════════════════════════
 (function(){
-  let activeTip = null;
-  function closeTip(){ if(activeTip){ activeTip.classList.remove('tip-active'); activeTip=null; } }
-  document.addEventListener('click', function(e){
-    // Check if click is on a [data-tip] element or its child
-    const el = e.target.closest('[data-tip]');
-    // Only activate on touch devices
-    if(!window.matchMedia('(hover:none)').matches) return;
-    if(el){
-      if(activeTip === el){ closeTip(); return; }
-      closeTip();
-      // Prevent navigation/action on first tap if it's just a tooltip trigger
-      // (only if element is not a button or link doing something else)
-      activeTip = el;
-      el.classList.add('tip-active');
-      e.stopPropagation();
+  const box   = document.getElementById('tipBox');
+  const arrow = document.getElementById('tipArrow');
+  if (!box || !arrow) return;
+
+  let currentEl  = null;
+  let hideTimer  = null;
+  let showTimer  = null;
+  const MARGIN   = 10;  // px safe zone from viewport edge
+  const GAP      = 8;   // px gap between element and tooltip
+  const DELAY    = 120; // ms hover delay before showing
+
+  // Pre-show: make box block but invisible to measure it
+  function position(el) {
+    const text = el.getAttribute('data-tip');
+    if (!text) return;
+
+    // Populate and make measurable (invisible)
+    box.textContent  = text;
+    box.style.opacity    = '0';
+    box.style.transition = 'none';
+    box.style.display    = 'block';
+
+    // Force layout so offsetWidth/Height are real values
+    void box.offsetWidth;
+
+    const elRect = el.getBoundingClientRect();
+    const boxW   = box.offsetWidth  || 240;
+    const boxH   = box.offsetHeight || 40;
+    const vw     = window.innerWidth;
+    const vh     = window.innerHeight;
+
+    // Vertical: prefer above; fall back to below if not enough space
+    const spaceAbove = elRect.top - GAP;
+    const spaceBelow = vh - elRect.bottom - GAP;
+    const goBelow    = spaceAbove < boxH + 20 && spaceBelow >= boxH;
+
+    let top, arrowTop, arrowClass;
+    if (goBelow) {
+      top       = elRect.bottom + GAP;
+      arrowTop  = elRect.bottom + 1;
+      arrowClass = 'up';
     } else {
-      closeTip();
+      top       = elRect.top - boxH - GAP;
+      arrowTop  = elRect.top - GAP - 4;
+      arrowClass = 'down';
+    }
+
+    // Horizontal: center on element, clamp within viewport
+    const elCx = elRect.left + elRect.width / 2;
+    let left   = elCx - boxW / 2;
+    left = Math.max(MARGIN, Math.min(left, vw - boxW - MARGIN));
+
+    // Arrow: point at element center, clamped
+    let arrowLeft = elCx - 5;
+    arrowLeft = Math.max(left + 8, Math.min(arrowLeft, left + boxW - 18));
+
+    box.style.top  = top  + 'px';
+    box.style.left = left + 'px';
+
+    arrow.className    = arrowClass;
+    arrow.style.top    = arrowTop  + 'px';
+    arrow.style.left   = arrowLeft + 'px';
+    arrow.style.opacity = '0';
+    arrow.style.display = 'block';
+
+    // Fade in
+    requestAnimationFrame(() => {
+      box.style.transition = 'opacity .12s ease';
+      box.style.opacity    = '1';
+      arrow.style.transition = 'opacity .12s ease';
+      arrow.style.opacity    = '1';
+    });
+  }
+
+  function showTip(el) {
+    clearTimeout(hideTimer);
+    clearTimeout(showTimer);
+    currentEl = el;
+    // Small delay so rapid mouse movements don't flash tooltips
+    showTimer = setTimeout(() => position(el), DELAY);
+  }
+
+  function hideTip() {
+    clearTimeout(showTimer);
+    currentEl = null;
+    box.style.opacity   = '0';
+    arrow.style.opacity = '0';
+    hideTimer = setTimeout(() => {
+      box.style.display   = 'none';
+      arrow.style.display = 'none';
+    }, 140);
+  }
+
+  // Init hidden
+  box.style.display   = 'none';
+  arrow.style.display = 'none';
+
+  // ── Desktop: hover ──────────────────────────────────
+  if (!window.matchMedia('(hover:none)').matches) {
+    document.addEventListener('mouseover', function(e) {
+      const el = e.target.closest('[data-tip]');
+      if (el && el !== currentEl) showTip(el);
+    });
+    document.addEventListener('mouseout', function(e) {
+      const el = e.target.closest('[data-tip]');
+      if (el && el === currentEl && !el.contains(e.relatedTarget)) hideTip();
+    });
+  }
+
+  // ── Mobile: tap ──────────────────────────────────────
+  document.addEventListener('click', function(e) {
+    if (!window.matchMedia('(hover:none)').matches) return;
+    const el = e.target.closest('[data-tip]');
+    if (el) {
+      if (currentEl === el) { hideTip(); return; }
+      showTip(el);
+    } else {
+      hideTip();
     }
   }, true);
-  // Close tooltip on scroll
-  document.addEventListener('scroll', closeTip, {passive:true});
+
+  // ── Hide on scroll or resize ─────────────────────────
+  document.addEventListener('scroll', hideTip, { passive: true, capture: true });
+  window.addEventListener('resize',   hideTip, { passive: true });
 })();
 
 init();
