@@ -735,10 +735,10 @@ button[data-tip],a[data-tip]{cursor:pointer}
     </div>
     <div class="ctx-help-body">
       <div class="ctx-steps">
-        <div class="ctx-step"><div class="ctx-step-n">1</div><p><strong>Configurá tu perfil</strong> — Ingresá tu cédula y hacé clic en 🌐 Buscar en Hacienda para completar nombre y actividad automáticamente.</p></div>
-        <div class="ctx-step"><div class="ctx-step-n">2</div><p><strong>Subí tus facturas XML</strong> — Arrastrá los archivos o hacé clic en la zona de carga. Necesitás cargar <strong>tanto las facturas emitidas (ventas) como las recibidas (compras)</strong>.</p></div>
-        <div class="ctx-step"><div class="ctx-step-n">3</div><p><strong>Revisá los contadores</strong> — Verificá que los totales de IVA Débito y Crédito tengan sentido. Si algo parece raro, revisá la pestaña ⚠️ <strong>Alertas</strong>.</p></div>
-        <div class="ctx-step"><div class="ctx-step-n g">→</div><p>Cuando hayas subido todos los XMLs, pasá a <strong>📋 D-150</strong> para ver el borrador listo para ingresar a TRIBU-CR.</p></div>
+        <div class="ctx-step"><div class="ctx-step-n">1</div><p><strong>Configurá tu perfil</strong> — Ingresá tu cédula y hacé clic en 🌐 Buscar en Hacienda para completar nombre, tipo y actividad automáticamente. También podés detectarlo desde los XML una vez cargados.</p></div>
+        <div class="ctx-step"><div class="ctx-step-n">2</div><p><strong>Subí tus facturas XML</strong> — Arrastrá los archivos o hacé clic en la zona de carga. Necesitás cargar <strong>tanto las facturas emitidas (ventas) como las recibidas (compras)</strong> para calcular el IVA neto correctamente.</p></div>
+        <div class="ctx-step"><div class="ctx-step-n">3</div><p><strong>Verificá los contadores</strong> — Comprobá que IVA Débito y Crédito tengan sentido. Si hay rechazados o algo raro, revisá la pestaña ⚠️ <strong>Alertas</strong>.</p></div>
+        <div class="ctx-step"><div class="ctx-step-n g">→</div><p>Con las facturas cargadas y el perfil listo, pasá a <strong>📋 D-150</strong> para revisar el borrador del formulario.</p></div>
       </div>
       <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
         <button class="ctx-action-btn" onclick="switchTab('d150')">📋 Ver borrador D-150 →</button>
@@ -758,42 +758,13 @@ button[data-tip],a[data-tip]{cursor:pointer}
     <div id="vencStatus"></div>
   </div>
 
-  <div class="upload-zone" id="dropZone"
-       onclick="document.getElementById('fileInput').click()"
-       ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
-    <div class="upload-icon">📁</div>
-    <div class="upload-title">Arrastrá tus facturas electrónicas aquí</div>
-    <div class="upload-sub">Emitidas (ventas) <strong style="color:var(--text)">+</strong> Recibidas (compras) · XML individuales, múltiples o un ZIP con todo el período</div>
-    <button class="btn btn-primary" onclick="event.stopPropagation();document.getElementById('fileInput').click()">Seleccionar archivos</button>
-    <div class="upload-types">
-      <div class="type-chip" data-tip="Factura electrónica estándar de venta. El tipo más común emitido por comercios y profesionales.">FacturaElectronica v4.4</div>
-      <div class="type-chip" data-tip="Respuesta de Hacienda sobre una factura: puede ser Aceptada o Rechazada.">MensajeHacienda</div>
-      <div class="type-chip" data-tip="Factura de compra recibida de un proveedor. El IVA de estas facturas se convierte en Crédito Fiscal.">FacturaCompra (Crédito Fiscal)</div>
-      <div class="type-chip" data-tip="Comprobante simplificado de venta al consumidor final. No requiere datos del receptor.">TiqueteElectronico</div>
-      <div class="type-chip" data-tip="Nota Crédito: anula o reduce el monto de una factura anterior. Nota Débito: aumenta el monto.">NotaCredito / NotaDebito</div>
-      <div class="type-chip" data-tip="Recibo Electrónico de Pago: comprobante para honorarios profesionales y servicios independientes.">REP v4.4</div>
-      <div class="type-chip" data-tip="Podés comprimir múltiples XML en un archivo .zip y subirlos todos de una sola vez.">​.zip múltiple</div>
-    </div>
-    <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-    <div class="upload-status-txt" id="uploadTxt"></div>
-  </div>
-  <input type="file" id="fileInput" accept=".xml,.zip" multiple onchange="handleFileSelect(event)">
-  <div style="text-align:center;margin-top:12px">
-    <button class="btn btn-ghost btn-sm" onclick="loadDemo()" data-tip="Carga 6 documentos de ejemplo para explorar todas las funciones sin necesitar XMLs reales.">🎲 No tengo XMLs — Cargar datos demo</button>
-  </div>
-
-  <div class="stats-row" style="margin-top:22px">
-    <div class="stat-card blue" data-tip="Total de archivos XML procesados en esta sesión (facturas, notas, mensajes de Hacienda)."><div class="stat-label">Total Documentos</div><div class="stat-value" id="s-total">0</div><div class="stat-sub">Cargados en el sistema</div></div>
-    <div class="stat-card green" data-tip="Documentos validados y aceptados por el sistema de Hacienda. Estos son fiscalmente válidos."><div class="stat-label">Aceptados</div><div class="stat-value" id="s-accepted">0</div><div class="stat-sub">Validados por Hacienda</div></div>
-    <div class="stat-card red" data-tip="Documentos rechazados por Hacienda. Revisá el Centro de Alertas para ver el motivo de cada rechazo."><div class="stat-label">Rechazados</div><div class="stat-value" id="s-rejected">0</div><div class="stat-sub">Con error Hacienda</div></div>
-    <div class="stat-card yellow" data-tip="IVA generado en tus ventas gravadas. Este monto es lo que 'debés' a Hacienda antes de restar el crédito fiscal."><div class="stat-label">IVA Débito</div><div class="stat-value" id="s-iva">₡0</div><div class="stat-sub">Ventas gravadas</div></div>
-    <div class="stat-card purple" data-tip="IVA pagado en tus compras y gastos. Podés acreditarlo contra el débito fiscal para reducir lo que pagás."><div class="stat-label">IVA Crédito</div><div class="stat-value" id="s-credito">₡0</div><div class="stat-sub">De compras deducibles</div></div>
-  </div>
-
-  <!-- PERFIL DEL CONTRIBUYENTE -->
-  <div class="card" style="margin-top:14px">
+  <!-- PASO 1 — PERFIL DEL CONTRIBUYENTE -->
+  <div class="card" style="margin-bottom:20px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-      <div class="t-card-title" style="margin-bottom:0">👤 Perfil del Contribuyente <span style="font-size:10px;font-weight:400;color:var(--faint)">(aparece en PDF y exports)</span></div>
+      <div>
+        <div class="t-card-title" style="margin-bottom:2px">👤 Paso 1 — Perfil del Contribuyente <span style="font-size:10px;font-weight:400;color:var(--faint)">(aparece en PDF y exports)</span></div>
+        <div style="font-size:11px;color:var(--muted)">Ingresá tu cédula y buscá en Hacienda para autocompletar — o detectá desde los XML una vez cargados.</div>
+      </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn btn-ghost btn-xs" onclick="autoDetectFromXMLs()" data-tip="Detecta automáticamente tu cédula y nombre desde las facturas emitidas ya cargadas.">🔎 Detectar desde XML</button>
         <button class="btn btn-ghost btn-xs" onclick="buscarEnHacienda()" data-tip="Consulta la API oficial de Hacienda con la cédula ingresada y completa nombre, tipo y actividad económica.">🌐 Buscar en Hacienda</button>
@@ -806,14 +777,14 @@ button[data-tip],a[data-tip]{cursor:pointer}
 
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
       <div>
-        <label class="sim-lbl">Nombre / Razón Social</label>
-        <input type="text" id="prof-nombre" class="search-box" placeholder="Ej: Juan Pérez Rodríguez" maxlength="120" style="width:100%;margin-bottom:0" data-tip="Nombre o razón social del contribuyente tal como aparece en Hacienda.">
-      </div>
-      <div>
         <label class="sim-lbl">Cédula / RUC</label>
         <input type="text" id="prof-cedula" class="search-box" placeholder="Ej: 102340567 o 3101234567" maxlength="30" style="width:100%;margin-bottom:0"
           data-tip="Cédula física (9 dígitos sin guiones), jurídica (10 dígitos) o DIMEX. Se usa para buscar en Hacienda."
           onkeydown="if(event.key==='Enter'){buscarEnHacienda();}">
+      </div>
+      <div>
+        <label class="sim-lbl">Nombre / Razón Social</label>
+        <input type="text" id="prof-nombre" class="search-box" placeholder="Ej: Juan Pérez Rodríguez" maxlength="120" style="width:100%;margin-bottom:0" data-tip="Nombre o razón social del contribuyente tal como aparece en Hacienda.">
       </div>
       <div>
         <label class="sim-lbl">Tipo de Contribuyente</label>
@@ -845,6 +816,42 @@ button[data-tip],a[data-tip]{cursor:pointer}
     <div id="prof-saved-msg" style="display:none;margin-top:10px;font-size:11px;color:var(--accent)">✅ Perfil guardado correctamente.</div>
   </div>
 
+  <!-- PASO 2 — ZONA DE CARGA -->
+  <div style="font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">📁 Paso 2 — Cargá tus facturas XML</div>
+  <div class="upload-zone" id="dropZone"
+       onclick="document.getElementById('fileInput').click()"
+       ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+    <div class="upload-icon">📁</div>
+    <div class="upload-title">Arrastrá tus facturas electrónicas aquí</div>
+    <div class="upload-sub">Emitidas (ventas) <strong style="color:var(--text)">+</strong> Recibidas (compras) · XML individuales, múltiples o un ZIP con todo el período</div>
+    <button class="btn btn-primary" onclick="event.stopPropagation();document.getElementById('fileInput').click()">Seleccionar archivos</button>
+    <div class="upload-types">
+      <div class="type-chip" data-tip="Factura electrónica estándar de venta. El tipo más común emitido por comercios y profesionales.">FacturaElectronica v4.4</div>
+      <div class="type-chip" data-tip="Respuesta de Hacienda sobre una factura: puede ser Aceptada o Rechazada.">MensajeHacienda</div>
+      <div class="type-chip" data-tip="Factura de compra recibida de un proveedor. El IVA de estas facturas se convierte en Crédito Fiscal.">FacturaCompra (Crédito Fiscal)</div>
+      <div class="type-chip" data-tip="Comprobante simplificado de venta al consumidor final. No requiere datos del receptor.">TiqueteElectronico</div>
+      <div class="type-chip" data-tip="Nota Crédito: anula o reduce el monto de una factura anterior. Nota Débito: aumenta el monto.">NotaCredito / NotaDebito</div>
+      <div class="type-chip" data-tip="Recibo Electrónico de Pago: comprobante para honorarios profesionales y servicios independientes.">REP v4.4</div>
+      <div class="type-chip" data-tip="Podés comprimir múltiples XML en un archivo .zip y subirlos todos de una sola vez;">​.zip múltiple</div>
+    </div>
+    <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="upload-status-txt" id="uploadTxt"></div>
+  </div>
+  <input type="file" id="fileInput" accept=".xml,.zip" multiple onchange="handleFileSelect(event)">
+  <div style="text-align:center;margin-top:12px">
+    <button class="btn btn-ghost btn-sm" onclick="loadDemo()" data-tip="Carga 6 documentos de ejemplo para explorar todas las funciones sin necesitar XMLs reales.">🎲 No tengo XMLs — Cargar datos demo</button>
+  </div>
+
+  <!-- PASO 3 — RESULTADOS -->
+  <div style="font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);margin:22px 0 10px">📊 Paso 3 — Verificá los resultados</div>
+  <div class="stats-row">
+    <div class="stat-card blue" data-tip="Total de archivos XML procesados en esta sesión (facturas, notas, mensajes de Hacienda)."><div class="stat-label">Total Documentos</div><div class="stat-value" id="s-total">0</div><div class="stat-sub">Cargados en el sistema</div></div>
+    <div class="stat-card green" data-tip="Documentos validados y aceptados por el sistema de Hacienda. Estos son fiscalmente válidos."><div class="stat-label">Aceptados</div><div class="stat-value" id="s-accepted">0</div><div class="stat-sub">Validados por Hacienda</div></div>
+    <div class="stat-card red" data-tip="Documentos rechazados por Hacienda. Revisá el Centro de Alertas para ver el motivo de cada rechazo."><div class="stat-label">Rechazados</div><div class="stat-value" id="s-rejected">0</div><div class="stat-sub">Con error Hacienda</div></div>
+    <div class="stat-card yellow" data-tip="IVA generado en tus ventas gravadas. Este monto es lo que 'debés' a Hacienda antes de restar el crédito fiscal."><div class="stat-label">IVA Débito</div><div class="stat-value" id="s-iva">₡0</div><div class="stat-sub">Ventas gravadas</div></div>
+    <div class="stat-card purple" data-tip="IVA pagado en tus compras y gastos. Podés acreditarlo contra el débito fiscal para reducir lo que pagás."><div class="stat-label">IVA Crédito</div><div class="stat-value" id="s-credito">₡0</div><div class="stat-sub">De compras deducibles</div></div>
+  </div>
+
 </section>
 
 <!-- ════ FACTURAS ════ -->
@@ -860,7 +867,7 @@ button[data-tip],a[data-tip]{cursor:pointer}
         <div class="ctx-step"><div class="ctx-step-n">1</div><p>Verificá que cada factura esté marcada como <strong>VENTA</strong> (emitida por vos) o <strong>COMPRA</strong> (recibida de proveedor). Las compras generan crédito fiscal.</p></div>
         <div class="ctx-step"><div class="ctx-step-n">2</div><p>Filtrá por mes para ver solo las facturas del período que vas a declarar. Usá el selector <strong>Todos los meses</strong> para elegir el período.</p></div>
         <div class="ctx-step"><div class="ctx-step-n">3</div><p>Las facturas con estado <span style="color:var(--danger);font-weight:600">Rechazada</span> no tienen validez fiscal — no se incluyen en el D-150. Revisá la pestaña ⚠️ Alertas para el motivo.</p></div>
-        <div class="ctx-step"><div class="ctx-step-n g">→</div><p>Si todo se ve bien, pasá a <strong>📋 D-150 TRIBU</strong> para revisar el borrador del formulario.</p></div>
+        <div class="ctx-step"><div class="ctx-step-n g">→</div><p>Si todo se ve bien, pasá a <strong>📋 D-150</strong> para revisar el borrador del formulario.</p></div>
       </div>
       <button class="ctx-action-btn" onclick="switchTab('d150')" style="margin-top:14px">📋 Ir al borrador D-150 →</button>
     </div>
@@ -1080,6 +1087,25 @@ button[data-tip],a[data-tip]{cursor:pointer}
 
 <!-- ════ RESUMEN MENSUAL ════ -->
 <section class="section" id="section-summary">
+  <!-- AYUDA CONTEXTUAL -->
+  <div class="ctx-help" id="ctx-summary">
+    <div class="ctx-help-hdr" onclick="toggleCtxHelp('ctx-summary')">
+      <div class="ctx-help-title">💡 ¿Qué muestra esta pestaña?</div>
+      <div class="ctx-help-toggle">▼</div>
+    </div>
+    <div class="ctx-help-body">
+      <div class="ctx-steps">
+        <div class="ctx-step"><div class="ctx-step-n">1</div><p>Usá el selector ‹ › para ver el resumen de un mes específico. Con <strong>Todos los meses</strong> ves el acumulado total de la sesión.</p></div>
+        <div class="ctx-step"><div class="ctx-step-n">2</div><p>El bloque <strong>IVA a Pagar</strong> es el resultado clave: Débito Fiscal menos Crédito Fiscal. Si es negativo, tenés saldo a favor.</p></div>
+        <div class="ctx-step"><div class="ctx-step-n">3</div><p>La tabla de períodos y el gráfico al fondo te muestran la evolución mensual — útil para detectar inconsistencias entre meses.</p></div>
+        <div class="ctx-step"><div class="ctx-step-n g">→</div><p>Antes de exportar, revisá ⚠️ <strong>Alertas</strong> para asegurarte de que no hay facturas rechazadas o CABYS inválidos.</p></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+        <button class="ctx-action-btn" onclick="switchTab('warnings')">⚠️ Revisar Alertas →</button>
+        <button class="ctx-action-btn ghost" onclick="switchTab('export')">📥 Exportar</button>
+      </div>
+    </div>
+  </div>
   <div class="section-header">
     <div class="section-title">📊 Resumen Mensual IVA</div>
     <div class="month-selector">
@@ -1402,7 +1428,7 @@ button[data-tip],a[data-tip]{cursor:pointer}
       </div>
       <div class="ctx-help-body">
         <div class="ctx-steps">
-          <div class="ctx-step"><div class="ctx-step-n">A</div><p><strong>Perfil del contribuyente</strong> — En la pestaña 📤 Subir, ingresá tu cédula y hacé clic en 🌐 Buscar en Hacienda. Se completan automáticamente: nombre oficial, tipo de contribuyente, actividad económica y estado tributario.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n">A</div><p><strong>Perfil del contribuyente</strong> — En la pestaña 🏠 Inicio, ingresá tu cédula y hacé clic en 🌐 Buscar en Hacienda. Se completan automáticamente: nombre oficial, tipo de contribuyente, actividad económica y estado tributario.</p></div>
           <div class="ctx-step"><div class="ctx-step-n">B</div><p><strong>Obtener los XMLs</strong> — De tu sistema de facturación: las facturas <em>emitidas</em> del período (tus ventas) y las facturas <em>recibidas</em> de proveedores (tus compras). Ambas son necesarias para calcular el IVA neto.</p></div>
           <div class="ctx-step"><div class="ctx-step-n">C</div><p><strong>Cargar los archivos</strong> — Arrastrá los XML o un ZIP con todos los del período a la zona de carga. La app acepta hasta 50 MB por archivo y detecta automáticamente el tipo de cada comprobante.</p></div>
           <div class="ctx-step"><div class="ctx-step-n">D</div><p><strong>Verificar contadores</strong> — Los cuadros de estadísticas muestran documentos Aceptados, Rechazados, IVA Débito (ventas) e IVA Crédito (compras). Si los números no cuadran, revisá ⚠️ Alertas.</p></div>
@@ -1410,7 +1436,7 @@ button[data-tip],a[data-tip]{cursor:pointer}
         <div style="background:rgba(255,201,71,.06);border:1px solid rgba(255,201,71,.2);border-radius:var(--rs);padding:10px 14px;margin-top:12px;font-size:12px;color:var(--warn)">
           ⚠️ <strong>Importante:</strong> Debés cargar tanto facturas emitidas (ventas) como recibidas (compras). Sin las compras no se calcula el crédito fiscal y el IVA a pagar quedará sobreestimado.
         </div>
-        <button class="ctx-action-btn" onclick="switchTab('upload')" style="margin-top:12px">📤 Ir a Subir →</button>
+        <button class="ctx-action-btn" onclick="switchTab('upload')" style="margin-top:12px">🏠 Ir a Inicio →</button>
       </div>
     </div>
 
@@ -1458,7 +1484,24 @@ button[data-tip],a[data-tip]{cursor:pointer}
     <!-- PASO 4 -->
     <div class="ctx-help" id="g-paso4">
       <div class="ctx-help-hdr" onclick="toggleCtxHelp('g-paso4')">
-        <div class="ctx-help-title">📥 Paso 4 — Exportar el Borrador</div>
+        <div class="ctx-help-title">⚠️ Paso 4 — Revisar las Alertas</div>
+        <div class="ctx-help-toggle">▼</div>
+      </div>
+      <div class="ctx-help-body">
+        <div class="ctx-steps">
+          <div class="ctx-step"><div class="ctx-step-n">1</div><p><strong>Facturas rechazadas</strong> — Las facturas que Hacienda rechazó no tienen validez fiscal y no se incluyen en el D-150. Debés corregirlas en tu sistema de facturación y reenviarlas antes de declarar.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n">2</div><p><strong>CABYS inválidos</strong> — Si alguna factura tiene un código CABYS que no existe en el catálogo oficial, el validador te lo señala. Verificá con el emisor o usá el validador de 🔧 Herramientas.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n">3</div><p><strong>Proporcionalidad</strong> — Si tenés ventas gravadas y exentas, la app detecta si el porcentaje de proporcionalidad podría afectar tu crédito fiscal y te advierte.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n g">→</div><p>Sin alertas críticas, podés proceder a exportar el borrador con confianza.</p></div>
+        </div>
+        <button class="ctx-action-btn" onclick="switchTab('warnings')" style="margin-top:12px">⚠️ Ir a Alertas →</button>
+      </div>
+    </div>
+
+    <!-- PASO 5 -->
+    <div class="ctx-help" id="g-paso5">
+      <div class="ctx-help-hdr" onclick="toggleCtxHelp('g-paso5')">
+        <div class="ctx-help-title">📥 Paso 5 — Exportar el Borrador</div>
         <div class="ctx-help-toggle">▼</div>
       </div>
       <div class="ctx-help-body">
@@ -1472,10 +1515,10 @@ button[data-tip],a[data-tip]{cursor:pointer}
       </div>
     </div>
 
-    <!-- PASO 5 -->
-    <div class="ctx-help" id="g-paso5">
-      <div class="ctx-help-hdr" onclick="toggleCtxHelp('g-paso5')">
-        <div class="ctx-help-title">🌐 Paso 5 — Declarar en TRIBU-CR</div>
+    <!-- PASO 6 -->
+    <div class="ctx-help" id="g-paso6">
+      <div class="ctx-help-hdr" onclick="toggleCtxHelp('g-paso6')">
+        <div class="ctx-help-title">🌐 Paso 6 — Declarar en TRIBU-CR</div>
         <div class="ctx-help-toggle">▼</div>
       </div>
       <div class="ctx-help-body">
