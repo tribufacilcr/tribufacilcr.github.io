@@ -52,7 +52,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:18p
 /* NAV TABS */
 .nav-tabs{display:flex;gap:3px;margin:22px 0 28px;padding:4px;background:var(--surface);border-radius:var(--r);border:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
 .nav-tabs::-webkit-scrollbar{display:none}
-.nav-tab{flex:1;min-width:100px;padding:9px 14px;border-radius:10px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border:none;background:transparent;font-family:'DM Sans',sans-serif;transition:all .2s;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:5px}
+.nav-tab{flex:1;min-width:86px;padding:9px 14px;border-radius:10px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border:none;background:transparent;font-family:'DM Sans',sans-serif;transition:all .2s;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:5px}
 .nav-tab:hover{color:var(--text);background:var(--surface2)}
 .nav-tab.active{background:var(--surface3);color:var(--text);border:1px solid var(--border-hi);box-shadow:0 2px 8px rgba(0,0,0,.3)}
 .tab-badge{background:var(--primary);color:#fff;border-radius:100px;padding:1px 6px;font-size:10px;font-weight:700;min-width:16px;text-align:center}
@@ -602,7 +602,7 @@ button[data-tip],a[data-tip]{cursor:pointer}
     <div class="onboard-header">
       <div class="onboard-logo">T</div>
       <h2>Bienvenido a Tribu Fácil CR</h2>
-      <p>Tu asistente para preparar el borrador D-150 y declarar el IVA en TRIBU-CR. Seguí estos 5 pasos:</p>
+      <p>Tu asistente para preparar el borrador D-150 y declarar el IVA en TRIBU-CR. Seguí estos 6 pasos:</p>
     </div>
     <div class="onboard-steps">
       <div class="onboard-step">
@@ -624,14 +624,20 @@ button[data-tip],a[data-tip]{cursor:pointer}
         <p>Verificá los montos por sección y completá las retenciones o saldos a favor manuales si los tenés.</p>
       </div>
       <div class="onboard-step">
-        <div class="onboard-step-icon">📥</div>
+        <div class="onboard-step-icon">⚠️</div>
         <div class="onboard-step-num">Paso 4</div>
+        <h4>Revisá las Alertas</h4>
+        <p>Antes de exportar, verificá que no haya facturas rechazadas, CABYS inválidos ni errores de proporcionalidad.</p>
+      </div>
+      <div class="onboard-step">
+        <div class="onboard-step-icon">📥</div>
+        <div class="onboard-step-num">Paso 5</div>
         <h4>Exportá el borrador</h4>
         <p>Descargá el PDF o Excel, o copiá todos los valores al portapapeles para tenerlos a mano.</p>
       </div>
       <div class="onboard-step">
         <div class="onboard-step-icon">🌐</div>
-        <div class="onboard-step-num">Paso 5</div>
+        <div class="onboard-step-num">Paso 6</div>
         <h4>Declarás en TRIBU-CR</h4>
         <p>Abrí ovitribucr.hacienda.go.cr y copiá los valores del borrador en el formulario D-150 oficial.</p>
       </div>
@@ -671,27 +677,27 @@ button[data-tip],a[data-tip]{cursor:pointer}
 
 <!-- NAV TABS -->
 <div class="nav-tabs">
-  <button class="nav-tab active" onclick="switchTab('upload')" id="tab-upload" data-tip="Cargá tus archivos XML o ZIP de facturas electrónicas aquí.">📤 Subir</button>
+  <button class="nav-tab active" onclick="switchTab('upload')" id="tab-upload" data-tip="Punto de inicio: configurá tu perfil y cargá los archivos XML o ZIP de tus facturas electrónicas.">🏠 Inicio</button>
   <button class="nav-tab" onclick="switchTab('invoices')" id="tab-invoices" data-tip="Listado de todos los documentos cargados con filtros por estado, tipo y mes." >🧾 Facturas <span class="tab-badge" id="badge-inv">0</span></button>
-  <button class="nav-tab" onclick="switchTab('d150')" id="tab-d150" data-tip="Borrador del formulario D-150 (IVA mensual) con las 6 secciones listas para ingresar en TRIBU-CR.">📋 D-150 TRIBU</button>
-  <button class="nav-tab" onclick="switchTab('summary')" id="tab-summary" data-tip="Resumen de IVA débito (ventas), crédito (compras) y monto a pagar por período.">📊 Resumen IVA</button>
-  <button class="nav-tab" onclick="switchTab('simulator')" id="tab-simulator" data-tip="Estimá tu Impuesto sobre la Renta anual (D-101) con los tramos oficiales de Hacienda.">🧮 Renta</button>
-  <button class="nav-tab" onclick="switchTab('guia')" id="tab-guia" data-tip="Guía completa para declarar el D-150 y el D-101 en el portal TRIBU-CR.">📖 Guía</button>
-  <button class="nav-tab" onclick="switchTab('tools')" id="tab-tools" data-tip="Calculadora de multas por mora, validador de códigos CABYS y otras herramientas fiscales.">🔧 Herramientas</button>
-  <button class="nav-tab" onclick="switchTab('warnings')" id="tab-warnings" data-tip="Alertas automáticas sobre facturas rechazadas, CABYS inválidos y proporcionalidad.">⚠️ Alertas <span class="tab-badge warn" id="badge-warn">0</span></button>
+  <button class="nav-tab" onclick="switchTab('d150')" id="tab-d150" data-tip="Borrador del formulario D-150 (IVA mensual) con las 6 secciones listas para ingresar en TRIBU-CR.">📋 D-150</button>
+  <button class="nav-tab" onclick="switchTab('summary')" id="tab-summary" data-tip="Resumen de IVA débito (ventas), crédito (compras) y monto a pagar por período.">📊 Resumen</button>
+  <button class="nav-tab" onclick="switchTab('warnings')" id="tab-warnings" data-tip="Alertas automáticas sobre facturas rechazadas, CABYS inválidos y problemas de proporcionalidad. Revisá antes de exportar.">⚠️ Alertas <span class="tab-badge warn" id="badge-warn">0</span></button>
   <button class="nav-tab" onclick="switchTab('export')" id="tab-export" data-tip="Exportá tus datos en Excel, D-150 .xlsx, CSV o JSON para tu contador o respaldo.">📥 Exportar</button>
+  <button class="nav-tab" onclick="switchTab('tools')" id="tab-tools" data-tip="Calculadora de multas por mora, validador de códigos CABYS y otras herramientas fiscales.">🔧 Herramientas</button>
+  <button class="nav-tab" onclick="switchTab('simulator')" id="tab-simulator" data-tip="Estimá tu Impuesto sobre la Renta anual (D-101) con los tramos oficiales de Hacienda.">🧮 D-101</button>
+  <button class="nav-tab" onclick="switchTab('guia')" id="tab-guia" data-tip="Guía completa para declarar el D-150 y el D-101 en el portal TRIBU-CR.">📖 Guía</button>
 </div>
 
 <!-- BARRA DE PROGRESO DEL FLUJO -->
 <div class="progress-flow" id="progressFlow">
   <div class="pf-step active" onclick="switchTab('upload')" id="pf-1" data-tip="Paso 1: Configurá tu perfil y cargá los archivos XML del período a declarar.">
     <div class="pf-dot">1</div>
-    <div class="pf-label">📤 Subir XMLs</div>
+    <div class="pf-label">🏠 Inicio</div>
   </div>
   <div class="pf-arrow">›</div>
   <div class="pf-step" onclick="switchTab('invoices')" id="pf-2" data-tip="Paso 2: Revisá que todas las facturas estén correctamente clasificadas.">
     <div class="pf-dot">2</div>
-    <div class="pf-label">🧾 Verificar</div>
+    <div class="pf-label">🧾 Facturas</div>
   </div>
   <div class="pf-arrow">›</div>
   <div class="pf-step" onclick="switchTab('d150')" id="pf-3" data-tip="Paso 3: Revisá el borrador D-150 y completá los ajustes manuales de Sección IV.">
@@ -699,13 +705,18 @@ button[data-tip],a[data-tip]{cursor:pointer}
     <div class="pf-label">📋 D-150</div>
   </div>
   <div class="pf-arrow">›</div>
-  <div class="pf-step" onclick="switchTab('export')" id="pf-4" data-tip="Paso 4: Exportá el borrador en PDF o Excel para tenerlo de referencia.">
+  <div class="pf-step" onclick="switchTab('warnings')" id="pf-4" data-tip="Paso 4: Revisá las alertas — facturas rechazadas, CABYS inválidos y proporcionalidad — antes de exportar.">
     <div class="pf-dot">4</div>
+    <div class="pf-label">⚠️ Alertas</div>
+  </div>
+  <div class="pf-arrow">›</div>
+  <div class="pf-step" onclick="switchTab('export')" id="pf-5" data-tip="Paso 5: Exportá el borrador en PDF o Excel para tenerlo de referencia.">
+    <div class="pf-dot">5</div>
     <div class="pf-label">📥 Exportar</div>
   </div>
   <div class="pf-arrow">›</div>
-  <div class="pf-step" onclick="window.open('https://ovitribucr.hacienda.go.cr','_blank')" id="pf-5" data-tip="Paso 5: Abrí TRIBU-CR y copiá los valores del borrador en el formulario D-150 oficial.">
-    <div class="pf-dot">5</div>
+  <div class="pf-step" onclick="window.open('https://ovitribucr.hacienda.go.cr','_blank')" id="pf-6" data-tip="Paso 6: Abrí TRIBU-CR y copiá los valores del borrador en el formulario D-150 oficial.">
+    <div class="pf-dot">6</div>
     <div class="pf-label">🌐 TRIBU-CR</div>
   </div>
   <div style="margin-left:auto;display:flex;align-items:center;padding:0 12px;flex-shrink:0">
@@ -726,8 +737,8 @@ button[data-tip],a[data-tip]{cursor:pointer}
       <div class="ctx-steps">
         <div class="ctx-step"><div class="ctx-step-n">1</div><p><strong>Configurá tu perfil</strong> — Ingresá tu cédula y hacé clic en 🌐 Buscar en Hacienda para completar nombre y actividad automáticamente.</p></div>
         <div class="ctx-step"><div class="ctx-step-n">2</div><p><strong>Subí tus facturas XML</strong> — Arrastrá los archivos o hacé clic en la zona de carga. Necesitás cargar <strong>tanto las facturas emitidas (ventas) como las recibidas (compras)</strong>.</p></div>
-        <div class="ctx-step"><div class="ctx-step-n">3</div><p><strong>Revisá los contadores</strong> — Verificá que los totales de IVA Débito y Crédito tengan sentido. Si algo parece raro, revisá la pestaña ⚠️ Alertas.</p></div>
-        <div class="ctx-step"><div class="ctx-step-n g">→</div><p>Cuando hayas subido todos los XMLs, pasá a <strong>📋 D-150 TRIBU</strong> para ver el borrador.</p></div>
+        <div class="ctx-step"><div class="ctx-step-n">3</div><p><strong>Revisá los contadores</strong> — Verificá que los totales de IVA Débito y Crédito tengan sentido. Si algo parece raro, revisá la pestaña ⚠️ <strong>Alertas</strong>.</p></div>
+        <div class="ctx-step"><div class="ctx-step-n g">→</div><p>Cuando hayas subido todos los XMLs, pasá a <strong>📋 D-150</strong> para ver el borrador listo para ingresar a TRIBU-CR.</p></div>
       </div>
       <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
         <button class="ctx-action-btn" onclick="switchTab('d150')">📋 Ver borrador D-150 →</button>
@@ -752,7 +763,7 @@ button[data-tip],a[data-tip]{cursor:pointer}
        ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
     <div class="upload-icon">📁</div>
     <div class="upload-title">Arrastrá tus facturas electrónicas aquí</div>
-    <div class="upload-sub">XML individuales, múltiples o un ZIP con todas las facturas del período</div>
+    <div class="upload-sub">Emitidas (ventas) <strong style="color:var(--text)">+</strong> Recibidas (compras) · XML individuales, múltiples o un ZIP con todo el período</div>
     <button class="btn btn-primary" onclick="event.stopPropagation();document.getElementById('fileInput').click()">Seleccionar archivos</button>
     <div class="upload-types">
       <div class="type-chip" data-tip="Factura electrónica estándar de venta. El tipo más común emitido por comercios y profesionales.">FacturaElectronica v4.4</div>
@@ -834,15 +845,6 @@ button[data-tip],a[data-tip]{cursor:pointer}
     <div id="prof-saved-msg" style="display:none;margin-top:10px;font-size:11px;color:var(--accent)">✅ Perfil guardado correctamente.</div>
   </div>
 
-  <div class="card" style="margin-top:6px">
-    <div class="t-card-title">💡 ¿Cómo usar Tribu Fácil CR?</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:18px">
-      <div><div style="font-size:22px;margin-bottom:7px">1️⃣</div><div style="font-size:13px;font-weight:600;margin-bottom:3px">Subí tus XML</div><div style="font-size:12px;color:var(--muted)">Facturas emitidas Y recibidas (compras) para calcular IVA a pagar correctamente.</div></div>
-      <div><div style="font-size:22px;margin-bottom:7px">2️⃣</div><div style="font-size:13px;font-weight:600;margin-bottom:3px">Extracción automática</div><div style="font-size:12px;color:var(--muted)">El sistema lee XML v4.4 y extrae CABYS, tarifas, servicios vs mercancías, y crédito fiscal.</div></div>
-      <div><div style="font-size:22px;margin-bottom:7px">3️⃣</div><div style="font-size:13px;font-weight:600;margin-bottom:3px">Borrador D-150</div><div style="font-size:12px;color:var(--muted)">Generamos las 6 secciones del formulario D-150 listas para ingresar a TRIBU-CR.</div></div>
-      <div><div style="font-size:22px;margin-bottom:7px">4️⃣</div><div style="font-size:13px;font-weight:600;margin-bottom:3px">Declarás con confianza</div><div style="font-size:12px;color:var(--muted)">Exportá, revisá con tu contador y declarás directamente en la OVi de TRIBU-CR.</div></div>
-    </div>
-  </div>
 </section>
 
 <!-- ════ FACTURAS ════ -->
@@ -945,7 +947,7 @@ button[data-tip],a[data-tip]{cursor:pointer}
     </div>
   </div>
   <div class="section-header">
-    <div class="section-title">📋 Borrador Formulario D-150</div>
+    <div class="section-title">📋 Borrador D-150 — IVA Mensual</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <div class="month-selector">
         <button class="month-btn" onclick="changeMonth(-1)" data-tip="Mes anterior">‹</button>
@@ -1216,7 +1218,10 @@ button[data-tip],a[data-tip]{cursor:pointer}
 <!-- ════ ALERTAS ════ -->
 <section class="section" id="section-warnings">
   <div class="section-header">
-    <div class="section-title">⚠️ Centro de Alertas</div>
+    <div>
+      <div class="section-title">⚠️ Centro de Alertas</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">Revisá esto antes de exportar y declarar en TRIBU-CR</div>
+    </div>
     <button class="btn btn-ghost btn-sm" onclick="clearWarnings()" data-tip="Borra todas las alertas visibles. Las alertas se regeneran al recargar o subir nuevos documentos.">Limpiar alertas</button>
   </div>
   <div class="warn-list" id="warnList"></div>
@@ -1340,39 +1345,46 @@ button[data-tip],a[data-tip]{cursor:pointer}
 
   <!-- FLUJO VISUAL -->
   <div style="background:linear-gradient(135deg,rgba(61,122,255,.07),rgba(0,214,143,.04));border:1px solid var(--border-hi);border-radius:var(--r);padding:22px;margin-bottom:22px">
-    <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:16px">🗺️ El flujo completo en 5 pasos</div>
-    <div style="display:flex;align-items:center;gap:0;flex-wrap:wrap;gap:4px">
-      <div onclick="switchTab('upload')" style="cursor:pointer;background:var(--surface2);border:1px solid var(--primary);border-radius:var(--rs);padding:10px 14px;text-align:center;flex:1;min-width:100px;transition:all .2s" onmouseover="this.style.background='var(--surface3)'" onmouseleave="this.style.background='var(--surface2)'">
+    <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:16px">🗺️ El flujo completo en 6 pasos</div>
+    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">
+      <div onclick="switchTab('upload')" style="cursor:pointer;background:var(--surface2);border:1px solid var(--primary);border-radius:var(--rs);padding:10px 14px;text-align:center;flex:1;min-width:90px;transition:all .2s" onmouseover="this.style.background='var(--surface3)'" onmouseleave="this.style.background='var(--surface2)'">
         <div style="font-size:20px;margin-bottom:4px">📁</div>
         <div style="font-size:11px;font-weight:700;color:var(--primary)">PASO 1</div>
-        <div style="font-size:12px;font-weight:600">Subir XMLs</div>
+        <div style="font-size:12px;font-weight:600">Cargar XMLs</div>
         <div style="font-size:10px;color:var(--muted);margin-top:2px">Ventas + Compras</div>
       </div>
       <div style="color:var(--faint);font-size:18px;flex-shrink:0">›</div>
-      <div onclick="switchTab('invoices')" style="cursor:pointer;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:10px 14px;text-align:center;flex:1;min-width:100px;transition:all .2s" onmouseover="this.style.background='var(--surface3)'" onmouseleave="this.style.background='var(--surface2)'">
+      <div onclick="switchTab('invoices')" style="cursor:pointer;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:10px 14px;text-align:center;flex:1;min-width:90px;transition:all .2s" onmouseover="this.style.background='var(--surface3)'" onmouseleave="this.style.background='var(--surface2)'">
         <div style="font-size:20px;margin-bottom:4px">🧾</div>
         <div style="font-size:11px;font-weight:700;color:var(--muted)">PASO 2</div>
-        <div style="font-size:12px;font-weight:600">Verificar</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:2px">Revisar facturas</div>
+        <div style="font-size:12px;font-weight:600">Facturas</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">Revisar documentos</div>
       </div>
       <div style="color:var(--faint);font-size:18px;flex-shrink:0">›</div>
-      <div onclick="switchTab('d150')" style="cursor:pointer;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:10px 14px;text-align:center;flex:1;min-width:100px;transition:all .2s" onmouseover="this.style.background='var(--surface3)'" onmouseleave="this.style.background='var(--surface2)'">
+      <div onclick="switchTab('d150')" style="cursor:pointer;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:10px 14px;text-align:center;flex:1;min-width:90px;transition:all .2s" onmouseover="this.style.background='var(--surface3)'" onmouseleave="this.style.background='var(--surface2)'">
         <div style="font-size:20px;margin-bottom:4px">📋</div>
         <div style="font-size:11px;font-weight:700;color:var(--muted)">PASO 3</div>
-        <div style="font-size:12px;font-weight:600">Borrador D-150</div>
+        <div style="font-size:12px;font-weight:600">D-150</div>
         <div style="font-size:10px;color:var(--muted);margin-top:2px">Revisar y ajustar</div>
       </div>
       <div style="color:var(--faint);font-size:18px;flex-shrink:0">›</div>
-      <div onclick="switchTab('export')" style="cursor:pointer;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:10px 14px;text-align:center;flex:1;min-width:100px;transition:all .2s" onmouseover="this.style.background='var(--surface3)'" onmouseleave="this.style.background='var(--surface2)'">
+      <div onclick="switchTab('warnings')" style="cursor:pointer;background:rgba(255,201,71,.05);border:1px solid rgba(255,201,71,.25);border-radius:var(--rs);padding:10px 14px;text-align:center;flex:1;min-width:90px;transition:all .2s" onmouseover="this.style.background='rgba(255,201,71,.12)'" onmouseleave="this.style.background='rgba(255,201,71,.05)'">
+        <div style="font-size:20px;margin-bottom:4px">⚠️</div>
+        <div style="font-size:11px;font-weight:700;color:var(--warn)">PASO 4</div>
+        <div style="font-size:12px;font-weight:600;color:var(--text)">Alertas</div>
+        <div style="font-size:10px;color:var(--warn);margin-top:2px">Verificar errores</div>
+      </div>
+      <div style="color:var(--faint);font-size:18px;flex-shrink:0">›</div>
+      <div onclick="switchTab('export')" style="cursor:pointer;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:10px 14px;text-align:center;flex:1;min-width:90px;transition:all .2s" onmouseover="this.style.background='var(--surface3)'" onmouseleave="this.style.background='var(--surface2)'">
         <div style="font-size:20px;margin-bottom:4px">📥</div>
-        <div style="font-size:11px;font-weight:700;color:var(--muted)">PASO 4</div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted)">PASO 5</div>
         <div style="font-size:12px;font-weight:600">Exportar</div>
         <div style="font-size:10px;color:var(--muted);margin-top:2px">PDF o Excel</div>
       </div>
       <div style="color:var(--faint);font-size:18px;flex-shrink:0">›</div>
-      <a href="https://ovitribucr.hacienda.go.cr" target="_blank" style="text-decoration:none;background:rgba(0,214,143,.08);border:1px solid rgba(0,214,143,.3);border-radius:var(--rs);padding:10px 14px;text-align:center;flex:1;min-width:100px;transition:all .2s" onmouseover="this.style.background='rgba(0,214,143,.15)'" onmouseleave="this.style.background='rgba(0,214,143,.08)'">
+      <a href="https://ovitribucr.hacienda.go.cr" target="_blank" style="text-decoration:none;background:rgba(0,214,143,.08);border:1px solid rgba(0,214,143,.3);border-radius:var(--rs);padding:10px 14px;text-align:center;flex:1;min-width:90px;transition:all .2s" onmouseover="this.style.background='rgba(0,214,143,.15)'" onmouseleave="this.style.background='rgba(0,214,143,.08)'">
         <div style="font-size:20px;margin-bottom:4px">🌐</div>
-        <div style="font-size:11px;font-weight:700;color:var(--accent)">PASO 5</div>
+        <div style="font-size:11px;font-weight:700;color:var(--accent)">PASO 6</div>
         <div style="font-size:12px;font-weight:600;color:var(--text)">TRIBU-CR</div>
         <div style="font-size:10px;color:var(--accent);margin-top:2px">Declarar oficial</div>
       </a>
@@ -4091,17 +4103,15 @@ const FLOW_MAP = {
   invoices:  'pf-2',
   d150:      'pf-3',
   summary:   'pf-3',
-  export:    'pf-4',
+  warnings:  'pf-4',
+  export:    'pf-5',
   guia:      null,
   simulator: null,
-  warnings:  null,
+  tools:     null,
 };
 
 function updateProgress(tab) {
-  document.querySelectorAll('.pf-step').forEach(s => {
-    s.classList.remove('active');
-    // Mark as done if invoices loaded and step < active
-  });
+  document.querySelectorAll('.pf-step').forEach(s => s.classList.remove('active'));
   const activeId = FLOW_MAP[tab];
   if (activeId) {
     const el = document.getElementById(activeId);
@@ -4110,10 +4120,14 @@ function updateProgress(tab) {
   // Mark earlier steps as done if we have data
   if (invoices.length > 0) {
     document.getElementById('pf-1')?.classList.add('done');
-    if (invoices.length > 0 && (tab === 'd150' || tab === 'export' || tab === 'summary'))
+    if (tab === 'd150' || tab === 'export' || tab === 'summary' || tab === 'warnings')
       document.getElementById('pf-2')?.classList.add('done');
+    if (tab === 'export' || tab === 'warnings')
+      document.getElementById('pf-3')?.classList.add('done');
+    if (tab === 'export')
+      document.getElementById('pf-4')?.classList.add('done');
   }
-  // Remove done from active
+  // Remove done from active step
   if (activeId) {
     document.getElementById(activeId)?.classList.remove('done');
     document.getElementById(activeId)?.classList.add('active');
