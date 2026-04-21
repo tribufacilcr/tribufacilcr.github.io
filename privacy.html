@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Política de Privacidad — Tribu Fácil CR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500@display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#060c1a;--surface:#0d1628;--surface2:#131e35;
+  --border:rgba(99,143,255,.12);--border-hi:rgba(99,143,255,.28);
+  --primary:#3d7aff;--accent:#00d68f;
+  --text:#e8eeff;--muted:#7a90b8;--faint:#3d5078;
+  --r:14px;--shadow:0 8px 32px rgba(0,0,0,.4);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  font-size:15px;
+  line-height:1.75;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse 900px 600px at 10% 0%,rgba(61,122,255,.07) 0%,transparent 70%),
+              radial-gradient(ellipse 700px 500px at 90% 100%,rgba(0,214,143,.05) 0%,transparent 70%);
+  pointer-events:none;z-index:0;
+}
+.wrap{position:relative;z-index:1;max-width:780px;margin:0 auto;padding:60px 24px 80px}
+
+/* Header */
+.back-link{
+  display:inline-flex;align-items:center;gap:6px;
+  color:var(--muted);font-size:13px;text-decoration:none;
+  margin-bottom:36px;
+  transition:color .2s;
+}
+.back-link:hover{color:var(--primary);}
+.back-link svg{width:16px;height:16px;}
+
+.logo-chip{
+  display:inline-flex;align-items:center;gap:10px;
+  background:var(--surface2);border:1px solid var(--border-hi);
+  border-radius:50px;padding:8px 18px;margin-bottom:28px;
+}
+.logo-chip .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);}
+.logo-chip span{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;}
+
+h1{
+  font-family:'Syne',sans-serif;
+  font-size:clamp(1.8rem,5vw,2.4rem);
+  font-weight:700;
+  color:var(--text);
+  margin-bottom:10px;
+  line-height:1.2;
+}
+.subtitle{color:var(--muted);font-size:14px;margin-bottom:48px;}
+
+/* Content */
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:32px;
+  margin-bottom:20px;
+}
+h2{
+  font-family:'Syne',sans-serif;
+  font-size:1rem;
+  font-weight:700;
+  color:var(--primary);
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  margin-bottom:14px;
+}
+p{color:#b0c0e0;margin-bottom:12px;}
+p:last-child{margin-bottom:0;}
+ul{padding-left:20px;margin-bottom:12px;}
+ul li{color:#b0c0e0;margin-bottom:6px;}
+a{color:var(--primary);text-decoration:none;}
+a:hover{text-decoration:underline;}
+.highlight{
+  display:inline-block;
+  background:rgba(0,214,143,.1);
+  border:1px solid rgba(0,214,143,.25);
+  border-radius:6px;
+  padding:2px 10px;
+  font-size:13px;
+  color:var(--accent);
+  font-weight:600;
+}
+
+/* Footer */
+footer{
+  text-align:center;
+  margin-top:48px;
+  padding-top:24px;
+  border-top:1px solid var(--border);
+  font-size:12px;
+  color:var(--faint);
+}
+footer a{color:var(--muted);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <a class="back-link" href="index.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="15 18 9 12 15 6"/>
+    </svg>
+    Volver a Tribu Fácil CR
+  </a>
+
+  <div class="logo-chip">
+    <div class="dot"></div>
+    <span>Tribu Fácil CR</span>
+  </div>
+
+  <h1>Política de Privacidad</h1>
+  <p class="subtitle">Última actualización: abril 2026</p>
+
+  <div class="card">
+    <h2>1. Quiénes somos</h2>
+    <p>
+      <strong>Tribu Fácil CR</strong> es una herramienta web gratuita diseñada para ayudar a
+      contribuyentes costarricenses a gestionar sus obligaciones tributarias ante la plataforma
+      TRIBU-CR del Ministerio de Hacienda. El sitio opera en
+      <a href="https://tribufacilcr.github.io" target="_blank">tribufacilcr.github.io</a>.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>2. Datos que procesamos</h2>
+    <p>
+      Tribu Fácil CR <strong>no recopila ni almacena datos personales en servidores propios</strong>.
+      Toda la información fiscal que el usuario ingresa (archivos XML, montos, períodos) se procesa
+      exclusivamente en el navegador del usuario y se guarda de forma local mediante
+      <span class="highlight">localStorage</span> del propio dispositivo.
+    </p>
+    <p>No transmitimos datos personales a servidores de terceros a excepción de lo indicado en la sección 3.</p>
+  </div>
+
+  <div class="card">
+    <h2>3. Publicidad y cookies de terceros</h2>
+    <p>
+      Este sitio utiliza <strong>Google AdSense</strong> para mostrar publicidad. Google, como proveedor
+      externo, utiliza cookies para mostrar anuncios basados en visitas previas del usuario a este
+      sitio u otros sitios web.
+    </p>
+    <p>El uso de cookies publicitarias por parte de Google permite a Google y a sus socios mostrar
+    anuncios a los usuarios en función de su visita a este sitio y/o a otros sitios de Internet.</p>
+    <p>Los usuarios pueden inhabilitar la publicidad personalizada visitando el siguiente enlace:
+      <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener">
+        Configuración de anuncios de Google
+      </a>.
+    </p>
+    <p>Para más información sobre cómo Google utiliza los datos, consulte:
+      <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener">
+        Cómo usa Google los datos cuando usas sitios de nuestros socios
+      </a>.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>4. Consultas a la API de Hacienda</h2>
+    <p>
+      Para la validación de códigos CABYS, el sitio realiza consultas a la API pública del
+      Ministerio de Hacienda de Costa Rica
+      (<a href="https://api.hacienda.go.cr" target="_blank" rel="noopener">api.hacienda.go.cr</a>).
+      Estas consultas no incluyen información personal del usuario, únicamente el código CABYS
+      a consultar.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>5. Almacenamiento local</h2>
+    <p>
+      El sitio utiliza el almacenamiento local del navegador (<span class="highlight">localStorage</span>)
+      para guardar automáticamente el progreso del usuario (períodos, facturas procesadas, configuración).
+      Estos datos <strong>nunca salen de tu dispositivo</strong> y pueden borrarse en cualquier momento
+      limpiando los datos del sitio en la configuración del navegador.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>6. Notificaciones del navegador</h2>
+    <p>
+      El sitio puede solicitar permiso para enviar notificaciones del navegador con recordatorios
+      de fechas de vencimiento fiscal. Esta funcionalidad es completamente opcional y puede
+      desactivarse en cualquier momento desde la configuración de permisos del navegador.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>7. No vendemos datos</h2>
+    <p>
+      No vendemos, alquilamos ni compartimos información personal de nuestros usuarios con terceros
+      con fines comerciales propios. La única interacción con terceros es la publicidad gestionada
+      por Google AdSense descrita en la sección 3.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>8. Menores de edad</h2>
+    <p>
+      Este sitio está dirigido a contribuyentes adultos. No recopilamos intencionalmente información
+      de menores de 13 años. Si eres padre o tutor y crees que tu hijo ha proporcionado información
+      personal, contáctanos para eliminarla.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>9. Cambios a esta política</h2>
+    <p>
+      Podemos actualizar esta política de privacidad periódicamente. Los cambios se publicarán en
+      esta página con la fecha de la última actualización. El uso continuado del sitio tras los
+      cambios implica la aceptación de la política actualizada.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>10. Contacto</h2>
+    <p>
+      Si tienes preguntas sobre esta política de privacidad, puedes contactarnos a través de la
+      sección de contacto disponible en el sitio principal.
+    </p>
+  </div>
+
+  <footer>
+    <span>Tribu Fácil CR</span> · <a href="index.html">Volver al inicio</a> · 2026
+  </footer>
+
+</div>
+</body>
+</html>
