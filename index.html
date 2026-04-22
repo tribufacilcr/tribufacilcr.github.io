@@ -291,6 +291,35 @@ header{display:flex;align-items:center;justify-content:space-between;padding:18p
 .ev-ok .cal-ev-dot{background:var(--accent)}.ev-ok .cal-ev-badge{background:rgba(0,214,143,.12);color:var(--accent)}
 .ev-soon .cal-ev-dot{background:var(--warn)}.ev-soon .cal-ev-badge{background:rgba(255,201,71,.15);color:var(--warn)}
 .ev-urgent .cal-ev-dot{background:var(--danger)}.ev-urgent .cal-ev-badge{background:rgba(255,77,106,.15);color:var(--danger)}
+/* ══ REVISION DE CONSISTENCIA ══ */
+.rev-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:12px;transition:border-color .2s}
+.rev-card.rev-ok{border-color:rgba(0,214,143,.3);background:rgba(0,214,143,.03)}
+.rev-card.rev-warn{border-color:rgba(255,201,71,.35);background:rgba(255,201,71,.03)}
+.rev-card.rev-error{border-color:rgba(255,77,106,.35);background:rgba(255,77,106,.04)}
+.rev-card.rev-info{border-color:rgba(61,122,255,.3);background:rgba(61,122,255,.03)}
+.rev-hdr{display:flex;align-items:flex-start;gap:12px;margin-bottom:6px}
+.rev-icon{font-size:20px;flex-shrink:0;margin-top:1px}
+.rev-title{font-size:13px;font-weight:700;color:var(--text)}
+.rev-desc{font-size:12px;color:var(--muted);line-height:1.6;margin-top:4px}
+.rev-data{display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.rev-datum{text-align:center}
+.rev-datum-lbl{font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--faint)}
+.rev-datum-val{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-top:2px}
+.rev-score{display:flex;align-items:center;gap:14px;background:var(--surface2);border:1px solid var(--border-hi);border-radius:var(--r);padding:20px;margin-bottom:20px}
+.rev-score-ring{position:relative;width:72px;height:72px;flex-shrink:0}
+.rev-score-ring svg{transform:rotate(-90deg)}
+.rev-score-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:20px;font-weight:800}
+/* ══ REGULARIZACIÓN ══ */
+.reg-step{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden}
+.reg-step-hdr{padding:14px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:background .2s}
+.reg-step-hdr:hover{background:rgba(99,143,255,.04)}
+.reg-step-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:12px;font-weight:800;flex-shrink:0}
+.reg-step-title{font-size:13px;font-weight:700;flex:1}
+.reg-step-body{padding:0 18px 18px;display:none;animation:fadeIn .2s ease}
+.reg-step-body.open{display:block}
+.reg-result-box{background:var(--surface3);border:1px solid var(--border-hi);border-radius:var(--rs);padding:16px;margin-top:14px}
+.reg-total-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(99,143,255,.07)}
+.reg-total-row:last-child{border-bottom:none;font-weight:700;padding-top:12px;margin-top:4px}
 /* ══ SIMPLIFICADO ══ */
 .simp-act-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;max-height:340px;overflow-y:auto;padding:2px}
 .simp-act-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:10px 13px;cursor:pointer;transition:all .2s}
@@ -718,6 +747,8 @@ button[data-tip],a[data-tip]{cursor:pointer}
   <button class="nav-tab" onclick="switchTab('simulator')" id="tab-simulator" data-tip="Borrador completo del D-101 (Renta Anual): ingresos, gastos deducibles, depreciaciones, créditos familiares y cálculo por tramos.">📑 D-101 Renta</button>
   <button class="nav-tab" onclick="switchTab('simplificado')" id="tab-simplificado" data-tip="Calculadora para contribuyentes del Régimen de Tributación Simplificada (D-105): seleccioná tu actividad, ingresá tus compras por trimestre y obtenés el impuesto a pagar.">🪄 Simplificado</button>
   <button class="nav-tab" onclick="switchTab('calendario')" id="tab-calendario" data-tip="Calendario fiscal anual con todas las obligaciones tributarias: IVA, Renta, Timbre, Municipalidad, CCSS, y más.">📅 Calendario</button>
+  <button class="nav-tab" onclick="switchTab('revision')" id="tab-revision" data-tip="Analiza inconsistencias en tus facturas: variaciones inusuales respecto al período anterior, facturas duplicadas, CABYS sospechosos y brechas de IVA.">🔍 Revisión</button>
+  <button class="nav-tab" onclick="switchTab('regularizacion')" id="tab-regularizacion" data-tip="Calculadora de regularización fiscal: multas, intereses, recargos y planes de pago para ponerte al día con Hacienda.">⚖️ Regularizar</button>
   <button class="nav-tab" onclick="switchTab('guia')" id="tab-guia" data-tip="Guía completa para declarar el D-150 y el D-101 en el portal TRIBU-CR.">📖 Guía</button>
   <button class="nav-tab" onclick="switchTab('tools')" id="tab-tools" data-tip="Calculadora de multas por mora, validador de códigos CABYS y otras herramientas fiscales.">🔧 Herramientas</button>
   <button class="nav-tab" onclick="switchTab('warnings')" id="tab-warnings" data-tip="Alertas automáticas sobre facturas rechazadas, CABYS inválidos y proporcionalidad.">⚠️ Alertas <span class="tab-badge warn" id="badge-warn">0</span></button>
@@ -1493,6 +1524,226 @@ button[data-tip],a[data-tip]{cursor:pointer}
   </div>
   <div class="cal-list" id="calList"></div>
 </section>
+<!-- ════ REVISIÓN DE CONSISTENCIA ════ -->
+<section class="section" id="section-revision">
+  <div class="section-header">
+    <div class="section-title">🔍 Revisión de Consistencia</div>
+    <div style="display:flex;gap:8px">
+      <select class="filter-sel" id="rev-period-sel" onchange="runRevision()">
+        <option value="">-- Seleccioná período --</option>
+      </select>
+      <button class="btn btn-primary btn-sm" onclick="runRevision()">▶ Analizar</button>
+    </div>
+  </div>
+  <div class="info-box blue" style="margin-bottom:16px">
+    🔍 <strong>¿Qué analiza?</strong> Compara el período seleccionado contra el anterior, detecta variaciones inusuales, facturas duplicadas, brechas de IVA, CABYS problemáticos y señales de omisión. Es lo mismo que revisa un contador antes de firmar.
+  </div>
+
+  <!-- Score general -->
+  <div class="rev-score" id="revScore" style="display:none">
+    <div class="rev-score-ring">
+      <svg width="72" height="72" viewBox="0 0 72 72">
+        <circle cx="36" cy="36" r="30" fill="none" stroke="var(--surface3)" stroke-width="8"/>
+        <circle cx="36" cy="36" r="30" fill="none" stroke="#00d68f" stroke-width="8"
+          stroke-dasharray="188.5" stroke-dashoffset="188.5"
+          id="revScoreCircle" style="transition:stroke-dashoffset 1s ease,stroke .5s ease" stroke-linecap="round"/>
+      </svg>
+      <div class="rev-score-num" id="revScoreNum">—</div>
+    </div>
+    <div>
+      <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800" id="revScoreLabel">—</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px" id="revScoreSub">Cargá facturas y seleccioná un período para analizar.</div>
+      <div style="display:flex;gap:12px;margin-top:10px;font-size:11px;flex-wrap:wrap">
+        <span id="rev-cnt-ok"   style="color:var(--accent)">✅ 0 OK</span>
+        <span id="rev-cnt-warn" style="color:var(--warn)">⚠️ 0 avisos</span>
+        <span id="rev-cnt-err"  style="color:var(--danger)">❌ 0 errores</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="revResults" style="display:none"></div>
+
+  <div id="revEmpty" style="text-align:center;padding:60px 20px;color:var(--faint)">
+    <div style="font-size:48px;margin-bottom:12px">🔍</div>
+    <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px;color:var(--muted)">Sin análisis todavía</div>
+    <div style="font-size:13px">Cargá tus facturas XML y seleccioná un período para ejecutar el análisis de consistencia.</div>
+  </div>
+</section>
+
+<!-- ════ REGULARIZACIÓN ════ -->
+<section class="section" id="section-regularizacion">
+  <div class="section-header">
+    <div class="section-title">⚖️ Guía de Regularización Fiscal</div>
+    <button class="btn btn-ghost btn-sm" onclick="resetRegularizacion()">↺ Resetear</button>
+  </div>
+  <div class="info-box" style="margin-bottom:18px">
+    ⚠️ <strong>¿Debés atrasos con Hacienda?</strong> Esta guía te ayuda a calcular el monto total adeudado (impuesto + multas + intereses) y te orienta en los pasos para regularizarte, incluyendo cómo solicitar un plan de pago.
+  </div>
+
+  <!-- PASO 1: Qué debés -->
+  <div class="reg-step">
+    <div class="reg-step-hdr" onclick="toggleRegStep(this)">
+      <div class="reg-step-num" style="background:rgba(255,77,106,.15);color:var(--danger)">1</div>
+      <div class="reg-step-title">¿Qué declaraciones tenés pendientes o incorrectas?</div>
+      <span style="color:var(--faint);font-size:14px" class="reg-arrow">▼</span>
+    </div>
+    <div class="reg-step-body open">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Ingresá cada declaración pendiente o con error. Podés agregar tantas como necesites.</div>
+      <table class="depre-table" id="regDebtTable">
+        <thead>
+          <tr>
+            <th>Tipo</th>
+            <th>Período</th>
+            <th>Impuesto base (₡)</th>
+            <th>Estado</th>
+            <th style="width:30px"></th>
+          </tr>
+        </thead>
+        <tbody id="regDebtBody">
+          <tr id="regDebtEmpty"><td colspan="5" style="text-align:center;padding:16px;color:var(--faint);font-size:12px">Hacé clic en "+ Agregar" para añadir una declaración.</td></tr>
+        </tbody>
+      </table>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="addRegDebt('D-150','',0,'no_declarada')">+ IVA (D-150)</button>
+        <button class="btn btn-ghost btn-sm" onclick="addRegDebt('D-101','',0,'no_declarada')">+ Renta (D-101)</button>
+        <button class="btn btn-ghost btn-sm" onclick="addRegDebt('D-105','',0,'no_declarada')">+ Simplificado (D-105)</button>
+        <button class="btn btn-ghost btn-sm" onclick="addRegDebt('Otro','',0,'no_declarada')">+ Otro</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 2: Calcular multas e intereses -->
+  <div class="reg-step">
+    <div class="reg-step-hdr" onclick="toggleRegStep(this)">
+      <div class="reg-step-num" style="background:rgba(255,201,71,.15);color:var(--warn)">2</div>
+      <div class="reg-step-title">Calcular multas e intereses</div>
+      <span style="color:var(--faint);font-size:14px" class="reg-arrow">▼</span>
+    </div>
+    <div class="reg-step-body open">
+      <div class="grid2" style="gap:12px;margin-bottom:16px">
+        <div>
+          <label class="sim-lbl">Fecha de regularización (cuando vas a pagar)</label>
+          <input type="date" class="sim-input" id="reg-fecha-pago" oninput="calcRegularizacion()">
+        </div>
+        <div>
+          <label class="sim-lbl">Tasa interés BCCR anual (%) <span style="font-weight:400;color:var(--faint)">(tasa básica pasiva + 1pt)</span></label>
+          <input type="number" class="sim-input" id="reg-tasa" value="9" step="0.5" oninput="calcRegularizacion()" data-tip="Consultá la tasa vigente en bccr.fi.cr. Orientativo: ~9% inicio 2026.">
+        </div>
+        <div>
+          <label class="sim-lbl">¿Subsanación voluntaria?</label>
+          <select class="sim-input" id="reg-voluntario" onchange="calcRegularizacion()" data-tip="Si vas a pagar antes de que Hacienda te notifique, aplicás reducción de hasta 80% en sanciones.">
+            <option value="si">Sí — regularización espontánea (antes de notificación)</option>
+            <option value="no">No — después de notificación o acta de cargo</option>
+          </select>
+        </div>
+        <div>
+          <label class="sim-lbl">¿Primera vez que regularizás?</label>
+          <select class="sim-input" id="reg-primera" onchange="calcRegularizacion()">
+            <option value="si">Sí — primera vez</option>
+            <option value="no">No — reincidente</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="reg-result-box" id="regResultBox">
+        <div style="font-size:13px;color:var(--faint);text-align:center;padding:12px">Completá los datos para calcular.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 3: Plan de pago -->
+  <div class="reg-step">
+    <div class="reg-step-hdr" onclick="toggleRegStep(this)">
+      <div class="reg-step-num" style="background:rgba(0,214,143,.12);color:var(--accent)">3</div>
+      <div class="reg-step-title">Solicitar plan de pago (Facilidad de Pago)</div>
+      <span style="color:var(--faint);font-size:14px" class="reg-arrow">▼</span>
+    </div>
+    <div class="reg-step-body">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="grid2" style="gap:12px">
+          <div>
+            <label class="sim-lbl">Monto total adeudado (₡)</label>
+            <input type="number" class="sim-input" id="reg-plan-monto" placeholder="0" oninput="calcPlanPago()" data-tip="Podés usar el total calculado en el paso 2.">
+            <button class="btn btn-ghost btn-sm" style="margin-top:-8px" onclick="autoFillPlanMonto()">↑ Usar monto del paso 2</button>
+          </div>
+          <div>
+            <label class="sim-lbl">Cuotas solicitadas</label>
+            <select class="sim-input" id="reg-plan-cuotas" onchange="calcPlanPago()">
+              <option value="3">3 cuotas</option>
+              <option value="6" selected>6 cuotas</option>
+              <option value="12">12 cuotas</option>
+              <option value="18">18 cuotas</option>
+              <option value="24">24 cuotas</option>
+              <option value="36">36 cuotas (máx. habitual)</option>
+            </select>
+          </div>
+        </div>
+        <div id="planPagoResult"></div>
+
+        <div style="background:rgba(61,122,255,.06);border:1px solid rgba(61,122,255,.18);border-radius:var(--rs);padding:14px">
+          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;margin-bottom:10px;color:#7aabff">📋 Pasos para solicitar la Facilidad de Pago en TRIBU-CR</div>
+          <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--muted)">
+            <div><strong style="color:var(--text)">1.</strong> Ingresá a <a href="https://ovitribucr.hacienda.go.cr" target="_blank" style="color:#7aabff">ovitribucr.hacienda.go.cr</a> con tu usuario.</div>
+            <div><strong style="color:var(--text)">2.</strong> Ir a <strong style="color:var(--text)">Cuenta Tributaria → Deuda Tributaria → Facilidad de Pago</strong>.</div>
+            <div><strong style="color:var(--text)">3.</strong> Seleccioná las obligaciones que querés incluir en el plan.</div>
+            <div><strong style="color:var(--text)">4.</strong> Ingresá el número de cuotas solicitadas y la fecha de inicio.</div>
+            <div><strong style="color:var(--text)">5.</strong> El sistema calcula automáticamente el monto de cada cuota con los intereses corrientes.</div>
+            <div><strong style="color:var(--text)">6.</strong> Imprimí o guardá el comprobante de la solicitud.</div>
+            <div style="margin-top:6px;padding:8px 12px;background:rgba(255,201,71,.08);border:1px solid rgba(255,201,71,.2);border-radius:var(--rs);color:var(--warn)">
+              ⚠️ <strong>Importante:</strong> Una vez aprobada la facilidad, el incumplimiento de cualquier cuota anula el plan y genera el cobro inmediato del saldo total.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 4: Declaración sustitutiva -->
+  <div class="reg-step">
+    <div class="reg-step-hdr" onclick="toggleRegStep(this)">
+      <div class="reg-step-num" style="background:rgba(167,139,250,.12);color:#a78bfa">4</div>
+      <div class="reg-step-title">Presentar declaración sustitutiva (corrección)</div>
+      <span style="color:var(--faint);font-size:14px" class="reg-arrow">▼</span>
+    </div>
+    <div class="reg-step-body">
+      <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--muted)">
+        <div class="info-box blue">📖 Si ya declaraste pero con errores, debés presentar una <strong>declaración sustitutiva</strong> — no una nueva declaración, sino una corrección de la ya presentada.</div>
+        <div><strong style="color:var(--text)">¿Cuándo usarla?</strong><br>Cuando cometiste errores en montos, omitiste facturas, o clasificaste mal un ingreso o gasto.</div>
+        <div><strong style="color:var(--text)">Pasos en TRIBU-CR:</strong><br>
+          Declaraciones → buscar la declaración original → opción <strong>"Sustituir"</strong> → corregir los campos → presentar. El sistema marca automáticamente la anterior como sustituida.
+        </div>
+        <div><strong style="color:var(--text)">Diferencia de impuesto:</strong><br>
+          Si la corrección genera un impuesto mayor al original, la diferencia genera mora desde la fecha de vencimiento original. Calculá esa diferencia en el Paso 2 arriba.
+        </div>
+        <div><strong style="color:var(--text)">Si la corrección es a tu favor:</strong><br>
+          Podés solicitar devolución o aplicarlo como crédito contra futuras declaraciones desde Cuenta Tributaria → Créditos.
+        </div>
+        <a href="https://ovitribucr.hacienda.go.cr" target="_blank" class="ctx-action-btn" style="display:inline-flex;width:fit-content;margin-top:4px">🌐 Ir a TRIBU-CR →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 5: Consultar deuda -->
+  <div class="reg-step">
+    <div class="reg-step-hdr" onclick="toggleRegStep(this)">
+      <div class="reg-step-num" style="background:rgba(251,146,60,.12);color:#fb923c">5</div>
+      <div class="reg-step-title">Consultar tu estado de cuenta en Hacienda</div>
+      <span style="color:var(--faint);font-size:14px" class="reg-arrow">▼</span>
+    </div>
+    <div class="reg-step-body">
+      <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--muted)">
+        <div><strong style="color:var(--text)">Cuenta Tributaria (TRIBU-CR):</strong><br>Muestra todas tus deudas, pagos realizados, créditos disponibles y el estado de tus declaraciones por período. Es el registro oficial.</div>
+        <div><strong style="color:var(--text)">Certificado de estar al día:</strong><br>Lo generás desde Cuenta Tributaria → Certificados. Necesario para licitaciones, préstamos bancarios y algunos trámites.</div>
+        <div><strong style="color:var(--text)">Gestión de Cobro:</strong><br>Si Hacienda ya inició cobro administrativo, aparece en Cuenta Tributaria → Gestión de Cobro. En ese estado la multa puede ser mayor — buscá asesoría legal.</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+          <a href="https://ovitribucr.hacienda.go.cr" target="_blank" class="ctx-action-btn">🌐 TRIBU-CR →</a>
+          <a href="tel:25394000" class="ctx-action-btn" style="background:rgba(61,122,255,.08);border-color:rgba(61,122,255,.25);color:#7aabff">📞 Hacienda: 2539-4000</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</section>
 <!-- ════ ALERTAS ════ -->
 <section class="section" id="section-warnings">
   <div class="section-header">
@@ -1620,7 +1871,7 @@ button[data-tip],a[data-tip]{cursor:pointer}
 
   <!-- FLUJO VISUAL -->
   <div style="background:linear-gradient(135deg,rgba(61,122,255,.07),rgba(0,214,143,.04));border:1px solid var(--border-hi);border-radius:var(--r);padding:22px;margin-bottom:22px">
-    <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:16px">🗺️ El flujo completo en 5 pasos</div>
+    <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:16px">🗺️ El flujo completo en 7 pasos</div>
     <div style="display:flex;align-items:center;gap:0;flex-wrap:wrap;gap:4px">
       <div onclick="switchTab('upload')" style="cursor:pointer;background:var(--surface2);border:1px solid var(--primary);border-radius:var(--rs);padding:10px 14px;text-align:center;flex:1;min-width:100px;transition:all .2s" onmouseover="this.style.background='var(--surface3)'" onmouseleave="this.style.background='var(--surface2)'">
         <div style="font-size:20px;margin-bottom:4px">📁</div>
@@ -1650,9 +1901,23 @@ button[data-tip],a[data-tip]{cursor:pointer}
         <div style="font-size:10px;color:var(--muted);margin-top:2px">PDF o Excel</div>
       </div>
       <div style="color:var(--faint);font-size:18px;flex-shrink:0">›</div>
+      <div onclick="switchTab('revision')" style="cursor:pointer;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:10px 14px;text-align:center;flex:1;min-width:100px;transition:all .2s" onmouseover="this.style.background='var(--surface3)'" onmouseleave="this.style.background='var(--surface2)'">
+        <div style="font-size:20px;margin-bottom:4px">🔍</div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted)">PASO 5</div>
+        <div style="font-size:12px;font-weight:600">Revisión</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">Consistencia</div>
+      </div>
+      <div style="color:var(--faint);font-size:18px;flex-shrink:0">›</div>
+      <div onclick="switchTab('regularizacion')" style="cursor:pointer;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:10px 14px;text-align:center;flex:1;min-width:100px;transition:all .2s" onmouseover="this.style.background='var(--surface3)'" onmouseleave="this.style.background='var(--surface2)'">
+        <div style="font-size:20px;margin-bottom:4px">⚖️</div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted)">PASO 6</div>
+        <div style="font-size:12px;font-weight:600">Regularizar</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">Si hay atrasos</div>
+      </div>
+      <div style="color:var(--faint);font-size:18px;flex-shrink:0">›</div>
       <a href="https://ovitribucr.hacienda.go.cr" target="_blank" style="text-decoration:none;background:rgba(0,214,143,.08);border:1px solid rgba(0,214,143,.3);border-radius:var(--rs);padding:10px 14px;text-align:center;flex:1;min-width:100px;transition:all .2s" onmouseover="this.style.background='rgba(0,214,143,.15)'" onmouseleave="this.style.background='rgba(0,214,143,.08)'">
         <div style="font-size:20px;margin-bottom:4px">🌐</div>
-        <div style="font-size:11px;font-weight:700;color:var(--accent)">PASO 5</div>
+        <div style="font-size:11px;font-weight:700;color:var(--accent)">PASO 7</div>
         <div style="font-size:12px;font-weight:600;color:var(--text)">TRIBU-CR</div>
         <div style="font-size:10px;color:var(--accent);margin-top:2px">Declarar oficial</div>
       </a>
@@ -1763,6 +2028,43 @@ button[data-tip],a[data-tip]{cursor:pointer}
       </div>
     </div>
 
+    <!-- REVISIÓN -->
+    <div class="ctx-help" id="g-revision">
+      <div class="ctx-help-hdr" onclick="toggleCtxHelp('g-revision')">
+        <div class="ctx-help-title">🔍 Paso 5 — Revisión de Consistencia</div>
+        <div class="ctx-help-toggle">▼</div>
+      </div>
+      <div class="ctx-help-body">
+        <div class="ctx-steps">
+          <div class="ctx-step"><div class="ctx-step-n">1</div><p>Seleccioná el período a revisar en el selector de la pestaña 🔍 Revisión y hacé clic en <strong>▶ Analizar</strong>.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n">2</div><p>El sistema compara tus facturas contra el período anterior y analiza: variación de ingresos, ratio IVA/ventas, duplicados, rechazados y CABYS inválidos.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n">3</div><p>El <strong>puntaje de consistencia</strong> (0–100) te indica qué tan lista está tu declaración para presentar. Los errores ❌ son prioritarios; los avisos ⚠️ requieren revisión.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n">4</div><p>Atendé cada hallazgo antes de exportar y presentar en TRIBU-CR. Para más de 2 errores, revisá con un contador antes de declarar.</p></div>
+        </div>
+        <button class="ctx-action-btn" onclick="switchTab('revision')" style="margin-top:12px">🔍 Ir a Revisión →</button>
+      </div>
+    </div>
+
+    <!-- REGULARIZACIÓN -->
+    <div class="ctx-help" id="g-regularizacion">
+      <div class="ctx-help-hdr" onclick="toggleCtxHelp('g-regularizacion')">
+        <div class="ctx-help-title">⚖️ Paso 6 — Regularización (si tenés atrasos)</div>
+        <div class="ctx-help-toggle">▼</div>
+      </div>
+      <div class="ctx-help-body">
+        <div class="ctx-steps">
+          <div class="ctx-step"><div class="ctx-step-n">1</div><p><strong>Paso 1 de Regularización:</strong> Ingresá cada declaración pendiente — tipo (D-150, D-101, etc.), período y monto del impuesto base.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n">2</div><p><strong>Paso 2:</strong> Indicá la fecha de pago, la tasa BCCR vigente y si es regularización voluntaria. El sistema calcula multas, recargos e intereses automáticamente.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n">3</div><p><strong>Paso 3:</strong> Si no podés pagar todo de una, calculá el plan de cuotas y seguí los pasos para solicitar la Facilidad de Pago en TRIBU-CR.</p></div>
+          <div class="ctx-step"><div class="ctx-step-n">4</div><p>Si ya declaraste con error, usá el <strong>Paso 4 (Declaración Sustitutiva)</strong> para corregirla sin generar una nueva declaración.</p></div>
+        </div>
+        <div style="background:rgba(0,214,143,.06);border:1px solid rgba(0,214,143,.2);border-radius:var(--rs);padding:10px 14px;margin-top:12px;font-size:12px;color:var(--accent)">
+          ✅ <strong>Tip clave:</strong> La regularización voluntaria (antes de notificación de Hacienda) puede reducir las multas hasta en un 80%.
+        </div>
+        <button class="ctx-action-btn" onclick="switchTab('regularizacion')" style="margin-top:12px">⚖️ Ir a Regularizar →</button>
+      </div>
+    </div>
+
     <!-- FECHAS Y MULTAS -->
     <div class="ctx-help" id="g-fechas">
       <div class="ctx-help-hdr" onclick="toggleCtxHelp('g-fechas')">
@@ -1813,6 +2115,8 @@ button[data-tip],a[data-tip]{cursor:pointer}
           <div><div style="font-size:13px;font-weight:700;margin-bottom:4px">¿Qué hago si una factura aparece como rechazada?</div><div style="font-size:13px;color:var(--muted)">Una factura rechazada por Hacienda no es fiscalmente válida. Corrígela en tu sistema de facturación, reenvíala y cargá el nuevo XML. Revisá ⚠️ Alertas para ver el motivo del rechazo.</div></div>
           <div><div style="font-size:13px;font-weight:700;margin-bottom:4px">¿La app reemplaza a TRIBU-CR?</div><div style="font-size:13px;color:var(--muted)">No. Es una herramienta de preparación. La declaración oficial siempre se hace en ovitribucr.hacienda.go.cr. Esta app te genera el borrador con todos los montos calculados para que copies los valores.</div></div>
           <div><div style="font-size:13px;font-weight:700;margin-bottom:4px">¿Cómo respaldo mis datos?</div><div style="font-size:13px;color:var(--muted)">Usá 📥 Exportar → JSON Backup. Ese archivo incluye facturas, perfil y ajustes. Importálo desde el mismo lugar en otro dispositivo.</div></div>
+          <div><div style="font-size:13px;font-weight:700;margin-bottom:4px">¿Qué analiza la pestaña 🔍 Revisión?</div><div style="font-size:13px;color:var(--muted)">Compara el período que seleccionás contra el mes anterior: variaciones de ingresos inusuales, ratio IVA/ventas, facturas duplicadas, rechazadas, CABYS inválidos y balance crédito/débito. Te da un puntaje de consistencia y señala qué revisar antes de declarar.</div></div>
+          <div><div style="font-size:13px;font-weight:700;margin-bottom:4px">¿Cómo funciona ⚖️ Regularizar?</div><div style="font-size:13px;color:var(--muted)">Ingresás cada declaración pendiente o incorrecta con su monto base, el sistema calcula multas, recargos e intereses según el Código Tributario. También tiene una calculadora de plan de pago y los pasos para solicitar la Facilidad de Pago en TRIBU-CR.</div></div>
           <div><div style="font-size:13px;font-weight:700;margin-bottom:4px">¿Qué es la proporcionalidad?</div><div style="font-size:13px;color:var(--muted)">Si tenés ventas gravadas Y exentas, solo podés acreditar parte del IVA de tus compras. La app lo calcula en la Sección III del borrador. <strong>Desde enero 2026, TRIBU-CR calcula la proporcionalidad automáticamente</strong> — usá el valor de la app para verificar que coincida con lo que muestra el portal.</div></div>
           <div style="padding-top:8px;border-top:1px solid var(--border)"><div style="font-size:12px;color:var(--muted)">📞 Soporte Hacienda: <strong style="color:var(--text)">2539-4000</strong> (lun-vie 8am-6pm) · 🌐 <a href="https://hacienda.go.cr" target="_blank" style="color:#7aabff">hacienda.go.cr</a></div></div>
         </div>
@@ -1952,6 +2256,8 @@ function switchTab(t) {
   if (t === 'tools')     { initToolsTab(); }
   if (t === 'simplificado') { renderSimpActividades(); calcSimp(); }
   if (t === 'calendario')   { renderCalendario(); }
+  if (t === 'revision')     { populateRevPeriod(); runRevision(); }
+  if (t === 'regularizacion') { initRegularizacion(); }
   updateProgress(t);
 }
 
@@ -3849,6 +4155,507 @@ function renderCalendario() {
   list.innerHTML = html || '<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">Sin eventos</div><div class="empty-sub">Cambiá el filtro de régimen.</div></div>';
 }
 
+// ═══════════════════════════════════════════════════════
+//  REVISIÓN DE CONSISTENCIA
+// ═══════════════════════════════════════════════════════
+function getPeriodKey(inv) {
+  if (!inv.fechaEmision) return null;
+  const d = new Date(inv.fechaEmision);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+function populateRevPeriod() {
+  const sel = document.getElementById('rev-period-sel');
+  if (!sel) return;
+  const periods = [...new Set(invoices.map(getPeriodKey).filter(Boolean))].sort().reverse();
+  sel.innerHTML = '<option value="">-- Seleccioná período --</option>' +
+    periods.map(p => `<option value="${p}">${MONTHS[parseInt(p.split('-')[1])-1]} ${p.split('-')[0]}</option>`).join('');
+}
+
+function runRevision() {
+  const selEl = document.getElementById('rev-period-sel');
+  const period = selEl ? selEl.value : '';
+  const emptyEl = document.getElementById('revEmpty');
+  const scoreEl = document.getElementById('revScore');
+  const resEl   = document.getElementById('revResults');
+
+  if (!period || invoices.length === 0) {
+    if(emptyEl) emptyEl.style.display='';
+    if(scoreEl) scoreEl.style.display='none';
+    if(resEl)   resEl.style.display='none';
+    return;
+  }
+
+  const [yr, mo] = period.split('-').map(Number);
+  const prevMo = mo === 1 ? 12 : mo - 1;
+  const prevYr = mo === 1 ? yr - 1 : yr;
+  const prevKey = `${prevYr}-${String(prevMo).padStart(2,'0')}`;
+
+  const cur  = invoices.filter(i => getPeriodKey(i) === period);
+  const prev = invoices.filter(i => getPeriodKey(i) === prevKey);
+
+  const curVentas  = cur.filter(i=>i.direction==='emitida'&&i.type!=='MensajeHacienda');
+  const curCompras = cur.filter(i=>i.direction==='recibida'&&i.type!=='MensajeHacienda');
+  const prevVentas = prev.filter(i=>i.direction==='emitida'&&i.type!=='MensajeHacienda');
+  const prevCompras= prev.filter(i=>i.direction==='recibida'&&i.type!=='MensajeHacienda');
+
+  const sumT = (arr, fn) => arr.reduce((s,i)=>s+(fn(i)||0),0);
+  const curIngreso  = sumT(curVentas,  i=>i.resumen.totalComprobante);
+  const prevIngreso = sumT(prevVentas, i=>i.resumen.totalComprobante);
+  const curIvaD     = sumT(curVentas,  i=>i.resumen.totalImpuesto);
+  const prevIvaD    = sumT(prevVentas, i=>i.resumen.totalImpuesto);
+  const curCompT    = sumT(curCompras, i=>i.resumen.totalComprobante);
+  const curIvaC     = sumT(curCompras, i=>i.resumen.totalImpuesto);
+
+  const checks = [];
+
+  // 1. Variación de ingresos
+  if (prevIngreso > 0) {
+    const pct = ((curIngreso - prevIngreso) / prevIngreso) * 100;
+    const absPct = Math.abs(pct);
+    const tipo = absPct > 40 ? 'error' : absPct > 20 ? 'warn' : 'ok';
+    checks.push({
+      tipo, icon: pct >= 0 ? '📈' : '📉',
+      title: `Variación de ingresos: ${pct>=0?'+':''}${pct.toFixed(1)}%`,
+      desc: absPct > 40
+        ? `Una variación del ${pct.toFixed(1)}% respecto al mes anterior es inusualmente alta. Hacienda puede cuestionarla en una revisión. Verificá que no haya facturas omitidas o duplicadas.`
+        : absPct > 20
+        ? `Variación del ${pct.toFixed(1)}%. Moderada pero notable. Asegurate de tener documentación que justifique el cambio (estacionalidad, proyecto puntual, etc.).`
+        : `Variación normal (${pct.toFixed(1)}%). Los ingresos son consistentes con el período anterior.`,
+      data:[
+        {lbl:'Mes actual', val:fmt(curIngreso), color:'#7aabff'},
+        {lbl:'Mes anterior', val:fmt(prevIngreso), color:'var(--muted)'},
+        {lbl:'Variación', val:(pct>=0?'+':'')+pct.toFixed(1)+'%', color:tipo==='ok'?'var(--accent)':tipo==='warn'?'var(--warn)':'var(--danger)'},
+      ]
+    });
+  } else if (curVentas.length > 0) {
+    checks.push({ tipo:'info', icon:'ℹ️',
+      title:'Sin período anterior para comparar',
+      desc:`No hay facturas del mes ${MONTHS[prevMo-1]} ${prevYr} cargadas. Cargalas para habilitar la comparación de variaciones.`,
+      data:[]
+    });
+  }
+
+  // 2. Ratio IVA/Ventas
+  if (curIngreso > 0) {
+    const ratio = (curIvaD / curIngreso) * 100;
+    const expected = 13;
+    const diff = Math.abs(ratio - expected);
+    const tipo = diff > 5 ? 'warn' : 'ok';
+    checks.push({
+      tipo, icon:'🧮',
+      title: `Ratio IVA débito / Ventas: ${ratio.toFixed(2)}%`,
+      desc: tipo === 'warn'
+        ? `El ratio IVA/Ventas es ${ratio.toFixed(2)}%, alejado del 13% estándar. Puede ser normal si tenés ventas exentas o a tarifas reducidas, pero vale revisarlo para confirmar que el desglose por tarifa sea correcto.`
+        : `El ratio IVA/Ventas (${ratio.toFixed(2)}%) está dentro del rango esperado. Consistente con las tarifas de IVA vigentes.`,
+      data:[
+        {lbl:'IVA débito', val:fmt(curIvaD), color:'var(--danger)'},
+        {lbl:'Ventas brutas', val:fmt(curIngreso), color:'#7aabff'},
+        {lbl:'Ratio', val:ratio.toFixed(2)+'%', color:tipo==='ok'?'var(--accent)':'var(--warn)'},
+      ]
+    });
+  }
+
+  // 3. Facturas duplicadas (misma clave)
+  const claves = curVentas.map(i=>i.clave).filter(Boolean);
+  const clavesSet = new Set();
+  const dupes = claves.filter(c => { if(clavesSet.has(c)){return true;} clavesSet.add(c); return false; });
+  if (dupes.length > 0) {
+    checks.push({ tipo:'error', icon:'⚠️',
+      title:`${dupes.length} factura(s) con clave duplicada`,
+      desc:`Hay facturas con la misma clave electrónica. Esto puede indicar archivos cargados dos veces. Hacienda rechazará duplicados. Revisá en la pestaña Facturas y eliminá los repetidos.`,
+      data:[{lbl:'Duplicadas', val:String(dupes.length), color:'var(--danger)'}]
+    });
+  } else {
+    checks.push({ tipo:'ok', icon:'✅',
+      title:'Sin claves duplicadas',
+      desc:'Todos los comprobantes del período tienen clave electrónica única. Sin riesgo de doble registro.',
+      data:[]
+    });
+  }
+
+  // 4. Facturas rechazadas
+  const rechazadas = cur.filter(i=>i.estadoHacienda==='rechazado'||i.estado==='rechazada');
+  if (rechazadas.length > 0) {
+    checks.push({ tipo:'error', icon:'🚫',
+      title:`${rechazadas.length} factura(s) rechazada(s) por Hacienda`,
+      desc:`Las facturas rechazadas no tienen validez fiscal. No pueden incluirse en el D-150. Corregílas en tu sistema de facturación y reenvialas antes de declarar.`,
+      data:[{lbl:'Rechazadas', val:String(rechazadas.length), color:'var(--danger)'}]
+    });
+  } else {
+    checks.push({ tipo:'ok', icon:'✅',
+      title:'Sin facturas rechazadas',
+      desc:'Todos los comprobantes del período están aceptados por Hacienda.',
+      data:[]
+    });
+  }
+
+  // 5. Compras vs ventas ratio
+  if (curIngreso > 0 && curCompras.length > 0) {
+    const ratio = (curCompT / curIngreso) * 100;
+    const tipo = ratio > 90 ? 'warn' : ratio < 5 ? 'warn' : 'ok';
+    checks.push({
+      tipo, icon:'🛒',
+      title:`Ratio compras / ventas: ${ratio.toFixed(1)}%`,
+      desc: ratio > 90
+        ? `Las compras representan el ${ratio.toFixed(1)}% de tus ventas. Márgenes tan ajustados pueden atraer atención de Hacienda. Verificá que todas las compras sean necesarias para la actividad y estén bien documentadas.`
+        : ratio < 5
+        ? `Las compras son solo el ${ratio.toFixed(1)}% de tus ventas. Si tu actividad requiere insumos, revisá si cargaste todas las facturas de proveedores.`
+        : `Ratio de compras/ventas normal (${ratio.toFixed(1)}%). Consistente con una actividad comercial típica.`,
+      data:[
+        {lbl:'Compras', val:fmt(curCompT), color:'var(--accent)'},
+        {lbl:'Ventas', val:fmt(curIngreso), color:'#7aabff'},
+        {lbl:'Ratio', val:ratio.toFixed(1)+'%', color:tipo==='ok'?'var(--accent)':'var(--warn)'},
+      ]
+    });
+  } else if (curCompras.length === 0 && curVentas.length > 0) {
+    checks.push({ tipo:'warn', icon:'📂',
+      title:'Sin facturas de compra en este período',
+      desc:'No se cargaron facturas de proveedores. Si tu actividad tiene costos de compras, cargalas para calcular correctamente el crédito fiscal y el D-150.',
+      data:[]
+    });
+  }
+
+  // 6. CABYS sin código
+  const sinCabys = cur.filter(i=>i.lineas&&i.lineas.some(l=>!l.cabys||l.cabys.length!==13));
+  if (sinCabys.length > 0) {
+    checks.push({ tipo:'warn', icon:'🏷️',
+      title:`${sinCabys.length} factura(s) con CABYS inválido o ausente`,
+      desc:`Algunas líneas no tienen código CABYS de 13 dígitos válido. Desde 2024 es obligatorio. Podés verificar los códigos en la pestaña 🔧 Herramientas → Validador CABYS.`,
+      data:[{lbl:'Con CABYS inválido', val:String(sinCabys.length), color:'var(--warn)'}]
+    });
+  } else if (cur.length > 0) {
+    checks.push({ tipo:'ok', icon:'✅',
+      title:'Todos los CABYS son válidos',
+      desc:'Las facturas del período tienen códigos CABYS de 13 dígitos.',
+      data:[]
+    });
+  }
+
+  // 7. IVA crédito vs débito — ¿hay IVA a pagar?
+  if (curIvaD > 0) {
+    const ivaPagar = Math.max(0, curIvaD - curIvaC);
+    const pctCredito = curIvaD > 0 ? (curIvaC / curIvaD * 100) : 0;
+    const tipo = pctCredito > 95 ? 'warn' : 'ok';
+    checks.push({
+      tipo, icon:'⚖️',
+      title:`Balance IVA: ${pctCredito > 95 ? 'crédito casi igual al débito' : 'diferencia normal'}`,
+      desc: pctCredito > 95
+        ? `Tu IVA crédito (₡${fmt(curIvaC).replace('₡','')}) cubre el ${pctCredito.toFixed(1)}% de tu IVA débito. Esto puede llamar la atención si ocurre varios meses seguidos. Verificá que todas las compras sean deducibles.`
+        : `El IVA a pagar estimado es ${fmt(ivaPagar)}, con un crédito del ${pctCredito.toFixed(1)}% aplicado. Balance dentro de parámetros normales.`,
+      data:[
+        {lbl:'IVA Débito', val:fmt(curIvaD), color:'var(--danger)'},
+        {lbl:'IVA Crédito', val:fmt(curIvaC), color:'var(--accent)'},
+        {lbl:'A pagar est.', val:fmt(ivaPagar), color:ivaPagar>0?'var(--danger)':'var(--accent)'},
+      ]
+    });
+  }
+
+  // ─── SCORE ───
+  const errCount  = checks.filter(c=>c.tipo==='error').length;
+  const warnCount = checks.filter(c=>c.tipo==='warn').length;
+  const okCount   = checks.filter(c=>c.tipo==='ok').length;
+  const total = checks.length;
+  const score = Math.max(0, Math.round(100 - (errCount*25) - (warnCount*8)));
+  const scoreColor = score >= 80 ? '#00d68f' : score >= 60 ? '#ffc947' : '#ff4d6a';
+  const scoreLabel = score >= 80 ? 'Consistente' : score >= 60 ? 'Revisar' : 'Atención requerida';
+  const scoreSub   = score >= 80 ? 'Tu declaración luce consistente. Revisá los avisos menores antes de presentar.'
+    : score >= 60 ? 'Hay elementos a revisar antes de presentar. Atendé los avisos marcados.'
+    : 'Se detectaron inconsistencias importantes. Corregí los errores antes de declarar.';
+
+  if(emptyEl) emptyEl.style.display='none';
+  if(scoreEl) scoreEl.style.display='flex';
+  if(resEl)   resEl.style.display='';
+
+  document.getElementById('revScoreNum').textContent = score;
+  document.getElementById('revScoreLabel').textContent = scoreLabel;
+  document.getElementById('revScoreSub').textContent = scoreSub;
+  document.getElementById('rev-cnt-ok').textContent   = `✅ ${okCount} OK`;
+  document.getElementById('rev-cnt-warn').textContent = `⚠️ ${warnCount} avisos`;
+  document.getElementById('rev-cnt-err').textContent  = `❌ ${errCount} errores`;
+  const circ = document.getElementById('revScoreCircle');
+  if(circ){
+    const circumf = 188.5;
+    circ.style.strokeDashoffset = circumf - (circumf * score / 100);
+    circ.style.stroke = scoreColor;
+  }
+  document.getElementById('revScoreNum').style.color = scoreColor;
+
+  resEl.innerHTML = checks.map(c => `
+    <div class="rev-card rev-${c.tipo}">
+      <div class="rev-hdr">
+        <div class="rev-icon">${c.icon}</div>
+        <div>
+          <div class="rev-title">${c.title}</div>
+          <div class="rev-desc">${c.desc}</div>
+        </div>
+      </div>
+      ${c.data.length ? `<div class="rev-data">${c.data.map(d=>`
+        <div class="rev-datum">
+          <div class="rev-datum-lbl">${d.lbl}</div>
+          <div class="rev-datum-val" style="color:${d.color}">${d.val}</div>
+        </div>`).join('')}</div>` : ''}
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+//  REGULARIZACIÓN FISCAL
+// ═══════════════════════════════════════════════════════
+let regDebts = [];
+let regDebtCounter = 0;
+
+function initRegularizacion() {
+  if (!document.getElementById('reg-fecha-pago').value) {
+    document.getElementById('reg-fecha-pago').value = new Date().toISOString().split('T')[0];
+  }
+  renderRegDebtTable();
+  calcRegularizacion();
+}
+
+function toggleRegStep(hdr) {
+  const body = hdr.nextElementSibling;
+  const arrow = hdr.querySelector('.reg-arrow');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open');
+  if(arrow) arrow.textContent = isOpen ? '▼' : '▲';
+}
+
+function addRegDebt(tipo='D-150', periodo='', impuesto=0, estado='no_declarada') {
+  const id = ++regDebtCounter;
+  regDebts.push({ id, tipo, periodo, impuesto, estado });
+  renderRegDebtTable();
+  calcRegularizacion();
+}
+
+function removeRegDebt(id) {
+  regDebts = regDebts.filter(d=>d.id!==id);
+  renderRegDebtTable();
+  calcRegularizacion();
+}
+
+function updateRegDebt(id, field, val) {
+  const d = regDebts.find(x=>x.id===id);
+  if (!d) return;
+  d[field] = field==='impuesto' ? parseFloat(val)||0 : val;
+  calcRegularizacion();
+}
+
+function renderRegDebtTable() {
+  const tbody = document.getElementById('regDebtBody');
+  if (!tbody) return;
+  if (regDebts.length === 0) {
+    tbody.innerHTML = '<tr id="regDebtEmpty"><td colspan="5" style="text-align:center;padding:16px;color:var(--faint);font-size:12px">Hacé clic en "+ Agregar" para añadir una declaración.</td></tr>';
+    return;
+  }
+  const estadoOpts = [
+    {v:'no_declarada',    l:'No declarada (omisa)'},
+    {v:'declarada_sin_pagar', l:'Declarada, sin pagar'},
+    {v:'pago_parcial',    l:'Pago parcial realizado'},
+    {v:'error_monto',     l:'Declarada con error de monto'},
+  ];
+  tbody.innerHTML = regDebts.map(d=>`
+    <tr>
+      <td>
+        <select class="d-inp" onchange="updateRegDebt(${d.id},'tipo',this.value)" style="min-width:90px">
+          ${['D-150','D-101','D-105','Otro'].map(t=>`<option${d.tipo===t?' selected':''}>${t}</option>`).join('')}
+        </select>
+      </td>
+      <td><input class="d-inp" type="month" value="${d.periodo}" onchange="updateRegDebt(${d.id},'periodo',this.value)" style="min-width:130px"></td>
+      <td><input class="d-inp" type="number" value="${d.impuesto||''}" placeholder="0" oninput="updateRegDebt(${d.id},'impuesto',this.value)" style="min-width:110px"></td>
+      <td>
+        <select class="d-inp" onchange="updateRegDebt(${d.id},'estado',this.value)" style="min-width:160px">
+          ${estadoOpts.map(o=>`<option value="${o.v}"${d.estado===o.v?' selected':''}>${o.l}</option>`).join('')}
+        </select>
+      </td>
+      <td><button onclick="removeRegDebt(${d.id})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px">✕</button></td>
+    </tr>`).join('');
+}
+
+function calcRegularizacion() {
+  const fechaPagoStr = document.getElementById('reg-fecha-pago')?.value;
+  const tasaAnual    = parseFloat(document.getElementById('reg-tasa')?.value)||9;
+  const voluntario   = document.getElementById('reg-voluntario')?.value === 'si';
+  const primera      = document.getElementById('reg-primera')?.value === 'si';
+  const box          = document.getElementById('regResultBox');
+  if (!box) return;
+
+  if (regDebts.length === 0 || !fechaPagoStr) {
+    box.innerHTML = '<div style="font-size:13px;color:var(--faint);text-align:center;padding:12px">Agregá obligaciones y completá la fecha de pago para calcular.</div>';
+    return;
+  }
+
+  const fechaPago = new Date(fechaPagoStr);
+  let rows = [];
+  let grandTotal = 0;
+
+  regDebts.forEach(d => {
+    if (!d.periodo || d.impuesto <= 0) return;
+    const [yr, mo] = d.periodo.split('-').map(Number);
+    // Vencimiento: día 15 del mes siguiente para D-150, 15 dic para D-101
+    let venc;
+    if (d.tipo === 'D-101') {
+      venc = new Date(yr, 11, 15);
+    } else if (d.tipo === 'D-105') {
+      // Trimestral: determinar trimestre
+      const trimMap = {1:3,2:3,3:3,4:6,5:6,6:6,7:9,8:9,9:9,10:12,11:12,12:12};
+      venc = new Date(yr, trimMap[mo]-1, 15);
+    } else {
+      venc = new Date(yr, mo, 15); // mes + 1 desde 0-indexed
+    }
+
+    const diasMora = Math.max(0, Math.floor((fechaPago - venc) / 86400000));
+    const mesesMora = diasMora / 30;
+
+    // Multa por omisión / mora
+    let multaPct = 0;
+    if (d.estado === 'no_declarada') {
+      // No declarada: entre 50% y 150%
+      multaPct = primera ? (voluntario ? 25 : 50) : (voluntario ? 37.5 : 100);
+    } else {
+      // Declarada tardía: 2% por mes (mín ₡1000)
+      multaPct = Math.min(20, mesesMora * 2); // cap 20%
+    }
+
+    const multa = Math.max(d.estado==='no_declarada'?0:1000, d.impuesto * multaPct / 100);
+
+    // Recargo por mora: 1% mensual
+    const recargo = d.impuesto * 0.01 * mesesMora;
+
+    // Intereses: tasa BCCR diaria
+    const interes = d.impuesto * (tasaAnual / 100) * (diasMora / 365);
+
+    const totalDeuda = d.impuesto + multa + recargo + interes;
+    grandTotal += totalDeuda;
+
+    rows.push({
+      tipo: d.tipo,
+      periodo: d.periodo,
+      impuesto: d.impuesto,
+      diasMora,
+      multa,
+      recargo,
+      interes,
+      totalDeuda,
+      estado: d.estado,
+      multaPct,
+    });
+  });
+
+  if (rows.length === 0) {
+    box.innerHTML = '<div style="font-size:13px;color:var(--faint);text-align:center;padding:12px">Completá el impuesto base y el período para calcular.</div>';
+    return;
+  }
+
+  // Store for plan de pago autofill
+  window._regGrandTotal = grandTotal;
+
+  const voluntLabel = voluntario
+    ? `<span style="color:var(--accent);font-size:11px">✅ Subsanación voluntaria — reducción aplicada</span>`
+    : `<span style="color:var(--warn);font-size:11px">⚠️ Sin reducción voluntaria</span>`;
+
+  let html = `<div style="margin-bottom:12px;font-size:12px">${voluntLabel}</div>`;
+
+  rows.forEach(r => {
+    html += `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:12px;margin-bottom:10px">
+      <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;margin-bottom:8px">
+        ${r.tipo} — ${r.periodo} <span style="font-size:10px;color:var(--muted);font-weight:400">(${r.diasMora} días de mora)</span>
+      </div>
+      <div class="reg-total-row"><span style="color:var(--muted)">Impuesto base</span><span>${fmt(r.impuesto)}</span></div>
+      <div class="reg-total-row"><span style="color:var(--muted)">Multa (${r.multaPct.toFixed(1)}%)</span><span style="color:var(--warn)">${fmt(r.multa)}</span></div>
+      <div class="reg-total-row"><span style="color:var(--muted)">Recargo mora (1%/mes)</span><span style="color:var(--warn)">${fmt(r.recargo)}</span></div>
+      <div class="reg-total-row"><span style="color:var(--muted)">Intereses (${r.interes.toFixed?r.interes.toFixed(0):0} días)</span><span style="color:var(--warn)">${fmt(r.interes)}</span></div>
+      <div class="reg-total-row" style="border-top:2px solid var(--border-hi);margin-top:6px"><span style="color:var(--text);font-weight:700">Total esta obligación</span><span style="color:var(--danger);font-family:'Syne',sans-serif;font-size:16px;font-weight:800">${fmt(r.totalDeuda)}</span></div>
+    </div>`;
+  });
+
+  if (rows.length > 1) {
+    html += `<div style="background:rgba(255,77,106,.08);border:1px solid rgba(255,77,106,.25);border-radius:var(--rs);padding:14px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:13px;font-weight:700">TOTAL A REGULARIZAR</div>
+      <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--danger)">${fmt(grandTotal)}</div>
+    </div>`;
+  }
+
+  html += `<div style="margin-top:12px;font-size:11px;color:var(--faint);line-height:1.8">
+    * Cálculo orientativo. Los montos exactos los determina Hacienda al momento del pago.<br>
+    * Multas reducidas al ${voluntario?'máx. 80%':'0%'} por ${voluntario?'subsanación voluntaria':'falta de subsanación voluntaria'}.<br>
+    * Intereses calculados con tasa BCCR ${tasaAnual}% anual sobre el impuesto base.
+  </div>`;
+
+  box.innerHTML = html;
+}
+
+function autoFillPlanMonto() {
+  const el = document.getElementById('reg-plan-monto');
+  if (el && window._regGrandTotal) {
+    el.value = Math.round(window._regGrandTotal);
+    calcPlanPago();
+  }
+}
+
+function calcPlanPago() {
+  const monto   = parseFloat(document.getElementById('reg-plan-monto')?.value)||0;
+  const cuotas  = parseInt(document.getElementById('reg-plan-cuotas')?.value)||6;
+  const tasa    = parseFloat(document.getElementById('reg-tasa')?.value)||9;
+  const box     = document.getElementById('planPagoResult');
+  if (!box) return;
+  if (monto <= 0) { box.innerHTML=''; return; }
+
+  // Cuota con interés corriente (amortización simple)
+  const tasaMensual = tasa / 100 / 12;
+  const cuotaBase   = monto / cuotas;
+  let saldo = monto, rows = [], totalPagar = 0;
+  const hoy = new Date();
+
+  for (let i=1; i<=cuotas; i++) {
+    const intCuota = saldo * tasaMensual;
+    const cuotaTotal = cuotaBase + intCuota;
+    saldo -= cuotaBase;
+    totalPagar += cuotaTotal;
+    const fechaCuota = new Date(hoy.getFullYear(), hoy.getMonth()+i, 15);
+    rows.push({ num:i, cuotaTotal, intCuota, fecha:fechaCuota });
+  }
+
+  box.innerHTML = `
+    <div style="background:rgba(0,214,143,.06);border:1px solid rgba(0,214,143,.2);border-radius:var(--rs);padding:14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:11px;color:var(--muted)">Cuota mensual estimada</div>
+        <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--accent)">${fmt(rows[0].cuotaTotal)}</div>
+        <div style="font-size:11px;color:var(--faint)">Incluye interés corriente ${tasa}% anual</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;color:var(--muted)">Total a pagar</div>
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--text)">${fmt(totalPagar)}</div>
+        <div style="font-size:11px;color:var(--faint)">${cuotas} cuotas · intereses ${fmt(totalPagar-monto)}</div>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+    <table class="depre-table">
+      <thead><tr><th>#</th><th>Fecha venc.</th><th>Capital</th><th>Interés</th><th>Cuota total</th></tr></thead>
+      <tbody>${rows.map(r=>`
+        <tr>
+          <td style="color:var(--faint)">${r.num}</td>
+          <td>${r.fecha.toLocaleDateString('es-CR',{day:'2-digit',month:'short',year:'numeric'})}</td>
+          <td>${fmt(monto/cuotas)}</td>
+          <td style="color:var(--warn)">${fmt(r.intCuota)}</td>
+          <td style="font-weight:700;color:var(--accent)">${fmt(r.cuotaTotal)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    </div>`;
+}
+
+function resetRegularizacion() {
+  regDebts = []; regDebtCounter = 0;
+  renderRegDebtTable();
+  const el = document.getElementById('reg-plan-monto'); if(el) el.value='';
+  calcRegularizacion();
+  calcPlanPago();
+}
+
+// ═══════════════════════════════════════════════════════
+//  VENCIMIENTO WIDGET — con feriados CR y fines de semana
+// ═══════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════
 //  VENCIMIENTO WIDGET — con feriados CR y fines de semana
 // ═══════════════════════════════════════════════════════
