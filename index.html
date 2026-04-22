@@ -265,6 +265,44 @@ header{display:flex;align-items:center;justify-content:space-between;padding:18p
 @media(max-width:700px){.grid2{grid-template-columns:1fr}}
 .info-box{background:rgba(255,201,71,.06);border:1px solid rgba(255,201,71,.18);border-radius:var(--rs);padding:13px 16px;font-size:12px;color:var(--warn);margin-bottom:18px}
 .info-box.blue{background:rgba(61,122,255,.06);border-color:rgba(61,122,255,.18);color:#7aabff}
+/* ══ D-101 COMPLETO ══ */
+.d101-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:14px;overflow:hidden}
+.d101-block-hdr{padding:11px 18px;background:var(--surface3);border-bottom:1px solid var(--border);cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none;transition:background .2s}
+.d101-block-hdr:hover{background:rgba(99,143,255,.05)}
+.d101-block-body{padding:16px 18px;display:none;animation:fadeIn .2s ease}
+.d101-block-body.open{display:block}
+.d-inp{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:5px 8px;color:var(--text);font-size:12px;outline:none;font-family:'DM Sans',sans-serif;transition:border-color .2s}
+.d-inp:focus{border-color:var(--primary)}
+.depre-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+.depre-table th{text-align:left;padding:6px 8px;font-size:9px;font-weight:700;letter-spacing:.5px;color:var(--faint);text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
+.depre-table td{padding:5px 4px;border-bottom:1px solid rgba(99,143,255,.05);vertical-align:middle}
+/* ══ CALENDARIO ══ */
+.cal-list{display:flex;flex-direction:column;gap:7px}
+.cal-ev{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:13px 18px;display:flex;align-items:center;gap:14px;transition:border-color .2s}
+.cal-ev:hover{border-color:var(--border-hi)}
+.cal-ev-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.cal-ev-info{flex:1}
+.cal-ev-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:1px}
+.cal-ev-desc{font-size:11px;color:var(--muted)}
+.cal-ev-badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:100px;white-space:nowrap}
+.cal-month-sep{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--faint);padding:10px 0 4px;border-top:1px solid var(--border);margin-top:8px}
+.cal-month-sep:first-child{border-top:none;margin-top:0}
+.ev-past .cal-ev-dot{background:var(--faint)}.ev-past .cal-ev-badge{background:rgba(122,144,184,.1);color:var(--faint)}.ev-past .cal-ev-title{color:var(--muted)}
+.ev-ok .cal-ev-dot{background:var(--accent)}.ev-ok .cal-ev-badge{background:rgba(0,214,143,.12);color:var(--accent)}
+.ev-soon .cal-ev-dot{background:var(--warn)}.ev-soon .cal-ev-badge{background:rgba(255,201,71,.15);color:var(--warn)}
+.ev-urgent .cal-ev-dot{background:var(--danger)}.ev-urgent .cal-ev-badge{background:rgba(255,77,106,.15);color:var(--danger)}
+/* ══ SIMPLIFICADO ══ */
+.simp-act-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;max-height:340px;overflow-y:auto;padding:2px}
+.simp-act-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:10px 13px;cursor:pointer;transition:all .2s}
+.simp-act-card:hover{border-color:var(--primary);background:rgba(61,122,255,.05)}
+.simp-act-card.selected{border-color:var(--accent);background:rgba(0,214,143,.07)}
+.simp-act-name{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px}
+.simp-act-factor{font-size:11px;color:var(--muted)}
+.simp-q-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+@media(max-width:640px){.simp-q-grid{grid-template-columns:repeat(2,1fr)}}
+.simp-q{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;text-align:center}
+.simp-q-lbl{font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.simp-q-tax{font-size:12px;font-weight:700;color:var(--danger);margin-top:4px;min-height:18px}
 ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:3px}
 footer{text-align:center;padding:22px;margin-top:36px;border-top:1px solid var(--border);font-size:11px;color:var(--faint)}
 footer span{color:var(--muted)}
@@ -677,7 +715,9 @@ button[data-tip],a[data-tip]{cursor:pointer}
   <button class="nav-tab" onclick="switchTab('invoices')" id="tab-invoices" data-tip="Listado de todos los documentos cargados con filtros por estado, tipo y mes." >🧾 Facturas <span class="tab-badge" id="badge-inv">0</span></button>
   <button class="nav-tab" onclick="switchTab('d150')" id="tab-d150" data-tip="Borrador del formulario D-150 (IVA mensual) con las 6 secciones listas para ingresar en TRIBU-CR.">📋 D-150 TRIBU</button>
   <button class="nav-tab" onclick="switchTab('summary')" id="tab-summary" data-tip="Resumen de IVA débito (ventas), crédito (compras) y monto a pagar por período.">📊 Resumen IVA</button>
-  <button class="nav-tab" onclick="switchTab('simulator')" id="tab-simulator" data-tip="Estimá tu Impuesto sobre la Renta anual (D-101) con los tramos oficiales de Hacienda.">🧮 Renta</button>
+  <button class="nav-tab" onclick="switchTab('simulator')" id="tab-simulator" data-tip="Borrador completo del D-101 (Renta Anual): ingresos, gastos deducibles, depreciaciones, créditos familiares y cálculo por tramos.">📑 D-101 Renta</button>
+  <button class="nav-tab" onclick="switchTab('simplificado')" id="tab-simplificado" data-tip="Calculadora para contribuyentes del Régimen de Tributación Simplificada (D-105): seleccioná tu actividad, ingresá tus compras por trimestre y obtenés el impuesto a pagar.">🪄 Simplificado</button>
+  <button class="nav-tab" onclick="switchTab('calendario')" id="tab-calendario" data-tip="Calendario fiscal anual con todas las obligaciones tributarias: IVA, Renta, Timbre, Municipalidad, CCSS, y más.">📅 Calendario</button>
   <button class="nav-tab" onclick="switchTab('guia')" id="tab-guia" data-tip="Guía completa para declarar el D-150 y el D-101 en el portal TRIBU-CR.">📖 Guía</button>
   <button class="nav-tab" onclick="switchTab('tools')" id="tab-tools" data-tip="Calculadora de multas por mora, validador de códigos CABYS y otras herramientas fiscales.">🔧 Herramientas</button>
   <button class="nav-tab" onclick="switchTab('warnings')" id="tab-warnings" data-tip="Alertas automáticas sobre facturas rechazadas, CABYS inválidos y proporcionalidad.">⚠️ Alertas <span class="tab-badge warn" id="badge-warn">0</span></button>
@@ -1149,72 +1189,310 @@ button[data-tip],a[data-tip]{cursor:pointer}
 <!-- ════ SIMULADOR RENTA ════ -->
 <section class="section" id="section-simulator">
   <div class="section-header">
-    <div class="section-title">🧮 Simulador Impuesto sobre la Renta</div>
-    <button class="btn btn-ghost btn-sm" onclick="resetSim()">↺ Resetear</button>
+    <div class="section-title">📑 D-101 Renta Anual</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="autoFillSim()" data-tip="Carga tus ingresos desde las facturas procesadas.">✨ Desde facturas</button>
+      <button class="btn btn-ghost btn-sm" onclick="resetSim()">↺ Resetear</button>
+    </div>
   </div>
   <div class="info-box">
-    ⚠️ <strong>Importante:</strong> Estimado orientativo para el formulario D-101 (Renta). Consultá siempre con un contador público autorizado. Los tramos corresponden al <strong>Decreto Ejecutivo N°44772-H</strong> (período 2024–2025) y la <strong>Gaceta N°229 del 05-12-2025</strong> (período 2025–2026), publicados por el Ministerio de Hacienda. La persona jurídica con ingresos ≤ al umbral usa <strong>tramos progresivos sobre renta neta</strong>, no tasa plana.
+    ⚠️ <strong>Borrador orientativo D-101.</strong> Tramos según <strong>Decreto N°44772-H</strong> (2024–2025) y <strong>Gaceta N°229 del 05-12-2025</strong> (2025–2026). No reemplaza la revisión de un contador público autorizado.
   </div>
-  <div class="sim-grid">
-    <div class="card">
-      <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:18px">Datos del Período Fiscal</div>
+
+  <!-- CONTROLES SUPERIORES -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
+    <div class="card-sm">
       <label class="sim-lbl">Período Fiscal</label>
-      <select class="sim-input" id="sim-period" onchange="calcSim()" data-tip="El año fiscal en Costa Rica va del 1° de octubre al 30 de setiembre. Seleccioná el período que vas a declarar.">
+      <select class="sim-input" id="sim-period" onchange="calcSim()">
         <option value="2025">2024–2025 (1 oct 2024 – 30 set 2025)</option>
         <option value="2026">2025–2026 (1 oct 2025 – 30 set 2026)</option>
       </select>
-      <script>
-      (function(){
-        // Auto-select current CR fiscal year: Oct 1 → Sep 30
-        const n = new Date();
-        const fiscalEnd = n.getMonth() >= 9 // Oct=9 or later → next calendar year ends the period
-          ? n.getFullYear() + 1
-          : n.getFullYear();
-        const sel = document.getElementById('sim-period');
-        if (sel) {
-          // Try to find matching option, else select the last one
-          let found = false;
-          for (const opt of sel.options) {
-            if (opt.value === String(fiscalEnd)) { opt.selected = true; found = true; break; }
-          }
-          if (!found) sel.options[sel.options.length-1].selected = true;
-        }
-      })();
-      </script>
+      <script>(function(){const n=new Date();const fy=n.getMonth()>=9?n.getFullYear()+1:n.getFullYear();const s=document.getElementById('sim-period');if(s){for(const o of s.options){if(o.value===String(fy)){o.selected=true;break;}}}})()</script>
+    </div>
+    <div class="card-sm">
       <label class="sim-lbl">Tipo de Contribuyente</label>
-      <select class="sim-input" id="sim-tipo" onchange="calcSim()" data-tip="Persona Física: profesionales independientes, comerciantes físicos. Persona Jurídica: S.A., S.R.L., cooperativas, etc.">
-        <option value="fisica">Persona Física con Actividad Lucrativa (D-101)</option>
-        <option value="juridica">Persona Jurídica / Empresa (D-101)</option>
+      <select class="sim-input" id="sim-tipo" onchange="calcSim()">
+        <option value="fisica">Persona Física con Actividad Lucrativa</option>
+        <option value="juridica">Persona Jurídica (S.A., SRL, etc.)</option>
       </select>
-      <label class="sim-lbl">Ingresos Brutos Anuales (₡)</label>
-      <input type="number" class="sim-input" id="sim-ing" placeholder="Ej: 15000000" oninput="calcSim()" data-tip="Total de ingresos antes de restar gastos. Para personas jurídicas también determina si aplicás tramos progresivos (≤umbral) o tarifa plana del 30%.">
-      <label class="sim-lbl">Gastos Deducibles Anuales (₡) <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--faint)">(facturas, salarios, alquiler, etc.)</span></label>
-      <input type="number" class="sim-input" id="sim-gas" placeholder="Ej: 8000000" oninput="calcSim()" data-tip="Gastos necesarios para generar la renta: facturas de proveedores, salarios, alquiler, servicios públicos, seguros, etc. Deben estar debidamente documentados.">
-      <label class="sim-lbl">Otras Deducciones (₡)</label>
-      <input type="number" class="sim-input" id="sim-otras" placeholder="Ej: 500000" oninput="calcSim()" data-tip="Deducciones adicionales permitidas por ley: cuotas obrero-patronales, seguros del INS, créditos fiscales por hijo o cónyuge (aplica a persona física).">
-      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="calcSim()" data-tip="Calculá el estimado de impuesto según los tramos oficiales del Decreto Ejecutivo N°44772-H.">🧮 Calcular</button>
-      <button class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:8px" onclick="autoFillSim()" data-tip="Carga el total de tus facturas emitidas como ingreso bruto. Atención: los gastos se estiman al 40%, ajustá con tus gastos reales.">✨ Usar datos de mis facturas</button>
+    </div>
+  </div>
+
+  <!-- BLOQUE: INGRESOS -->
+  <div class="d101-block">
+    <div class="d101-block-hdr" onclick="toggleD101Block(this)">
+      <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px">💰 Ingresos Brutos</span>
+      <span style="font-size:11px;color:var(--muted)" id="d101-ing-sum">₡0</span>
+    </div>
+    <div class="d101-block-body open">
+      <div class="grid2" style="gap:10px">
+        <div>
+          <label class="sim-lbl" data-tip="Ventas de bienes y servicios gravados por IVA">Ventas / Servicios Gravados (₡)</label>
+          <input class="d-inp sim-input" type="number" id="d101-ing-grav" placeholder="0" oninput="calcSim()" data-tip="Ingresos por ventas o servicios afectos a IVA.">
+        </div>
+        <div>
+          <label class="sim-lbl">Ventas / Servicios Exentos (₡)</label>
+          <input class="d-inp sim-input" type="number" id="d101-ing-exen" placeholder="0" oninput="calcSim()" data-tip="Ventas o servicios no sujetos o exentos de IVA.">
+        </div>
+        <div>
+          <label class="sim-lbl">Otros Ingresos (₡)</label>
+          <input class="d-inp sim-input" type="number" id="d101-ing-otros" placeholder="0" oninput="calcSim()" data-tip="Intereses, alquileres, dividendos u otros ingresos no incluidos arriba.">
+        </div>
+        <div>
+          <label class="sim-lbl">(-) Devoluciones y Descuentos (₡)</label>
+          <input class="d-inp sim-input" type="number" id="d101-ing-dev" placeholder="0" oninput="calcSim()" data-tip="Notas de crédito emitidas y descuentos concedidos a clientes.">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BLOQUE: COSTOS Y GASTOS -->
+  <div class="d101-block">
+    <div class="d101-block-hdr" onclick="toggleD101Block(this)">
+      <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px">🧾 Costos y Gastos Deducibles</span>
+      <span style="font-size:11px;color:var(--muted)" id="d101-gas-sum">₡0</span>
+    </div>
+    <div class="d101-block-body">
+      <div class="grid2" style="gap:10px">
+        <div>
+          <label class="sim-lbl">Costo de Ventas / Mercancías (₡)</label>
+          <input class="d-inp sim-input" type="number" id="d101-gas-costo" placeholder="0" oninput="calcSim()" data-tip="Costo de los bienes vendidos o materia prima utilizada.">
+        </div>
+        <div>
+          <label class="sim-lbl">Salarios y Cargas Sociales (₡)</label>
+          <input class="d-inp sim-input" type="number" id="d101-gas-sal" placeholder="0" oninput="calcSim()" data-tip="Planilla pagada + cuotas patronales CCSS + INS.">
+        </div>
+        <div>
+          <label class="sim-lbl">Alquiler de Locales (₡)</label>
+          <input class="d-inp sim-input" type="number" id="d101-gas-alq" placeholder="0" oninput="calcSim()" data-tip="Arriendo de oficinas, locales comerciales o bodegas.">
+        </div>
+        <div>
+          <label class="sim-lbl">Servicios Profesionales (₡)</label>
+          <input class="d-inp sim-input" type="number" id="d101-gas-prof" placeholder="0" oninput="calcSim()" data-tip="Contadores, abogados, consultores, etc. con facturas.">
+        </div>
+        <div>
+          <label class="sim-lbl">Publicidad y Mercadeo (₡)</label>
+          <input class="d-inp sim-input" type="number" id="d101-gas-pub" placeholder="0" oninput="calcSim()">
+        </div>
+        <div>
+          <label class="sim-lbl">Servicios Públicos y Telecomunicaciones (₡)</label>
+          <input class="d-inp sim-input" type="number" id="d101-gas-serv" placeholder="0" oninput="calcSim()" data-tip="Agua, luz, Internet, teléfono, etc.">
+        </div>
+        <div>
+          <label class="sim-lbl">Seguros (₡)</label>
+          <input class="d-inp sim-input" type="number" id="d101-gas-seg" placeholder="0" oninput="calcSim()" data-tip="Seguros del INS y otras pólizas empresariales.">
+        </div>
+        <div>
+          <label class="sim-lbl">Intereses Bancarios (₡)</label>
+          <input class="d-inp sim-input" type="number" id="d101-gas-int" placeholder="0" oninput="calcSim()" data-tip="Intereses pagados por préstamos relacionados a la actividad.">
+        </div>
+        <div>
+          <label class="sim-lbl">Otros Gastos Deducibles (₡)</label>
+          <input class="d-inp sim-input" type="number" id="d101-gas-otros" placeholder="0" oninput="calcSim()" data-tip="Cualquier otro gasto necesario y debidamente documentado.">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BLOQUE: DEPRECIACIONES -->
+  <div class="d101-block">
+    <div class="d101-block-hdr" onclick="toggleD101Block(this)">
+      <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px">🏗️ Depreciaciones y Amortizaciones</span>
+      <span style="font-size:11px;color:var(--muted)" id="d101-dep-sum">₡0</span>
+    </div>
+    <div class="d101-block-body">
+      <div class="info-box blue" style="margin-bottom:12px">📖 Tasas máximas según el art. 8 de la Ley del Impuesto sobre la Renta. Podés usar tasas menores. Solo activos en uso durante el período.</div>
+      <table class="depre-table" id="depreTable">
+        <thead>
+          <tr>
+            <th>Activo / Descripción</th>
+            <th style="min-width:90px">Tasa % anual</th>
+            <th style="min-width:100px">Valor base (₡)</th>
+            <th style="min-width:80px">Meses en uso</th>
+            <th style="min-width:100px">Depreciación (₡)</th>
+            <th style="width:30px"></th>
+          </tr>
+        </thead>
+        <tbody id="depreTbody"></tbody>
+      </table>
+      <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="addDepreRow()">+ Agregar activo</button>
+    </div>
+  </div>
+
+  <!-- BLOQUE: PÉRDIDAS ANTERIORES -->
+  <div class="d101-block">
+    <div class="d101-block-hdr" onclick="toggleD101Block(this)">
+      <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px">📉 Pérdidas de Períodos Anteriores</span>
+      <span style="font-size:11px;color:var(--muted)" id="d101-per-sum">₡0</span>
+    </div>
+    <div class="d101-block-body">
+      <div class="info-box blue" style="margin-bottom:12px">📖 Las pérdidas pueden compensarse hasta por 3 años consecutivos (art. 8 inc. j) de la Ley ISR).</div>
+      <div class="grid2" style="gap:10px">
+        <div>
+          <label class="sim-lbl">Pérdida período anterior 1 (₡)</label>
+          <input class="d-inp sim-input" type="number" id="d101-per1" placeholder="0" oninput="calcSim()">
+        </div>
+        <div>
+          <label class="sim-lbl">Pérdida período anterior 2 (₡)</label>
+          <input class="d-inp sim-input" type="number" id="d101-per2" placeholder="0" oninput="calcSim()">
+        </div>
+        <div>
+          <label class="sim-lbl">Pérdida período anterior 3 (₡)</label>
+          <input class="d-inp sim-input" type="number" id="d101-per3" placeholder="0" oninput="calcSim()">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BLOQUE: CRÉDITOS FISCALES (solo persona física) -->
+  <div class="d101-block" id="d101-creditos-block">
+    <div class="d101-block-hdr" onclick="toggleD101Block(this)">
+      <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px">👨‍👩‍👧 Créditos Fiscales (Persona Física)</span>
+      <span style="font-size:11px;color:var(--muted)" id="d101-cred-sum">₡0</span>
+    </div>
+    <div class="d101-block-body">
+      <div class="info-box blue" style="margin-bottom:12px">📖 Créditos directos contra el impuesto. Se restan del impuesto calculado, no de la renta. Montos según Decreto N°44772-H y Gaceta N°229.</div>
+      <div class="grid2" style="gap:10px">
+        <div>
+          <label class="sim-lbl">Cónyuge o Compañero(a) (cantidad)</label>
+          <input class="d-inp sim-input" type="number" id="d101-cred-cony" placeholder="0" min="0" max="1" oninput="calcSim()" data-tip="Crédito por cónyuge o compañero: ₡31.080/año (período 2025-2026) o ₡30.756/año (2024-2025).">
+        </div>
+        <div>
+          <label class="sim-lbl">Hijos(as) dependientes (cantidad)</label>
+          <input class="d-inp sim-input" type="number" id="d101-cred-hijos" placeholder="0" min="0" oninput="calcSim()" data-tip="Crédito por cada hijo: ₡20.520/año (2025-2026) o ₡20.244/año (2024-2025).">
+        </div>
+        <div>
+          <label class="sim-lbl">Retenciones en la Fuente (₡)</label>
+          <input class="d-inp sim-input" type="number" id="d101-ret-fuente" placeholder="0" oninput="calcSim()" data-tip="IVA retenido por clientes o retenciones sobre honorarios profesionales ya pagadas.">
+        </div>
+        <div>
+          <label class="sim-lbl">Pagos Parciales ya Realizados (₡)</label>
+          <input class="d-inp sim-input" type="number" id="d101-pagos-parciales" placeholder="0" oninput="calcSim()" data-tip="Pagos fraccionados del impuesto realizados durante el período fiscal.">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTADO -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px">
+    <div class="card">
+      <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:14px">📊 Resumen D-101</div>
+      <div class="t-row"><span class="t-row-lbl">Ingresos Brutos Totales</span><span class="t-row-val" style="color:#7aabff" id="r-ing">₡0</span></div>
+      <div class="t-row"><span class="t-row-lbl">(-) Costos y Gastos</span><span class="t-row-val" id="r-gas">₡0</span></div>
+      <div class="t-row"><span class="t-row-lbl">(-) Depreciaciones</span><span class="t-row-val" id="r-dep">₡0</span></div>
+      <div class="t-row"><span class="t-row-lbl">(-) Pérdidas anteriores</span><span class="t-row-val" id="r-per">₡0</span></div>
+      <div class="t-row" style="border-bottom:2px solid var(--border-hi)"><span class="t-row-lbl" style="font-weight:600;color:var(--text)">Renta Neta Imponible</span><span class="t-row-val" style="font-size:16px" id="r-neta">₡0</span></div>
+      <div style="margin:12px 0 8px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--faint)">Tramos</div>
+      <div id="simBrackets"></div>
+      <div class="t-row" style="margin-top:10px"><span class="t-row-lbl">Impuesto según tramos</span><span class="t-row-val" style="color:var(--danger)" id="r-imp-bruto">₡0</span></div>
+      <div class="t-row"><span class="t-row-lbl">(-) Créditos familiares</span><span class="t-row-val" style="color:var(--accent)" id="r-cred">₡0</span></div>
+      <div class="t-row"><span class="t-row-lbl">(-) Retenciones y pagos</span><span class="t-row-val" style="color:var(--accent)" id="r-ret">₡0</span></div>
+    </div>
+    <div class="card" style="display:flex;flex-direction:column;gap:12px">
+      <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700">💸 Resultado Final</div>
+      <div style="background:rgba(255,77,106,.08);border:1px solid rgba(255,77,106,.25);border-radius:var(--rs);padding:18px;flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Impuesto a Pagar Estimado</div>
+        <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--danger)" id="r-imp">₡0</div>
+        <div style="font-size:10px;color:var(--faint);margin-top:6px">D-101 en TRIBU-CR</div>
+      </div>
+      <div style="background:rgba(0,214,143,.08);border:1px solid rgba(0,214,143,.2);border-radius:var(--rs);padding:14px;display:none" id="saldoFavorBox">
+        <div style="font-size:11px;color:var(--muted)">Saldo a Favor</div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--accent)" id="r-saldo-favor">₡0</div>
+        <div style="font-size:10px;color:var(--faint);margin-top:4px">Podés solicitar devolución o compensar con próximas obligaciones</div>
+      </div>
+      <div style="font-size:10px;color:var(--faint);line-height:1.7" id="simNotes"></div>
+      <button class="btn btn-ghost btn-sm" onclick="exportD101PDF()" style="justify-content:center">📑 Exportar borrador D-101 PDF</button>
+    </div>
+  </div>
+</section>
+<!-- ════ SIMPLIFICADO ════ -->
+<section class="section" id="section-simplificado">
+  <div class="section-header">
+    <div class="section-title">🪄 Régimen Simplificado (D-105)</div>
+    <button class="btn btn-ghost btn-sm" onclick="resetSimp()">↺ Resetear</button>
+  </div>
+  <div class="info-box">
+    ⚠️ <strong>Régimen de Tributación Simplificada.</strong> Para contribuyentes con ingresos brutos anuales que no superen el límite establecido por Hacienda (~₡133M aprox.) y que estén inscritos en el régimen. Tasas según tablas vigentes del Ministerio de Hacienda. Declaración trimestral en TRIBU-CR (formulario D-105).
+  </div>
+
+  <!-- Paso 1: Seleccionar actividad -->
+  <div class="card" style="margin-bottom:14px">
+    <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:6px">Paso 1 — Seleccioná tu actividad económica</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px">El factor de impuesto varía según la actividad. Podés buscar por nombre.</div>
+    <input class="search-box" id="simpSearch" placeholder="Buscar actividad..." oninput="renderSimpActividades()" style="margin-bottom:12px;max-width:400px">
+    <div class="simp-act-grid" id="simpActGrid"></div>
+    <div style="margin-top:10px;font-size:12px;color:var(--muted)">Actividad seleccionada: <strong id="simpActSelected" style="color:var(--accent)">Ninguna</strong></div>
+  </div>
+
+  <!-- Paso 2: Compras por trimestre -->
+  <div class="card" style="margin-bottom:14px">
+    <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:6px">Paso 2 — Compras del período (₡)</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Ingresá el total de compras (mercancías, materias primas, insumos) de cada trimestre. La base imponible se calcula sobre las compras.</div>
+    <div class="simp-q-grid">
+      <div class="simp-q">
+        <div class="simp-q-lbl">I Trimestre<br><span style="font-weight:400;font-size:9px">Ene–Mar</span></div>
+        <input class="d-inp" type="number" id="simp-q1" placeholder="0" oninput="calcSimp()" style="text-align:center;margin-top:6px">
+        <div class="simp-q-tax" id="simp-q1-tax"></div>
+      </div>
+      <div class="simp-q">
+        <div class="simp-q-lbl">II Trimestre<br><span style="font-weight:400;font-size:9px">Abr–Jun</span></div>
+        <input class="d-inp" type="number" id="simp-q2" placeholder="0" oninput="calcSimp()" style="text-align:center;margin-top:6px">
+        <div class="simp-q-tax" id="simp-q2-tax"></div>
+      </div>
+      <div class="simp-q">
+        <div class="simp-q-lbl">III Trimestre<br><span style="font-weight:400;font-size:9px">Jul–Set</span></div>
+        <input class="d-inp" type="number" id="simp-q3" placeholder="0" oninput="calcSimp()" style="text-align:center;margin-top:6px">
+        <div class="simp-q-tax" id="simp-q3-tax"></div>
+      </div>
+      <div class="simp-q">
+        <div class="simp-q-lbl">IV Trimestre<br><span style="font-weight:400;font-size:9px">Oct–Dic</span></div>
+        <input class="d-inp" type="number" id="simp-q4" placeholder="0" oninput="calcSimp()" style="text-align:center;margin-top:6px">
+        <div class="simp-q-tax" id="simp-q4-tax"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resultado -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div class="card">
+      <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:14px">📊 Resumen Anual</div>
+      <div class="t-row"><span class="t-row-lbl">Total Compras Anuales</span><span class="t-row-val" style="color:#7aabff" id="simp-r-compras">₡0</span></div>
+      <div class="t-row"><span class="t-row-lbl">Factor aplicado</span><span class="t-row-val" id="simp-r-factor">—</span></div>
+      <div class="t-row" style="border-top:2px solid var(--border-hi);margin-top:6px;padding-top:10px"><span class="t-row-lbl" style="font-weight:600;color:var(--text)">Impuesto Anual Estimado</span><span class="t-row-val" style="color:var(--danger);font-size:18px" id="simp-r-total">₡0</span></div>
     </div>
     <div class="card">
-      <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:18px">Resultado del Estimado</div>
-      <div class="t-row" data-tip="Total de ingresos antes de cualquier deducción."><span class="t-row-lbl">Ingresos Brutos</span><span class="t-row-val" style="color:#7aabff" id="r-ing">₡0</span></div>
-      <div class="t-row" data-tip="Gastos necesarios para generar la renta, respaldados por comprobantes fiscales."><span class="t-row-lbl">(-) Gastos Deducibles</span><span class="t-row-val" id="r-gas">₡0</span></div>
-      <div class="t-row" data-tip="Otras deducciones permitidas: cargas sociales, seguros, créditos familiares, etc."><span class="t-row-lbl">(-) Otras Deducciones</span><span class="t-row-val" id="r-otras">₡0</span></div>
-      <div class="t-row" style="border-bottom:2px solid var(--border-hi)" data-tip="Ingresos Brutos menos todos los gastos y deducciones. Sobre esta base se aplican los tramos de impuesto.">
-        <span class="t-row-lbl" style="font-weight:600;color:var(--text)">Renta Neta Imponible</span>
-        <span class="t-row-val" style="font-size:16px" id="r-neta">₡0</span>
-      </div>
-      <div style="margin:14px 0 8px;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--faint)">Cálculo por Tramos</div>
-      <div id="simBrackets"></div>
-      <div style="background:rgba(255,77,106,.08);border:1px solid rgba(255,77,106,.25);border-radius:var(--rs);padding:16px;display:flex;justify-content:space-between;align-items:center;margin-top:14px" data-tip="Estimado antes de aplicar créditos fiscales por hijo o cónyuge, retenciones en la fuente ni pagos parciales ya realizados. Confirmá con tu contador antes de declarar el D-101.">
-        <div><div style="font-size:11px;color:var(--muted)">Impuesto Estimado Anual</div><div style="font-size:11px;color:var(--faint)">Antes de créditos y retenciones · D-101</div></div>
-        <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--danger)" id="r-imp">₡0</div>
-      </div>
-      <div style="margin-top:10px;font-size:10px;color:var(--faint);line-height:1.7" id="simNotes"></div>
+      <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:10px">📅 Por Trimestre (a pagar)</div>
+      <div class="t-row"><span class="t-row-lbl">I Trimestre (vence abr 15)</span><span class="t-row-val" style="color:var(--danger)" id="simp-r-q1">₡0</span></div>
+      <div class="t-row"><span class="t-row-lbl">II Trimestre (vence jul 15)</span><span class="t-row-val" style="color:var(--danger)" id="simp-r-q2">₡0</span></div>
+      <div class="t-row"><span class="t-row-lbl">III Trimestre (vence oct 15)</span><span class="t-row-val" style="color:var(--danger)" id="simp-r-q3">₡0</span></div>
+      <div class="t-row"><span class="t-row-lbl">IV Trimestre (vence ene 15)</span><span class="t-row-val" style="color:var(--danger)" id="simp-r-q4">₡0</span></div>
+      <div style="margin-top:12px;font-size:10px;color:var(--faint)" id="simp-notes"></div>
     </div>
   </div>
 </section>
 
+<!-- ════ CALENDARIO FISCAL ════ -->
+<section class="section" id="section-calendario">
+  <div class="section-header">
+    <div class="section-title">📅 Calendario Fiscal</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <select class="filter-sel" id="cal-regime" onchange="renderCalendario()">
+        <option value="all">Todos los regímenes</option>
+        <option value="tradicional">Régimen Tradicional</option>
+        <option value="simplificado">Régimen Simplificado</option>
+        <option value="persona-fisica">Persona Física</option>
+      </select>
+      <select class="filter-sel" id="cal-year" onchange="renderCalendario()">
+        <option value="2025">2025</option>
+        <option value="2026" selected>2026</option>
+      </select>
+    </div>
+  </div>
+  <div class="info-box blue" style="margin-bottom:18px">
+    📌 Fechas calculadas con hábiles bancarios costarricenses. Si el día 15 cae en sábado, domingo o feriado, el vencimiento se traslada al siguiente día hábil.
+  </div>
+  <div class="cal-list" id="calList"></div>
+</section>
 <!-- ════ ALERTAS ════ -->
 <section class="section" id="section-warnings">
   <div class="section-header">
@@ -1672,6 +1950,8 @@ function switchTab(t) {
   if (t === 'summary')   { renderSummary(); renderAllPeriods(); renderPeriodsChart(); }
   if (t === 'export')    { document.getElementById('exp-count').textContent = invoices.length + ' documentos'; showNotifBanner(); }
   if (t === 'tools')     { initToolsTab(); }
+  if (t === 'simplificado') { renderSimpActividades(); calcSimp(); }
+  if (t === 'calendario')   { renderCalendario(); }
   updateProgress(t);
 }
 
@@ -3114,119 +3394,464 @@ function renderSummary() {
 // ═══════════════════════════════════════════════════════
 //  SIMULATOR (MEJORA 6 — fix D-101 / nueva codificación)
 // ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+//  D-101 — RENTA ANUAL COMPLETO
+// ═══════════════════════════════════════════════════════
+let depreRows = [];
+
+function toggleD101Block(hdr) {
+  const body = hdr.nextElementSibling;
+  body.classList.toggle('open');
+}
+
+function addDepreRow(desc='', tasa=10, valor=0, meses=12) {
+  const id = Date.now() + Math.random();
+  depreRows.push({ id, desc, tasa, valor, meses });
+  renderDepreTable();
+  calcSim();
+}
+
+function removeDepreRow(id) {
+  depreRows = depreRows.filter(r => r.id !== id);
+  renderDepreTable();
+  calcSim();
+}
+
+function renderDepreTable() {
+  const tbody = document.getElementById('depreTbody');
+  if (!tbody) return;
+  if (depreRows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--faint);font-size:12px">Sin activos. Hacé clic en "+ Agregar activo".</td></tr>';
+    return;
+  }
+  tbody.innerHTML = depreRows.map(r => `
+    <tr>
+      <td><input class="d-inp" style="min-width:140px" type="text" value="${r.desc}" placeholder="Ej: Vehículo" oninput="updateDepreRow(${r.id},'desc',this.value)"></td>
+      <td><input class="d-inp" style="width:70px" type="number" value="${r.tasa}" min="0" max="100" oninput="updateDepreRow(${r.id},'tasa',this.value)"></td>
+      <td><input class="d-inp" style="width:90px" type="number" value="${r.valor}" placeholder="0" oninput="updateDepreRow(${r.id},'valor',this.value)"></td>
+      <td><input class="d-inp" style="width:60px" type="number" value="${r.meses}" min="1" max="12" oninput="updateDepreRow(${r.id},'meses',this.value)"></td>
+      <td style="font-weight:600;color:var(--accent);font-family:'Syne',sans-serif">${fmt(calcDepreRow(r))}</td>
+      <td><button onclick="removeDepreRow(${r.id})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px">✕</button></td>
+    </tr>`).join('');
+}
+
+function updateDepreRow(id, field, val) {
+  const r = depreRows.find(x => x.id === id);
+  if (!r) return;
+  r[field] = field === 'desc' ? val : parseFloat(val) || 0;
+  // update the dep sum cell
+  const cells = document.querySelectorAll(`#depreTbody td:nth-child(5)`);
+  depreRows.forEach((row, i) => {
+    if (cells[i]) cells[i].textContent = fmt(calcDepreRow(row));
+  });
+  calcSim();
+}
+
+function calcDepreRow(r) {
+  return (r.valor * (r.tasa / 100)) * (r.meses / 12);
+}
+
+function gI(id) { const el=document.getElementById(id); return el ? parseFloat(el.value)||0 : 0; }
+
 function autoFillSim() {
   const ventas = invoices.filter(i=>i.direction==='emitida'&&i.type!=='MensajeHacienda');
-  const total  = sum(ventas, i=>i.resumen.totalComprobante);
-  document.getElementById('sim-ing').value  = Math.round(total);
-  document.getElementById('sim-gas').value  = Math.round(total * 0.40);
+  const compras = invoices.filter(i=>i.direction==='recibida'&&i.type!=='MensajeHacienda');
+  const totalVentas = sum(ventas, i=>i.resumen.totalComprobante);
+  const totalCompras = sum(compras, i=>i.resumen.totalComprobante);
+  const el = id => document.getElementById(id);
+  if(el('d101-ing-grav')) el('d101-ing-grav').value = Math.round(totalVentas);
+  if(el('d101-gas-costo')) el('d101-gas-costo').value = Math.round(totalCompras * 0.7);
+  if(el('d101-gas-otros')) el('d101-gas-otros').value = Math.round(totalCompras * 0.3);
   calcSim();
-  toast('warn','⚠️ Gastos estimados al 40% (ejemplo). Ajustá con tus gastos reales.');
+  toast('warn','⚠️ Datos precargados desde facturas. Revisá y ajustá cada campo antes de usar.');
 }
 
 function calcSim() {
-  const ing   = parseF(document.getElementById('sim-ing').value);
-  const gas   = parseF(document.getElementById('sim-gas').value);
-  const otras = parseF(document.getElementById('sim-otras').value);
-  const tipo  = document.getElementById('sim-tipo').value;
-  const period= document.getElementById('sim-period').value;
-  const renta = Math.max(0, ing - gas - otras);
+  const tipo   = (document.getElementById('sim-tipo')||{}).value || 'fisica';
+  const period = (document.getElementById('sim-period')||{}).value || '2026';
 
-  setText('r-ing',   fmt(ing));
-  setText('r-gas',   fmt(gas));
-  setText('r-otras', fmt(otras));
-  setText('r-neta',  fmt(renta));
+  // INGRESOS
+  const ingGrav  = gI('d101-ing-grav');
+  const ingExen  = gI('d101-ing-exen');
+  const ingOtros = gI('d101-ing-otros');
+  const ingDev   = gI('d101-ing-dev');
+  const ingBruto = ingGrav + ingExen + ingOtros - ingDev;
 
-  let imp = 0, brackets = [], notes = '';
+  // GASTOS
+  const gastos = ['costo','sal','alq','prof','pub','serv','seg','int','otros']
+    .reduce((s,k) => s + gI('d101-gas-'+k), 0);
+
+  // DEPRECIACIONES
+  const depTotal = depreRows.reduce((s,r) => s + calcDepreRow(r), 0);
+
+  // PÉRDIDAS
+  const perdidas = gI('d101-per1') + gI('d101-per2') + gI('d101-per3');
+
+  // RENTA NETA
+  const rentaNeta = Math.max(0, ingBruto - gastos - depTotal - perdidas);
+
+  // UPDATE SUMMARIES
+  const setT = (id,v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
+  setT('d101-ing-sum', fmt(ingBruto));
+  setT('d101-gas-sum', fmt(gastos));
+  setT('d101-dep-sum', fmt(depTotal));
+  setT('d101-per-sum', fmt(perdidas));
+  setT('r-ing',  fmt(ingBruto));
+  setT('r-gas',  fmt(gastos));
+  setT('r-dep',  fmt(depTotal));
+  setT('r-per',  fmt(perdidas));
+  setT('r-neta', fmt(rentaNeta));
+
+  // TRAMOS
+  let impBruto = 0, brackets = [], notes = '';
+  const cols = ['#3d7aff','#00d68f','#ffc947','#ff4d6a','#a78bfa'];
 
   if (tipo === 'fisica') {
-    // Tramos Persona Física con Actividad Lucrativa — sobre Renta Neta ANUAL
-    // Fuente: Decreto Ejecutivo N°44772-H (período 2025) y Gaceta 229 del 05-12-2025 (período 2026)
-    const tramos2025 = [
-      { hasta: 4094000,  tasa: 0,  lbl:'0% (exento)' },
-      { hasta: 6115000,  tasa: 10, lbl:'10%' },
-      { hasta: 10200000, tasa: 15, lbl:'15%' },
-      { hasta: 20442000, tasa: 20, lbl:'20%' },
-      { hasta: Infinity, tasa: 25, lbl:'25%' },
-    ];
-    const tramos2026 = [
-      { hasta: 6244000,  tasa: 0,  lbl:'0% (exento)' },
-      { hasta: 8329000,  tasa: 10, lbl:'10%' },
-      { hasta: 10414000, tasa: 15, lbl:'15%' },
-      { hasta: 20872000, tasa: 20, lbl:'20%' },
-      { hasta: Infinity, tasa: 25, lbl:'25%' },
-    ];
-    const tramos = period === '2026' ? tramos2026 : tramos2025;
-    let rest = renta, prev = 0;
-    for (const t of tramos) {
-      const tramo = Math.min(rest, t.hasta - prev);
-      const monto = tramo * t.tasa / 100;
-      imp += monto;
-      brackets.push({ lbl: t.lbl, monto });
-      rest -= tramo; prev = t.hasta;
-      if (rest <= 0) break;
+    const tr25 = [{h:4094000,t:0,l:'0%'},{h:6115000,t:10,l:'10%'},{h:10200000,t:15,l:'15%'},{h:20442000,t:20,l:'20%'},{h:Infinity,t:25,l:'25%'}];
+    const tr26 = [{h:6244000,t:0,l:'0%'},{h:8329000,t:10,l:'10%'},{h:10414000,t:15,l:'15%'},{h:20872000,t:20,l:'20%'},{h:Infinity,t:25,l:'25%'}];
+    const tramos = period==='2026' ? tr26 : tr25;
+    let rest=rentaNeta, prev=0;
+    for(const t of tramos){
+      const chunk=Math.min(rest,t.h-prev), monto=chunk*t.t/100;
+      impBruto+=monto; brackets.push({l:t.l,monto}); rest-=chunk; prev=t.h; if(rest<=0)break;
     }
-    const decree = period === '2026' ? 'Gaceta N°229 del 05-12-2025' : 'Decreto Ejecutivo N°44772-H del 03-12-2024';
-    notes = `* Período fiscal ${period==='2026'?'2025–2026':'2024–2025'} · Persona Física con Actividad Lucrativa · Tramos sobre Renta Neta Anual · Fuente: ${decree} · Antes de créditos fiscales (cónyuge ₡${period==='2026'?'31.080':'30.756'}/año, hijos ₡${period==='2026'?'20.520':'20.244'}/año) · Formulario D-101 en TRIBU-CR.`;
+    const dec = period==='2026'?'Gaceta N°229 (05-12-2025)':'Decreto N°44772-H (03-12-2024)';
+    notes = `Persona Física · Tramos sobre Renta Neta · Período ${period==='2026'?'2025–2026':'2024–2025'} · Fuente: ${dec}`;
+    // show créditos block
+    const cb=document.getElementById('d101-creditos-block'); if(cb) cb.style.display='';
   } else {
-    // Persona Jurídica — Fuente: Decreto N°44772-H (2025) y Gaceta 229 (2026)
-    // Umbral de ingresos brutos para determinar régimen
-    const umbral2025 = 119629000;
-    const umbral2026 = 119174000;
-    const umbral = period === '2026' ? umbral2026 : umbral2025;
-
-    if (ing > umbral) {
-      // Gran empresa: tarifa plana 30% sobre renta neta
-      imp = renta * 0.30;
-      brackets = [{ lbl: `Gran empresa (ingresos > ₡${Math.round(umbral/1e6)}M) — 30% sobre renta neta`, monto: imp }];
-      notes = `* Persona Jurídica · Ingresos brutos superan ₡${Math.round(umbral/1000000)}M → tarifa única 30% sobre renta neta · Período ${period==='2026'?'2025–2026':'2024–2025'} · Formulario D-101 en TRIBU-CR.`;
+    const umb25=119629000, umb26=119174000;
+    const umb = period==='2026'?umb26:umb25;
+    if(ingBruto > umb){
+      impBruto=rentaNeta*0.30;
+      brackets=[{l:`Gran empresa >₡${Math.round(umb/1e6)}M · 30%`,monto:impBruto}];
+      notes=`Persona Jurídica · Ingresos superan umbral → tarifa 30% plana`;
     } else {
-      // Micro/pequeña empresa: tramos progresivos sobre renta neta
-      const tramos2025j = [
-        { hasta: 5642000,  tasa: 0,  lbl:'0% (exento)' },
-        { hasta: 8465000,  tasa: 10, lbl:'10%' },
-        { hasta: 11286000, tasa: 15, lbl:'15%' },
-        { hasta: Infinity, tasa: 20, lbl:'20%' },
-      ];
-      const tramos2026j = [
-        { hasta: 5621000,  tasa: 5,  lbl:'5%' },
-        { hasta: 8433000,  tasa: 10, lbl:'10%' },
-        { hasta: 11243000, tasa: 15, lbl:'15%' },
-        { hasta: Infinity, tasa: 20, lbl:'20%' },
-      ];
-      const tramos = period === '2026' ? tramos2026j : tramos2025j;
-      let rest = renta, prev = 0;
-      for (const t of tramos) {
-        const tramo = Math.min(rest, t.hasta - prev);
-        const monto = tramo * t.tasa / 100;
-        imp += monto;
-        brackets.push({ lbl: t.lbl, monto });
-        rest -= tramo; prev = t.hasta;
-        if (rest <= 0) break;
+      const tr25j=[{h:5642000,t:0,l:'0%'},{h:8465000,t:10,l:'10%'},{h:11286000,t:15,l:'15%'},{h:Infinity,t:20,l:'20%'}];
+      const tr26j=[{h:5621000,t:5,l:'5%'},{h:8433000,t:10,l:'10%'},{h:11243000,t:15,l:'15%'},{h:Infinity,t:20,l:'20%'}];
+      const tramos=period==='2026'?tr26j:tr25j;
+      let rest=rentaNeta,prev=0;
+      for(const t of tramos){
+        const chunk=Math.min(rest,t.h-prev),monto=chunk*t.t/100;
+        impBruto+=monto;brackets.push({l:t.l,monto});rest-=chunk;prev=t.h;if(rest<=0)break;
       }
-      const decree = period === '2026' ? 'Gaceta N°229 del 05-12-2025' : 'Decreto Ejecutivo N°44772-H del 03-12-2024';
-      notes = `* Persona Jurídica con ingresos brutos ≤ ₡${Math.round(umbral/1e6)}M · Tramos progresivos sobre Renta Neta · Período ${period==='2026'?'2025–2026':'2024–2025'} · Fuente: ${decree} · Formulario D-101 en TRIBU-CR.`;
+      notes=`Persona Jurídica · Ingresos ≤₡${Math.round(umb/1e6)}M · Tramos progresivos`;
     }
+    const cb=document.getElementById('d101-creditos-block'); if(cb) cb.style.display='none';
   }
 
-  setText('r-imp', fmt(imp));
-  const maxB = Math.max(...brackets.map(b=>b.monto), 1);
-  const cols  = ['#3d7aff','#00d68f','#ffc947','#ff4d6a','#a78bfa'];
-  document.getElementById('simBrackets').innerHTML = brackets.map((b,i)=>`
+  setT('r-imp-bruto', fmt(impBruto));
+
+  // CRÉDITOS Y RETENCIONES
+  const cony   = gI('d101-cred-cony');
+  const hijos  = gI('d101-cred-hijos');
+  const retFte = gI('d101-ret-fuente');
+  const pagPar = gI('d101-pagos-parciales');
+  const creditoCony  = cony  * (period==='2026'?31080:30756);
+  const creditoHijos = hijos * (period==='2026'?20520:20244);
+  const totalCred = tipo==='fisica' ? (creditoCony + creditoHijos) : 0;
+  const totalRet  = tipo==='fisica' ? (retFte + pagPar) : (retFte + pagPar);
+  setT('d101-cred-sum', fmt(totalCred));
+  setT('r-cred', fmt(totalCred));
+  setT('r-ret',  fmt(totalRet));
+
+  const impFinal = impBruto - totalCred - totalRet;
+  const saldoFavor = Math.max(0, -impFinal);
+  const impPagar   = Math.max(0, impFinal);
+
+  setT('r-imp', fmt(impPagar));
+  const sfBox=document.getElementById('saldoFavorBox');
+  if(sfBox){ sfBox.style.display=saldoFavor>0?'':'none'; setT('r-saldo-favor',fmt(saldoFavor)); }
+
+  // BRACKETS HTML
+  const maxB=Math.max(...brackets.map(b=>b.monto),1);
+  const bEl=document.getElementById('simBrackets');
+  if(bEl) bEl.innerHTML=brackets.map((b,i)=>`
     <div class="bracket-row">
-      <div class="bracket-lbl">${b.lbl}</div>
+      <div class="bracket-lbl">${b.l}</div>
       <div class="bracket-track"><div class="bracket-fill" style="width:${b.monto>0?(b.monto/maxB*100).toFixed(1):0}%;background:${cols[i%cols.length]}"></div></div>
       <div class="bracket-val" style="color:${cols[i%cols.length]}">${fmt(b.monto)}</div>
     </div>`).join('');
-  document.getElementById('simNotes').textContent = notes;
+
+  const nEl=document.getElementById('simNotes'); if(nEl) nEl.textContent=notes;
 }
 
 function resetSim() {
-  ['sim-ing','sim-gas','sim-otras'].forEach(id=>document.getElementById(id).value='');
-  ['r-ing','r-gas','r-otras','r-neta','r-imp'].forEach(id=>setText(id,'₡0'));
-  document.getElementById('simBrackets').innerHTML='';
-  document.getElementById('simNotes').textContent='';
+  const ids=['d101-ing-grav','d101-ing-exen','d101-ing-otros','d101-ing-dev',
+             'd101-gas-costo','d101-gas-sal','d101-gas-alq','d101-gas-prof',
+             'd101-gas-pub','d101-gas-serv','d101-gas-seg','d101-gas-int','d101-gas-otros',
+             'd101-per1','d101-per2','d101-per3',
+             'd101-cred-cony','d101-cred-hijos','d101-ret-fuente','d101-pagos-parciales'];
+  ids.forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  depreRows=[];
+  renderDepreTable();
+  calcSim();
 }
 
+function exportD101PDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const tipo=(document.getElementById('sim-tipo')||{}).value||'fisica';
+  const period=(document.getElementById('sim-period')||{}).value||'2026';
+  const getT=id=>{ const e=document.getElementById(id); return e?e.textContent:'₡0'; };
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(16);
+  doc.text('Tribu Facil CR - Borrador D-101', 14, 18);
+  doc.setFontSize(10);
+  doc.setFont('helvetica','normal');
+  doc.text(`Periodo: ${period==='2026'?'2025-2026':'2024-2025'} | Tipo: ${tipo==='fisica'?'Persona Fisica':'Persona Juridica'} | Fecha: ${new Date().toLocaleDateString('es-CR')}`, 14, 26);
+  let y=36;
+  const row=(lbl,val,bold=false)=>{
+    if(y>270){doc.addPage();y=20;}
+    if(bold){doc.setFont('helvetica','bold');} else {doc.setFont('helvetica','normal');}
+    doc.setFontSize(10);
+    doc.text(lbl,14,y);
+    doc.text(val,140,y,{align:'right'});
+    y+=7;
+  };
+  const sep=()=>{ doc.setDrawColor(200); doc.line(14,y,196,y); y+=4; };
+  row('INGRESOS','',true); sep();
+  row('Ingresos Brutos Totales', getT('r-ing'));
+  row('(-) Costos y Gastos', getT('r-gas'));
+  row('(-) Depreciaciones', getT('r-dep'));
+  row('(-) Perdidas anteriores', getT('r-per'));
+  sep();
+  row('Renta Neta Imponible', getT('r-neta'), true);
+  y+=4;
+  row('IMPUESTO','',true); sep();
+  row('Impuesto segun tramos', getT('r-imp-bruto'));
+  row('(-) Creditos familiares', getT('r-cred'));
+  row('(-) Retenciones y pagos', getT('r-ret'));
+  sep();
+  row('IMPUESTO A PAGAR ESTIMADO', getT('r-imp'), true);
+  y+=8;
+  doc.setFontSize(8);
+  doc.setTextColor(150);
+  doc.text('Borrador orientativo. No reemplaza declaracion oficial en TRIBU-CR ni asesoria contable autorizada.',14,y);
+  doc.save('D101-borrador-tribufacilcr.pdf');
+}
+
+// ═══════════════════════════════════════════════════════
+//  RÉGIMEN SIMPLIFICADO
+// ═══════════════════════════════════════════════════════
+// Actividades y factores según tablas de Hacienda (D-105)
+const SIMP_ACTIVIDADES = [
+  { name:'Abastecedores (pulperías)', factor:0.0065 },
+  { name:'Agricultura (pequeños productores)', factor:0.006 },
+  { name:'Alquiler de bienes muebles', factor:0.0173 },
+  { name:'Carpintería y ebanistería', factor:0.012 },
+  { name:'Carnicerías', factor:0.008 },
+  { name:'Comercio de artesanías', factor:0.0155 },
+  { name:'Comercio de calzado', factor:0.0155 },
+  { name:'Comercio de electrodomésticos', factor:0.0155 },
+  { name:'Comercio de ferretería', factor:0.0155 },
+  { name:'Comercio de medicamentos', factor:0.0155 },
+  { name:'Comercio de ropa y textiles', factor:0.0155 },
+  { name:'Comercio de víveres / abarrotes', factor:0.0065 },
+  { name:'Confección y costura', factor:0.0096 },
+  { name:'Cristalería y cerrajería', factor:0.012 },
+  { name:'Distribución de productos alimenticios', factor:0.008 },
+  { name:'Ebanistería / muebles', factor:0.012 },
+  { name:'Electricistas', factor:0.0173 },
+  { name:'Elaboración de alimentos (sodas/restaurantes)', factor:0.0155 },
+  { name:'Elaboración de helados y refrescos', factor:0.0155 },
+  { name:'Fotocopiadoras y tipografías', factor:0.0173 },
+  { name:'Fruterías y verduleras', factor:0.0065 },
+  { name:'Gasolineras / estaciones de servicio', factor:0.003 },
+  { name:'Imprentas pequeñas', factor:0.0173 },
+  { name:'Joyería y relojería', factor:0.0155 },
+  { name:'Jugueterías', factor:0.0155 },
+  { name:'Lavanderías y tintorerías', factor:0.0173 },
+  { name:'Licorerías', factor:0.025 },
+  { name:'Mecánica automotriz', factor:0.0173 },
+  { name:'Panaderías y pastelerías', factor:0.0096 },
+  { name:'Peluquerías y barberías', factor:0.0173 },
+  { name:'Pesca artesanal', factor:0.006 },
+  { name:'Pintura de edificios', factor:0.0173 },
+  { name:'Plomería', factor:0.0173 },
+  { name:'Producción agrícola', factor:0.006 },
+  { name:'Reparación de calzado (zapatería)', factor:0.0096 },
+  { name:'Reparación de electrodomésticos', factor:0.0173 },
+  { name:'Restaurantes y sodas', factor:0.0155 },
+  { name:'Salones de belleza', factor:0.0173 },
+  { name:'Servicios de fotografía', factor:0.0173 },
+  { name:'Servicios de limpieza', factor:0.0173 },
+  { name:'Soldadura y tornería', factor:0.012 },
+  { name:'Tabaquería', factor:0.025 },
+  { name:'Talleres de reparación de bicicletas', factor:0.0096 },
+  { name:'Tapicería', factor:0.012 },
+  { name:'Tiendas de artículos deportivos', factor:0.0155 },
+  { name:'Tiendas de mascotas y accesorios', factor:0.0155 },
+  { name:'Transporte de carga liviana', factor:0.0173 },
+  { name:'Ventas de repuestos automotrices', factor:0.0155 },
+  { name:'Viveros y plantas ornamentales', factor:0.0096 },
+  { name:'Zapaterías (venta)', factor:0.0155 },
+];
+
+let simpActSelected = null;
+
+function renderSimpActividades() {
+  const q = (document.getElementById('simpSearch')||{}).value?.toLowerCase() || '';
+  const grid = document.getElementById('simpActGrid');
+  if (!grid) return;
+  const filtered = SIMP_ACTIVIDADES.filter(a => a.name.toLowerCase().includes(q));
+  grid.innerHTML = filtered.length ? filtered.map(a => `
+    <div class="simp-act-card${simpActSelected&&simpActSelected.name===a.name?' selected':''}"
+         onclick="selectSimpAct('${a.name.replace(/'/g,"\'")}',${a.factor})">
+      <div class="simp-act-name">${a.name}</div>
+      <div class="simp-act-factor">Factor: ${(a.factor*100).toFixed(2)}%</div>
+    </div>`).join('') : '<div style="padding:16px;color:var(--faint);font-size:12px">Sin resultados.</div>';
+}
+
+function selectSimpAct(name, factor) {
+  simpActSelected = { name, factor };
+  document.getElementById('simpActSelected').textContent = name + ' (factor ' + (factor*100).toFixed(2) + '%)';
+  renderSimpActividades();
+  calcSimp();
+}
+
+function calcSimp() {
+  const fmtC = v => '₡' + Math.round(v).toLocaleString('es-CR');
+  const q1 = parseFloat(document.getElementById('simp-q1')?.value)||0;
+  const q2 = parseFloat(document.getElementById('simp-q2')?.value)||0;
+  const q3 = parseFloat(document.getElementById('simp-q3')?.value)||0;
+  const q4 = parseFloat(document.getElementById('simp-q4')?.value)||0;
+  const factor = simpActSelected ? simpActSelected.factor : 0;
+  const t1=q1*factor, t2=q2*factor, t3=q3*factor, t4=q4*factor;
+  const total = t1+t2+t3+t4;
+  const set=(id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
+  set('simp-q1-tax', factor?fmtC(t1):'');
+  set('simp-q2-tax', factor?fmtC(t2):'');
+  set('simp-q3-tax', factor?fmtC(t3):'');
+  set('simp-q4-tax', factor?fmtC(t4):'');
+  set('simp-r-compras', fmtC(q1+q2+q3+q4));
+  set('simp-r-factor', factor ? (factor*100).toFixed(2)+'%' : '— (seleccioná actividad)');
+  set('simp-r-total', fmtC(total));
+  set('simp-r-q1', fmtC(t1));
+  set('simp-r-q2', fmtC(t2));
+  set('simp-r-q3', fmtC(t3));
+  set('simp-r-q4', fmtC(t4));
+  const nEl=document.getElementById('simp-notes');
+  if(nEl) nEl.textContent = simpActSelected
+    ? `Actividad: ${simpActSelected.name} · Factor: ${(factor*100).toFixed(2)}% sobre compras · Declaración trimestral D-105 en TRIBU-CR.`
+    : 'Seleccioná una actividad para calcular.';
+}
+
+function resetSimp() {
+  simpActSelected=null;
+  ['simp-q1','simp-q2','simp-q3','simp-q4'].forEach(id=>{ const e=document.getElementById(id); if(e) e.value=''; });
+  const el=document.getElementById('simpActSelected'); if(el) el.textContent='Ninguna';
+  renderSimpActividades();
+  calcSimp();
+}
+
+// ═══════════════════════════════════════════════════════
+//  CALENDARIO FISCAL
+// ═══════════════════════════════════════════════════════
+function calNextBizDay(d) {
+  let r = new Date(d);
+  while(r.getDay()===0||r.getDay()===6||isCRHoliday(r)) r.setDate(r.getDate()+1);
+  return r;
+}
+
+function calVenc(yr, mo, day) {
+  return calNextBizDay(new Date(yr, mo, day));
+}
+
+function renderCalendario() {
+  const yr = parseInt((document.getElementById('cal-year')||{}).value||'2026');
+  const regime = (document.getElementById('cal-regime')||{}).value||'all';
+  const today = new Date();
+  const list = document.getElementById('calList');
+  if (!list) return;
+
+  // Build all events
+  const events = [];
+  const MONTHS_ABR = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic'];
+  const fmtDate = d => `${MONTHS_ABR[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+
+  // Helper: add event
+  const ev = (date, title, desc, regime_tag, color='#3d7aff') => {
+    events.push({ date, title, desc, regime_tag, color });
+  };
+
+  // IVA mensual (D-150) — día 15 de cada mes para el mes anterior
+  if (regime==='all'||regime==='tradicional') {
+    for (let m=0; m<12; m++) {
+      const vDate = calVenc(yr, m+1, 15);
+      const periodoMes = MONTHS_ABR[m];
+      ev(vDate, `D-150 IVA — ${periodoMes} ${yr}`, `Declaración y pago del IVA del mes de ${MONTHS[m]}. Ingresá en TRIBU-CR.`, 'tradicional', '#3d7aff');
+    }
+  }
+
+  // Renta anual D-101 — 15 dic (período oct–set)
+  if (regime==='all'||regime==='tradicional'||regime==='persona-fisica') {
+    const rentaVenc = calVenc(yr, 11, 15);
+    ev(rentaVenc, `D-101 Renta Anual ${yr-1}–${yr}`, `Vencimiento declaración y pago del Impuesto sobre la Renta (período oct ${yr-1}–set ${yr}).`, 'tradicional', '#a78bfa');
+  }
+
+  // Simplificado D-105 — trimestral
+  if (regime==='all'||regime==='simplificado') {
+    const simpDates = [
+      [calVenc(yr,3,15), 'I Trimestre (Ene–Mar)'],
+      [calVenc(yr,6,15), 'II Trimestre (Abr–Jun)'],
+      [calVenc(yr,9,15), 'III Trimestre (Jul–Set)'],
+      [calVenc(yr+1,0,15),'IV Trimestre (Oct–Dic)'],
+    ];
+    simpDates.forEach(([d,q]) => ev(d, `D-105 Simplificado — ${q}`, `Declaración trimestral Régimen Simplificado. Presentar en TRIBU-CR.`, 'simplificado', '#00d68f'));
+  }
+
+  // Timbre de Educación y Cultura — 31 marzo
+  if (regime==='all'||regime==='tradicional'||regime==='persona-fisica') {
+    const timbre = calNextBizDay(new Date(yr,2,31));
+    ev(timbre, `Timbre Educación y Cultura`, `Pago anual del Timbre de Educación y Cultura (1% sobre capital social o activos).`, 'tradicional', '#ffc947');
+  }
+
+  // Municipalidad — patente trimestral (aproximado: ene, abr, jul, oct)
+  if (regime==='all'||regime==='tradicional') {
+    [[0,'I Trim'],[3,'II Trim'],[6,'III Trim'],[9,'IV Trim']].forEach(([m,q]) => {
+      const pd = calVenc(yr,m,31);
+      ev(pd, `Patente Municipal — ${q}`, `Pago trimestral de patente comercial a la municipalidad correspondiente.`, 'tradicional', '#fb923c');
+    });
+  }
+
+  // CCSS planilla (mensual, 15)
+  if (regime==='all'||regime==='tradicional'||regime==='persona-fisica') {
+    for(let m=0;m<12;m++){
+      const cd = calVenc(yr,m,15);
+      ev(cd, `CCSS Planilla — ${MONTHS_ABR[m]}`, `Pago de cuotas obrero-patronales CCSS (si tenés empleados o trabajador independiente).`, 'tradicional', '#f472b6');
+    }
+  }
+
+  // Sort by date
+  events.sort((a,b) => a.date - b.date);
+
+  // Build HTML grouped by month
+  let html = '', curMonth = -1;
+  events.forEach(e => {
+    const diff = Math.ceil((e.date - today) / 86400000);
+    const cls = diff < 0 ? 'ev-past' : diff < 5 ? 'ev-urgent' : diff < 15 ? 'ev-soon' : 'ev-ok';
+    const badge = diff < 0 ? 'Vencido' : diff === 0 ? 'HOY' : diff === 1 ? 'Mañana' : `${diff} días`;
+    const mo = e.date.getMonth();
+    if (mo !== curMonth) {
+      curMonth = mo;
+      html += `<div class="cal-month-sep">📆 ${MONTHS[mo]} ${e.date.getFullYear()}</div>`;
+    }
+    html += `<div class="cal-ev ${cls}">
+      <div class="cal-ev-dot" style="background:${e.color}"></div>
+      <div class="cal-ev-info">
+        <div class="cal-ev-title">${e.title}</div>
+        <div class="cal-ev-desc">${e.desc}</div>
+      </div>
+      <div class="cal-ev-badge" style="background:${cls==='ev-past'?'rgba(122,144,184,.1)':cls==='ev-urgent'?'rgba(255,77,106,.15)':cls==='ev-soon'?'rgba(255,201,71,.15)':'rgba(0,214,143,.12)'};color:${cls==='ev-past'?'var(--faint)':cls==='ev-urgent'?'var(--danger)':cls==='ev-soon'?'var(--warn)':'var(--accent)'}">${badge}</div>
+    </div>`;
+  });
+  list.innerHTML = html || '<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">Sin eventos</div><div class="empty-sub">Cambiá el filtro de régimen.</div></div>';
+}
+
+// ═══════════════════════════════════════════════════════
+//  VENCIMIENTO WIDGET — con feriados CR y fines de semana
+// ═══════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════
 //  VENCIMIENTO WIDGET — con feriados CR y fines de semana
 // ═══════════════════════════════════════════════════════
